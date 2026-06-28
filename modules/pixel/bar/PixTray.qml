@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
+import qs
 import qs.services
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
@@ -45,19 +46,31 @@ Row {
         }
     }
 
-    // Wifi status
+    // Wifi status (click opens quick settings)
     PixIcon {
         anchors.verticalCenter: parent.verticalCenter
         name: "wifi"
         size: 16
         color: (Network?.wifi || Network?.ethernet) ? PixTheme.colors.fg : PixTheme.colors.grey
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -4
+            cursorShape: Qt.PointingHandCursor
+            onClicked: GlobalStates.sidebarRightOpen = true
+        }
     }
 
-    // Bluetooth status
+    // Bluetooth status (click opens quick settings)
     PixIcon {
         anchors.verticalCenter: parent.verticalCenter
         name: "bluetooth"
         size: 16
         color: (BluetoothStatus?.connected ?? false) ? PixTheme.colors.fg : PixTheme.colors.grey
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -4
+            cursorShape: Qt.PointingHandCursor
+            onClicked: GlobalStates.sidebarRightOpen = true
+        }
     }
 }

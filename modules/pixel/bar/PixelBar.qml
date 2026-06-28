@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
@@ -66,11 +67,66 @@ Scope {
 
                 // ---- Bar content row ----
                 Item {
+                    id: barContent
                     anchors {
                         fill: parent
                         leftMargin: 12
                         rightMargin: 12
                         bottomMargin: PixTheme.barBorderWidth
+                    }
+
+                    // Per-screen brightness monitor (null-safe; may be null).
+                    property var brightnessMonitor: Brightness.getMonitorForScreen(barRoot.screen)
+
+                    // Scroll over the left half to change brightness, the right
+                    // half to change volume — same as the ii bar. Declared first
+                    // (lowest z) so workspaces/buttons still receive clicks;
+                    // scrolling lands on these only over empty bar regions.
+                    // Transparent: keeps the monochrome look intact.
+                    FocusedScrollMouseArea {
+                        id: leftScroll
+                        anchors {
+                            top: parent.top
+                            bottom: parent.bottom
+                            left: parent.left
+                            right: parent.horizontalCenter
+                        }
+                        acceptedButtons: Qt.NoButton
+                        onScrollUp: {
+                            if (barContent.brightnessMonitor) {
+                                GlobalStates.osdBrightnessOpen = true;
+                                barContent.brightnessMonitor.setBrightness(
+                                    barContent.brightnessMonitor.brightness + 0.05);
+                            }
+                        }
+                        onScrollDown: {
+                            if (barContent.brightnessMonitor) {
+                                GlobalStates.osdBrightnessOpen = true;
+                                barContent.brightnessMonitor.setBrightness(
+                                    barContent.brightnessMonitor.brightness - 0.05);
+                            }
+                        }
+                        onMovedAway: GlobalStates.osdBrightnessOpen = false
+                    }
+
+                    FocusedScrollMouseArea {
+                        id: rightScroll
+                        anchors {
+                            top: parent.top
+                            bottom: parent.bottom
+                            left: parent.horizontalCenter
+                            right: parent.right
+                        }
+                        acceptedButtons: Qt.NoButton
+                        onScrollUp: {
+                            GlobalStates.osdVolumeOpen = true;
+                            Audio.incrementVolume();
+                        }
+                        onScrollDown: {
+                            GlobalStates.osdVolumeOpen = true;
+                            Audio.decrementVolume();
+                        }
+                        onMovedAway: GlobalStates.osdVolumeOpen = false
                     }
 
                     // LEFT cluster: active window, divider, stats

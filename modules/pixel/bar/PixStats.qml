@@ -1,13 +1,15 @@
 import QtQuick
+import qs
 import qs.services
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * Stats cluster: ram / swap / cpu values with PixIcons, a Claude session-usage
- * indicator (shown only when ClaudeUsage is available), plus a media "note"
- * indicator (track title in grey, "No media" when nothing playing).
- * Hovering anywhere over the cluster shows the system-monitor popup.
+ * Stats cluster: ram / cpu values with PixIcons, a Claude session-usage
+ * indicator (robot icon, shown only when ClaudeUsage is available), plus a
+ * media "note" indicator (track title in grey, "No media" when nothing
+ * playing). Hovering the stats shows the system-monitor popup; clicking the
+ * media indicator opens the pixel media controls.
  *
  * Bound to ResourceUsage, ClaudeUsage and MprisController.
  */
@@ -41,10 +43,9 @@ MouseArea {
                 spacing: 14
 
                 PixStatItem { icon: "ram"; value: root.pct(ResourceUsage.memoryUsedPercentage) }
-                PixStatItem { icon: "swap"; value: root.pct(ResourceUsage.swapUsedPercentage) }
                 PixStatItem { icon: "cpu"; value: root.pct(ResourceUsage.cpuUsage) }
                 PixStatItem {
-                    icon: "sparkle"
+                    icon: "robot"
                     value: Math.round(ClaudeUsage.sessionPercent ?? 0)
                     visible: ClaudeUsage.available
                 }
@@ -57,13 +58,17 @@ MouseArea {
             }
         }
 
-        // Media note indicator — hovering it shows the media popup.
+        // Media note indicator — click to open the pixel media controls.
         MouseArea {
             id: mediaArea
             anchors.verticalCenter: parent.verticalCenter
             hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
             implicitWidth: mediaRow.implicitWidth
             implicitHeight: 32
+            // Open-only (closing is handled by the media controls' focus grab /
+            // Escape), matching the quick-settings sliders button.
+            onClicked: GlobalStates.mediaControlsOpen = true
 
             Row {
                 id: mediaRow
@@ -85,11 +90,7 @@ MouseArea {
                 }
             }
 
-            PixelBarPopup {
-                hoverTarget: mediaArea
-                contentMargin: 14
-                PixMediaPopup {}
-            }
+            PixTooltip { text: "Media controls"; visibleCondition: mediaArea.containsMouse }
         }
     }
 }

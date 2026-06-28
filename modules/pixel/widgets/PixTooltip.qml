@@ -27,17 +27,33 @@ Item {
 
     anchors.fill: parent
 
+    // Gap between the anchor edge and the tooltip. Large enough that the popup
+    // never maps directly under the cursor (which would otherwise steal hover
+    // from the parent and make the tooltip flicker on/off).
+    readonly property int gap: 14
+
     Timer {
         id: showTimer
         interval: root.showDelay
         onTriggered: tooltipLoader.active = true
     }
+    // Hysteresis: once shown, a brief un-hover does NOT immediately hide. This
+    // debounces the transient hover loss that can happen as the popup maps.
+    Timer {
+        id: hideTimer
+        interval: 120
+        onTriggered: tooltipLoader.active = false
+    }
     onVisibleConditionChanged: {
-        if (root.visibleCondition && root.text.length > 0)
-            showTimer.restart();
-        else {
+        if (root.visibleCondition && root.text.length > 0) {
+            hideTimer.stop();
+            if (!tooltipLoader.active)
+                showTimer.restart();
+        } else {
             showTimer.stop();
-            tooltipLoader.active = false;
+            // Debounce the hide so a momentary hover blip keeps it shown.
+            if (tooltipLoader.active)
+                hideTimer.restart();
         }
     }
 
@@ -53,13 +69,15 @@ Item {
                 edges: root.anchorEdges
                 gravity: root.anchorGravity
                 margins {
-                    top: 4
-                    bottom: 4
-                    left: 6
-                    right: 6
+                    top: root.gap
+                    bottom: root.gap
+                    left: root.gap
+                    right: root.gap
                 }
             }
-            mask: Region { item: null } // click-through
+            // Empty input region → fully click/hover-through, so the popup can
+            // never steal hover from the parent control underneath.
+            mask: Region { item: null }
             color: "transparent"
             implicitWidth: label.implicitWidth + 16
             implicitHeight: label.implicitHeight + 8

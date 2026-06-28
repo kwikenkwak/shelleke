@@ -4,8 +4,8 @@ import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * System-monitor hover popup content: RAM / Swap / CPU / Claude columns.
- * Mirrors PixelPopups.html. Null-safe against ResourceUsage / ClaudeUsage.
+ * System-monitor hover popup content: RAM / CPU / Claude columns.
+ * Null-safe against ResourceUsage / ClaudeUsage.
  */
 Row {
     id: root
@@ -24,16 +24,6 @@ Row {
         PixSysIconRow { icon: "ram"; label: "Total:"; value: root.formatKB(ResourceUsage.memoryTotal) }
     }
 
-    // ---- Swap ----
-    Column {
-        spacing: 9
-        visible: ResourceUsage.swapTotal > 0
-        PixSysHeader { icon: "swap"; label: "Swap" }
-        PixSysSwatchRow { filled: true; label: "Used:"; value: root.formatKB(ResourceUsage.swapUsed) }
-        PixSysSwatchRow { filled: false; label: "Free:"; value: root.formatKB(ResourceUsage.swapFree) }
-        PixSysIconRow { icon: "swap"; label: "Total:"; value: root.formatKB(ResourceUsage.swapTotal) }
-    }
-
     // ---- CPU ----
     Column {
         spacing: 9
@@ -49,7 +39,7 @@ Row {
     Column {
         spacing: 9
         visible: ClaudeUsage.available
-        PixSysHeader { icon: "sparkle"; label: "Claude" }
+        PixSysHeader { icon: "robot"; label: "Claude" }
         PixSysIconRow {
             icon: "clock"
             label: "Session:"
