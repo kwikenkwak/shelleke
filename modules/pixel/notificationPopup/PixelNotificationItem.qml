@@ -22,7 +22,12 @@ PixPanel {
     readonly property string appIcon: notif?.appIcon ?? ""
     readonly property string summaryText: notif?.summary ?? ""
     readonly property string bodyText: notif?.body ?? ""
-    readonly property var actions: notif?.actions ?? []
+    // Only show real, labelled actions as buttons. The "default" action (and any
+    // empty-label action) is the click-to-activate action, not a visible button —
+    // rendering it produced a blank full-width bar.
+    readonly property var actions: (notif?.actions ?? []).filter(a =>
+        (a.text ?? "").trim().length > 0 && a.identifier !== "default")
+    readonly property var defaultAction: (notif?.actions ?? []).find(a => a.identifier === "default")
     readonly property double notifTime: notif?.time ?? 0
 
     signal dismissed()
@@ -63,7 +68,12 @@ PixPanel {
             if (root.notif)
                 Notifications.cancelTimeout(root.notif.notificationId);
         }
-        onClicked: root.dismissed()
+        // Click activates the notification's default action (if any), then dismisses.
+        onClicked: {
+            if (root.notif && root.defaultAction)
+                Notifications.attemptInvokeAction(root.notif.notificationId, root.defaultAction.identifier);
+            root.dismissed();
+        }
     }
 
     RowLayout {

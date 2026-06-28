@@ -13,13 +13,13 @@ import Quickshell.Hyprland
 /**
  * Monochrome wallpaper for the pixel family.
  *
- * The wallpaper image is fully desaturated (grayscale). In light mode it shows
- * as black/grey on the white theme background; in dark mode it is inverted
- * (white/grey on black) so it tracks the theme. Areas with no image fall back
- * to the theme background color. Rendered on the bottom layer.
+ * Pipeline: desaturate -> boost contrast -> (dark mode) invert. The invert is
+ * done by swapping LevelAdjust's output levels based on PixTheme.dark, so it
+ * reliably flips when the theme toggles: black/grey on white in light mode,
+ * white/grey on black in dark mode. The theme background fills behind it.
  *
- * Kept deliberately simple (no parallax/widgets/video) — the goal is a clean,
- * theme-matched monochrome backdrop.
+ * Parallax: the wallpaper is zoomed slightly and panned with the active
+ * workspace (and a nudge when the sidebar opens), like the ii background.
  */
 Variants {
     id: root
@@ -30,6 +30,7 @@ Variants {
         required property var modelData
         screen: modelData
 
+        readonly property HyprlandMonitor monitor: Hyprland.monitorFor(modelData)
         readonly property bool wallpaperIsVideo: {
             const p = Config.options.background.wallpaperPath ?? "";
             return p.endsWith(".mp4") || p.endsWith(".webm") || p.endsWith(".mkv") || p.endsWith(".avi") || p.endsWith(".mov");
@@ -37,6 +38,22 @@ Variants {
         readonly property string wallpaperPath: wallpaperIsVideo
             ? (Config.options.background.thumbnailPath ?? "")
             : (Config.options.background.wallpaperPath ?? "")
+
+        // ---- Parallax ----
+        readonly property real zoom: Math.max(1.0, Config.options.background.parallax.workspaceZoom ?? 1.08)
+        readonly property int workspacesShown: Config.options.bar.workspaces.shown ?? 10
+        readonly property int activeWsId: monitor?.activeWorkspace?.id ?? 1
+        readonly property int wsGroupLower: Math.floor((activeWsId - 1) / workspacesShown) * workspacesShown
+        readonly property real wsFraction: workspacesShown > 1
+            ? (activeWsId - wsGroupLower - 1) / (workspacesShown - 1) : 0.5
+        readonly property real valueX: {
+            let v = (Config.options.background.parallax.enableWorkspace ?? true) ? wsFraction : 0.5;
+            if (Config.options.background.parallax.enableSidebar ?? true)
+                v += 0.12 * (GlobalStates.sidebarRightOpen ? 1 : 0) - 0.12 * (GlobalStates.sidebarLeftOpen ? 1 : 0);
+            return Math.max(0, Math.min(1, v));
+        }
+        readonly property real movableX: bgRoot.screen.width * (zoom - 1) / 2
+        readonly property real movableY: bgRoot.screen.height * (zoom - 1) / 2
 
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Bottom
@@ -56,34 +73,52 @@ Variants {
 
             Image {
                 id: wallpaper
-                anchors.fill: parent
                 visible: false
+                width: bgRoot.screen.width * bgRoot.zoom
+                height: bgRoot.screen.height * bgRoot.zoom
+                x: -bgRoot.movableX - (bgRoot.valueX - 0.5) * 2 * bgRoot.movableX
+                y: -bgRoot.movableY
+                Behavior on x {
+                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                }
                 source: bgRoot.wallpaperPath
                 fillMode: Image.PreserveAspectCrop
                 cache: false
                 asynchronous: true
-                sourceSize.width: bgRoot.screen.width
-                sourceSize.height: bgRoot.screen.height
+                sourceSize.width: bgRoot.screen.width * bgRoot.zoom
+                sourceSize.height: bgRoot.screen.height * bgRoot.zoom
             }
 
-            // Grayscale (always). layer.enabled so it can feed the inverter below.
+            // Grayscale (intermediate, fed to the next stage).
             Desaturate {
                 id: gray
-                anchors.fill: parent
+                anchors.fill: wallpaper
                 source: wallpaper
                 desaturation: 1.0
-                visible: wallpaper.status === Image.Ready
+                visible: false
                 layer.enabled: true
             }
 
-            // Dark mode: invert the grayscale (white/grey on black). Drawn opaque
-            // over `gray`, so it covers it when shown; hidden in light mode.
-            LevelAdjust {
-                anchors.fill: parent
+            // Boost contrast so it reads as crisp black/grey/white, not washed out.
+            BrightnessContrast {
+                id: punch
+                anchors.fill: wallpaper
                 source: gray
-                visible: PixTheme.dark && wallpaper.status === Image.Ready
-                minimumOutput: "#ffffffff"
-                maximumOutput: "#00000000"
+                brightness: 0.0
+                contrast: 0.45
+                visible: false
+                layer.enabled: true
+            }
+
+            // Final stage: identity in light mode, inverted output in dark mode.
+            // Swapping the output levels (bound to PixTheme.dark) flips reliably
+            // whenever the theme toggles.
+            LevelAdjust {
+                anchors.fill: wallpaper
+                source: punch
+                visible: wallpaper.status === Image.Ready
+                minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
+                maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
             }
         }
     }
