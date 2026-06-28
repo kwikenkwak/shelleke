@@ -96,6 +96,15 @@ Scope {
                 recycleTimer.start();
             }
 
+            // Safety net: make sure the scroll is running once the surface has a
+            // real width (covers any case where onScreenWChanged was missed).
+            Timer {
+                interval: 400
+                repeat: true
+                running: true
+                onTriggered: bgRoot.startScroll()
+            }
+
             // Recycle tiles that have fully exited the left edge.
             Timer {
                 id: recycleTimer
@@ -126,6 +135,7 @@ Scope {
                         required property int index
                         property int seg: index
                         readonly property string file: root.dir + "/seg_" + index + ".png"
+                        readonly property string url: "file://" + tile.file
 
                         width: bgRoot.screenW
                         height: bgRoot.screenH
@@ -139,15 +149,28 @@ Scope {
                             cache: false
                             asynchronous: true
                             fillMode: Image.Stretch // exact fill so tiles abut seamlessly
+                            // If the file isn't there yet or was read mid-write, retry.
+                            onStatusChanged: if (status === Image.Error) retryTimer.restart()
+                        }
+
+                        // Re-read the file from disk. A plain reassignment to the
+                        // same URL won't reload (URL unchanged), so clear first.
+                        function reload(): void {
+                            im.source = "";
+                            im.source = tile.url;
+                        }
+
+                        Timer {
+                            id: retryTimer
+                            interval: 200
+                            repeat: false
+                            onTriggered: tile.reload()
                         }
 
                         // One-shot renderer per tile; reload (off-screen) when done.
                         Process {
                             id: gen
-                            onExited: {
-                                im.source = "";
-                                im.source = "file://" + tile.file;
-                            }
+                            onExited: tile.reload()
                         }
 
                         function render(): void {
@@ -160,7 +183,15 @@ Scope {
                             tile.render();
                         }
 
-                        Component.onCompleted: render()
+                        Component.onCompleted: {
+                            // Show whatever PNG already exists (from a previous run)
+                            // immediately, so a quick reload never flashes a blank
+                            // white screen, then re-render this session's world. The
+                            // source is set proactively here rather than only in the
+                            // process's onExited, which can fail to fire on reload.
+                            reload();
+                            render();
+                        }
                     }
                 }
             }
