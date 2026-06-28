@@ -67,8 +67,12 @@ MouseArea {
             implicitWidth: mediaRow.implicitWidth
             implicitHeight: 32
             // Open-only (closing is handled by the media controls' focus grab /
-            // Escape), matching the quick-settings sliders button.
-            onClicked: GlobalStates.mediaControlsOpen = true
+            // Escape), matching the quick-settings sliders button. Publish this
+            // indicator's scene x so the panel opens right under the media title.
+            onClicked: {
+                GlobalStates.mediaControlsX = mediaArea.mapToItem(null, 0, 0).x;
+                GlobalStates.mediaControlsOpen = true;
+            }
 
             Row {
                 id: mediaRow

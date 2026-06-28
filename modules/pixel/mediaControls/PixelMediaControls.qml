@@ -48,9 +48,12 @@ Scope {
             top: true
             left: true
         }
+        // Open under the media title in the bar (its scene x is published by the
+        // bar on click), clamped so the panel stays on-screen.
         margins {
             top: PixTheme.barHeight + 8
-            left: 12
+            left: Math.max(12, Math.min(GlobalStates.mediaControlsX,
+                (mediaRoot.screen?.width ?? 1920) - mediaRoot.implicitWidth - 12))
         }
 
         HyprlandFocusGrab {
@@ -251,7 +254,6 @@ Scope {
                             id: prevBtn
                             implicitWidth: 46
                             implicitHeight: 38
-                            interactive: MprisController.canGoPrevious
                             onClicked: MprisController.previous()
                             PixIcon {
                                 anchors.centerIn: parent
@@ -266,7 +268,6 @@ Scope {
                             id: playBtn
                             implicitWidth: 46
                             implicitHeight: 38
-                            interactive: MprisController.canTogglePlaying
                             onClicked: MprisController.togglePlaying()
 
                             // Pause: two bars
@@ -317,7 +318,6 @@ Scope {
                             id: nextBtn
                             implicitWidth: 46
                             implicitHeight: 38
-                            interactive: MprisController.canGoNext
                             onClicked: MprisController.next()
                             PixIcon {
                                 anchors.centerIn: parent
