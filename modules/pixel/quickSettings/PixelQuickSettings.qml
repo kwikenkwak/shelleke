@@ -38,24 +38,26 @@ Scope {
             id: panelWindow
             exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:pixelQuickSettings"
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            // Hyprland 0.49: focus is always exclusive and setting
+            // WlrLayershell.keyboardFocus breaks the mouse focus grab (the panel
+            // never receives `cleared`, so it can't be clicked-out closed and it
+            // swallows global keybinds). Leave it unset, matching the
+            // KNOWN-WORKING ii sidebarRight.
             color: "transparent"
 
+            // Full screen height: anchor top + bottom + right so the panel fills
+            // the entire right edge. Width is content-driven (360px).
             anchors {
                 top: true
+                bottom: true
                 right: true
             }
 
             implicitWidth: content.implicitWidth
-            implicitHeight: content.implicitHeight
 
-            // Click-outside-to-close. `active` tracks the open flag rather than
-            // being hardcoded `true`: if it were always on, activating the grab
-            // while the triggering click is still on the *bar* surface (outside
-            // [panelWindow]) makes the compositor emit `cleared` immediately and
-            // the panel would close the instant it opens. Guarding onCleared with
-            // `if (!active)` further suppresses that spurious clear that fires
-            // during activation, matching the ii sidebarRight pattern.
+            // Click-outside-to-close. `active` tracks the open flag; guarding
+            // onCleared with `if (!active)` suppresses the spurious clear that
+            // fires during activation, matching the ii sidebarRight pattern.
             HyprlandFocusGrab {
                 id: focusGrab
                 windows: [panelWindow]
@@ -68,10 +70,13 @@ Scope {
 
             PixelQuickSettingsContent {
                 id: content
+                // Window height is driven by the screen (top+bottom anchors), so
+                // give the content the full window height to fill.
                 anchors.fill: parent
 
                 // Escape closes the panel. focus follows the open flag so the
-                // key handler is live whenever the panel is shown.
+                // key handler is live whenever the panel is shown, scoped to the
+                // content item rather than grabbing keyboard focus globally.
                 focus: GlobalStates.sidebarRightOpen
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {

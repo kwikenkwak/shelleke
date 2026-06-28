@@ -10,6 +10,6 @@ Text {
     font {
         family: PixTheme.fontMain
         pixelSize: PixTheme.font.pixelSize.normal
-        hintingPreference: Font.PreferDefaultHinting
+        hintingPreference: Font.PreferFullHinting
     }
 }

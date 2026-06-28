@@ -4,9 +4,12 @@ import Quickshell.Hyprland
 import qs.modules.pixel.common
 
 /**
- * Pixel workspaces: a row of small squares. Filled square = active or occupied,
- * hollow (2px-bordered) square = empty. Clicking a square switches to that
- * workspace; scrolling cycles workspaces. Occupancy logic mirrors the ii bar.
+ * Pixel workspaces: a row of small squares with three distinct states.
+ *   - empty (no windows):  hollow 2px-bordered square, dimmed to grey.
+ *   - occupied (windows, not focused):  solid filled fg square.
+ *   - current (focused):  elongated filled fg pill, ~double width.
+ * Clicking a cell switches to that workspace; scrolling cycles workspaces.
+ * Occupancy logic mirrors the ii bar.
  */
 Item {
     id: root
@@ -16,6 +19,7 @@ Item {
     readonly property int workspaceGroup: Math.floor((activeId - 1) / workspacesShown)
 
     property int square: 9
+    property int activeWidth: 20   // elongated pill width for the focused workspace
     property int gap: 7
 
     property list<bool> workspaceOccupied: []
@@ -63,18 +67,26 @@ Item {
                 readonly property int wsId: root.baseId(index)
                 readonly property bool active: root.activeId === wsId
                 readonly property bool occupied: root.workspaceOccupied[index] ?? false
-                readonly property bool filled: active || occupied
 
-                width: root.square
+                width: active ? root.activeWidth : root.square
                 height: root.square
                 anchors.verticalCenter: parent.verticalCenter
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: PixTheme.animation.duration
+                        easing.type: PixTheme.animation.type
+                    }
+                }
 
                 Rectangle {
                     anchors.fill: parent
                     antialiasing: false
-                    color: cell.filled ? PixTheme.colors.fg : "transparent"
-                    border.width: cell.filled ? 0 : 2
-                    border.color: PixTheme.colors.fg
+                    // current = filled fg pill; occupied = filled fg square;
+                    // empty = hollow grey bordered square.
+                    color: (cell.active || cell.occupied) ? PixTheme.colors.fg : "transparent"
+                    border.width: (cell.active || cell.occupied) ? 0 : 2
+                    border.color: cell.occupied ? PixTheme.colors.fg : PixTheme.colors.grey
                 }
 
                 MouseArea {

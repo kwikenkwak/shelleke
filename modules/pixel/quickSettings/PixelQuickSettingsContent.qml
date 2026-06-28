@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import qs
 import qs.services
@@ -8,8 +9,13 @@ import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * The 360px-wide quick-settings panel body, laid out top->bottom per
- * design/PixelQuickSettings.html. Backed by the shared quickToggles models.
+ * The quick-settings panel body. Lays out full-height: fixed sections (header,
+ * connectivity rows, toggle rows) pinned at the top, the notifications list
+ * flex-grows to fill the remaining vertical space (scrollable), and the notif
+ * footer + calendar sit at the bottom. Backed by the shared quickToggles models.
+ *
+ * Clicking the Internet / Bluetooth tiles opens an inline management overlay
+ * (PixWifiManager / PixBluetoothManager) covering the panel.
  */
 PixPanel {
     id: root
@@ -19,10 +25,11 @@ PixPanel {
     readonly property int gap: 11
 
     implicitWidth: 360
-    implicitHeight: column.implicitHeight + pad * 2
+
+    // Which management overlay is open: "" | "wifi" | "bluetooth".
+    property string overlay: ""
 
     // ---- Backing toggle models ----
-    NetworkToggle { id: networkToggle }
     BluetoothToggle { id: bluetoothToggle }
     IdleInhibitorToggle { id: idleToggle }
     MicToggle { id: micToggle }
@@ -37,7 +44,7 @@ PixPanel {
     readonly property bool micActive: !(Audio.source?.audio?.muted ?? true)
     readonly property bool audioMuted: Audio.sink?.audio?.muted ?? false
 
-    Column {
+    ColumnLayout {
         id: column
         anchors.fill: parent
         anchors.margins: root.pad
@@ -45,8 +52,8 @@ PixPanel {
 
         // ============ HEADER ============
         Item {
-            width: parent.width
-            height: 34
+            Layout.fillWidth: true
+            Layout.preferredHeight: 34
 
             // Uptime chip
             Rectangle {
@@ -118,30 +125,30 @@ PixPanel {
         }
 
         // ============ CONNECTIVITY ROW A ============
-        Row {
-            width: parent.width
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 8
 
             PixToggleTile {
-                width: (parent.width - 8 * 2 - 44) / 2
+                Layout.fillWidth: true
                 iconName: "wifi"
                 title: "Internet"
                 status: Network.networkName !== "" ? Network.networkName
                     : (root.internetConnected ? "Connected" : "Not connected")
                 active: root.internetConnected
-                onActivated: networkToggle.mainAction()
+                onActivated: root.overlay = "wifi"
             }
             PixToggleTile {
-                width: (parent.width - 8 * 2 - 44) / 2
+                Layout.fillWidth: true
                 iconName: "bluetooth"
                 title: "Bluetooth"
                 status: bluetoothToggle.statusText
                 active: bluetoothToggle.toggled
-                onActivated: bluetoothToggle.mainAction()
+                onActivated: root.overlay = "bluetooth"
             }
             PixButton {
-                width: 44
-                implicitHeight: 46
+                Layout.preferredWidth: 44
+                Layout.preferredHeight: 46
                 filled: idleToggle.toggled
                 onClicked: idleToggle.mainAction()
                 PixIcon {
@@ -154,13 +161,13 @@ PixPanel {
         }
 
         // ============ ROW B ============
-        Row {
-            width: parent.width
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 8
 
             PixButton {
-                width: 44
-                implicitHeight: 46
+                Layout.preferredWidth: 44
+                Layout.preferredHeight: 46
                 filled: root.micActive
                 onClicked: micToggle.mainAction()
                 PixIcon {
@@ -171,7 +178,7 @@ PixPanel {
                 }
             }
             PixToggleTile {
-                width: (parent.width - 8 * 2 - 44) / 2
+                Layout.fillWidth: true
                 iconName: "speaker"
                 title: "Audio output"
                 status: root.audioMuted ? "Muted" : "Unmuted"
@@ -179,7 +186,7 @@ PixPanel {
                 onActivated: Audio.toggleMute()
             }
             PixToggleTile {
-                width: (parent.width - 8 * 2 - 44) / 2
+                Layout.fillWidth: true
                 iconName: "moon"
                 title: "Night Light"
                 status: nightLightToggle.toggled ? "Active" : "Inactive"
@@ -189,11 +196,9 @@ PixPanel {
         }
 
         // ============ ROW C ============
-        Row {
-            id: rowC
-            width: parent.width
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 8
-            readonly property real btnW: (width - spacing * 4) / 5
 
             Repeater {
                 model: [
@@ -205,8 +210,8 @@ PixPanel {
                 ]
                 delegate: PixButton {
                     required property var modelData
-                    width: rowC.btnW
-                    implicitHeight: 38
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 38
                     filled: modelData.toggle.toggled
                     onClicked: modelData.toggle.mainAction()
                     PixIcon {
@@ -219,16 +224,17 @@ PixPanel {
             }
         }
 
-        // ============ NOTIFICATIONS ============
+        // ============ NOTIFICATIONS (flex-grows) ============
         Rectangle {
-            width: parent.width
-            height: PixTheme.borderWidth
+            Layout.fillWidth: true
+            Layout.preferredHeight: PixTheme.borderWidth
             color: PixTheme.colors.line
         }
 
         Item {
-            width: parent.width
-            height: Math.min(220, Math.max(notifList.contentHeight, 32))
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 60
 
             ListView {
                 id: notifList
@@ -256,14 +262,14 @@ PixPanel {
         }
 
         // ============ NOTIF FOOTER ============
-        Row {
-            width: parent.width
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 8
 
             PixButton {
                 id: markReadButton
-                width: 44
-                implicitHeight: 36
+                Layout.preferredWidth: 44
+                Layout.preferredHeight: 36
                 onClicked: Notifications.markAllRead()
                 PixIcon {
                     anchors.centerIn: parent
@@ -274,8 +280,8 @@ PixPanel {
             }
             PixButton {
                 id: notifCountLabel
-                width: parent.width - 44 * 2 - 8 * 2
-                implicitHeight: 36
+                Layout.fillWidth: true
+                Layout.preferredHeight: 36
                 fillOnHover: false
                 interactive: false
                 PixText {
@@ -290,8 +296,8 @@ PixPanel {
                 }
             }
             PixButton {
-                width: 44
-                implicitHeight: 36
+                Layout.preferredWidth: 44
+                Layout.preferredHeight: 36
                 onClicked: Notifications.discardAllNotifications()
                 PixIcon {
                     anchors.centerIn: parent
@@ -304,13 +310,81 @@ PixPanel {
 
         // ============ CALENDAR ============
         Rectangle {
-            width: parent.width
-            height: PixTheme.borderWidth
+            Layout.fillWidth: true
+            Layout.preferredHeight: PixTheme.borderWidth
             color: PixTheme.colors.line
         }
 
         PixCalendar {
-            width: parent.width
+            Layout.fillWidth: true
         }
+    }
+
+    // ============ MANAGEMENT OVERLAY ============
+    // Covers the whole panel with a wifi/bluetooth management UI. Opened by the
+    // Internet / Bluetooth tiles; a back button restores the panel.
+    // Opaque backdrop so the panel content does not show through the overlay.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: root.borderWidth
+        visible: overlayLoader.active
+        color: PixTheme.colors.bg
+        radius: 0
+        antialiasing: false
+    }
+
+    Loader {
+        id: overlayLoader
+        anchors.fill: parent
+        anchors.margins: root.pad
+        active: root.overlay !== ""
+        visible: active
+
+        sourceComponent: Column {
+            spacing: root.gap
+
+            // Back bar.
+            Item {
+                width: overlayLoader.width
+                height: 34
+                PixButton {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 38
+                    implicitHeight: 34
+                    onClicked: root.overlay = ""
+                    PixIcon {
+                        anchors.centerIn: parent
+                        name: "chevL"
+                        size: 15
+                        color: parent.contentColor
+                    }
+                }
+                PixTitle {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 50
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.overlay === "wifi" ? "INTERNET" : "DEVICES"
+                    font.pixelSize: PixTheme.font.pixelSize.title
+                }
+            }
+
+            Loader {
+                width: overlayLoader.width
+                height: overlayLoader.height - 34 - root.gap
+                sourceComponent: root.overlay === "wifi" ? wifiManagerComp
+                    : root.overlay === "bluetooth" ? btManagerComp
+                    : null
+            }
+        }
+    }
+
+    Component {
+        id: wifiManagerComp
+        PixWifiManager {}
+    }
+    Component {
+        id: btManagerComp
+        PixBluetoothManager {}
     }
 }

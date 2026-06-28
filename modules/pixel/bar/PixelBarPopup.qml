@@ -55,7 +55,16 @@ LazyLoader {
             borderWidth: PixTheme.popupBorderWidth
             implicitWidth: (root.contentItem?.implicitWidth ?? 0) + root.contentMargin * 2
             implicitHeight: (root.contentItem?.implicitHeight ?? 0) + root.contentMargin * 2
-            children: [root.contentItem]
+
+            // Inset the slotted content from the border on every side so it
+            // never sits flush against the 3px edge.
+            children: [
+                Item {
+                    anchors.fill: parent
+                    anchors.margins: root.contentMargin
+                    children: root.contentItem ? [root.contentItem] : []
+                }
+            ]
         }
     }
 }

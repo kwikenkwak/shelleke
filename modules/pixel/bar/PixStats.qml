@@ -9,8 +9,9 @@ import qs.modules.pixel.widgets
  * "note" indicator (track title in grey, "No media" when nothing playing).
  * Hovering anywhere over the cluster shows the system-monitor popup.
  *
- * Bound to ResourceUsage and MprisController. "proc" (process count) is read
- * from /proc/loadav's running-process field via a small polled FileView.
+ * Bound to ResourceUsage and MprisController. "proc" (process count) is the
+ * total number of processes, read from /proc/loadavg's "running/total" field
+ * via a small polled FileView.
  */
 MouseArea {
     id: root
@@ -21,7 +22,7 @@ MouseArea {
     readonly property var activePlayer: MprisController.activePlayer
     readonly property string trackTitle: activePlayer?.trackTitle ?? ""
 
-    // Running process count, parsed from /proc/loadavg ("running/total").
+    // Total process count, parsed from /proc/loadavg's 4th field ("running/total").
     property int processCount: 0
 
     function pct(v) { return Math.round((v ?? 0) * 100); }
@@ -38,9 +39,10 @@ MouseArea {
         id: loadavgFile
         path: "/proc/loadavg"
         onLoaded: {
-            const parts = (loadavgFile.text() ?? "").trim().split(" ");
-            const procs = parts[3] ?? "";       // e.g. "2/843"
-            root.processCount = Number(procs.split("/")[0] ?? 0);
+            const parts = (loadavgFile.text() ?? "").trim().split(/\s+/);
+            const procs = parts[3] ?? "";        // e.g. "2/843" (running/total)
+            const total = Number(procs.split("/")[1]);
+            if (!isNaN(total) && total > 0) root.processCount = total;
         }
     }
 

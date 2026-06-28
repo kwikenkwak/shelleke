@@ -11,6 +11,6 @@ Text {
         family: PixTheme.fontTitle
         pixelSize: PixTheme.font.pixelSize.title
         letterSpacing: 1
-        hintingPreference: Font.PreferDefaultHinting
+        hintingPreference: Font.PreferFullHinting
     }
 }
