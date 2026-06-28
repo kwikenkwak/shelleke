@@ -7,6 +7,7 @@ import qs.modules.pixel.widgets
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Hyprland
 
 /**
