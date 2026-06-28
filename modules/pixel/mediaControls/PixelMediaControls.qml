@@ -152,11 +152,31 @@ Scope {
                             Layout.alignment: Qt.AlignVCenter
                             spacing: 6
 
-                            PixTitle {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                text: StringUtils.cleanMusicTitle(panel.player?.trackTitle) || "Untitled"
-                                font.pixelSize: PixTheme.font.pixelSize.title
-                                elide: Text.ElideRight
+                                spacing: 8
+
+                                PixTitle {
+                                    Layout.fillWidth: true
+                                    text: StringUtils.cleanMusicTitle(panel.player?.trackTitle) || "Untitled"
+                                    font.pixelSize: PixTheme.font.pixelSize.title
+                                    elide: Text.ElideRight
+                                }
+                                // Lyrics visibility toggle (filled when shown).
+                                PixButton {
+                                    id: lyricsToggle
+                                    visible: Config.options.media.lyrics.enabled
+                                    implicitWidth: 30
+                                    implicitHeight: 26
+                                    filled: Config.options.media.lyrics.show
+                                    onClicked: Config.options.media.lyrics.show = !Config.options.media.lyrics.show
+                                    PixIcon {
+                                        anchors.centerIn: parent
+                                        name: "message"
+                                        size: 14
+                                        color: lyricsToggle.contentColor
+                                    }
+                                }
                             }
                             PixText {
                                 Layout.fillWidth: true
@@ -333,17 +353,17 @@ Scope {
                     // ---- Divider ----
                     Rectangle {
                         Layout.fillWidth: true
-                        visible: panel.hasPlayer
+                        visible: panel.hasPlayer && Config.options.media.lyrics.show
                         implicitHeight: PixTheme.borderWidth
                         color: PixTheme.colors.line
                         antialiasing: false
                     }
 
-                    // ---- Lyrics ----
+                    // ---- Lyrics (toggled by the lyrics button) ----
                     PixLyricsView {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 200
-                        visible: panel.hasPlayer
+                        visible: panel.hasPlayer && Config.options.media.lyrics.show
                         player: panel.player
                     }
                 }
