@@ -43,10 +43,26 @@ Item { // Wrapper
     }
 
     Keys.onPressed: event => {
+        if (event.modifiers & Qt.ControlModifier) {
+            if (event.key === Qt.Key_J) {
+                if (appResults.currentIndex < appResults.count - 1) {
+                    console.error("Increment");
+                    appResults.currentIndex = appResults.currentIndex + 1;
+                }
+                event.accepted = true;
+                return;
+            } else if (event.key === Qt.Key_K) {
+                if (appResults.currentIndex > 0) {
+                    appResults.currentIndex = appResults.currentIndex - 1;
+                }
+                event.accepted = true;
+                return;
+            }
+        }
         // Prevent Esc and Backspace from registering
         if (event.key === Qt.Key_Escape)
             return;
-
+            
         // Handle Backspace: focus and delete character if not focused
         if (event.key === Qt.Key_Backspace) {
             if (!searchBar.searchInput.activeFocus) {

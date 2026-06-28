@@ -83,7 +83,7 @@ Rectangle {
                 font.weight: Looks.font.weight.strong
                 font.pixelSize: Looks.font.pixelSize.large
                 elide: Text.ElideRight
-                text: StringUtils.cleanMusicTitle(root.activePlayer?.trackTitle) || Translation.tr("Unknown Title")
+                text: root.activePlayer?.trackTitle ?? Translation.tr("Unknown Title")
             }
 
             WText {

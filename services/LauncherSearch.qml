@@ -12,6 +12,56 @@ Singleton {
     id: root
 
     property string query: ""
+// Helper to get recent files from the system
+    FileView {
+      id: jsonFile
+      path: Qt.resolvedUrl(Quickshell.env("HOME") + "/.local/share/recently-used.xbel")
+      // Forces the file to be loaded by the time we call JSON.parse().
+      // see blockLoading's property documentation for details.
+      blockLoading: true
+      watchChanges: true
+      onFileChanged: this.reload()
+    }
+
+    property var recentFiles: {
+        try {
+            // Read the XBEL file (Standard for Linux recent files)
+            const content = jsonFile.text()
+            
+            // Regex to extract file paths and names
+            // XBEL stores them as <bookmark href="file:///path/to/file" ...>
+            const regex = /<bookmark href="file:\/\/([^"]+)"/g;
+            const files = [];
+            let match;
+            
+            while ((match = regex.exec(content)) !== null) {
+                let fullPath = decodeURIComponent(match[1]);
+                let fileName = fullPath.split('/').pop();
+                
+                const url = Qt.resolvedUrl(fullPath).exists()
+                console.info(url)
+                console.info(Object.entries(url))
+                console.info(typeof url)
+                if (!url) continue
+                // Avoid duplicates and filter out non-existent files if possible
+                if (files.some(f => f.name === fileName)) {
+                    const file = files.find(f => f.name === fileName);
+                    file.name = fileName;
+                    file.path = fullPath;
+                } else {
+                    files.push({
+                        name: fileName,
+                        path: fullPath
+                    });
+
+                }
+            }
+            return files.reverse()
+        } catch (e) {
+            console.error("FUCK:",e);
+            return [];
+        }
+    }
 
     function ensurePrefix(prefix) {
         if ([Config.options.search.prefix.action, Config.options.search.prefix.app, Config.options.search.prefix.clipboard, Config.options.search.prefix.emojis, Config.options.search.prefix.math, Config.options.search.prefix.shellCommand, Config.options.search.prefix.webSearch,].some(i => root.query.startsWith(i))) {
@@ -321,8 +371,41 @@ Singleton {
             }
             return null;
         }).filter(Boolean);
+        ////////////////// Recent Files ///////////////////
+        const recentFileObjects = 
+            Fuzzy.go(root.query, root.recentFiles, {
+                all: true,
+                key: "name"
+            })
+            .map(r => {
+                const file = r.obj;
+                console.log(file);
+                return resultComp.createObject(null, {
+                    type: Translation.tr("Recent File"),
+                    name: file.name,
+                    comment: file.path,
+                    iconName: "document-open", // Or use a generic file icon
+                    iconType: LauncherSearchResult.IconType.System,
+                    verb: Translation.tr("Open"),
+                    execute: () => {
+                        console.info("Opening file", file.path);
+                        Qt.openUrlExternally("file://" + file.path);
+                    },
+                    actions: [
+                        resultComp.createObject(null, {
+                            name: Translation.tr("Open Folder"),
+                            iconName: "folder",
+                            iconType: LauncherSearchResult.IconType.Material,
+                            execute: () => {
+                                const dirPath = file.path.substring(0, file.path.lastIndexOf('/'));
+                                Qt.openUrlExternally("file://" + dirPath);
+                            }
+                        })
+                    ]
+                });
+            });
 
-        //////// Prioritized by prefix /////////
+            //////// Prioritized by prefix /////////
         let result = [];
         const startsWithNumber = /^\d/.test(root.query);
         const startsWithMathPrefix = root.query.startsWith(Config.options.search.prefix.math);
@@ -338,6 +421,9 @@ Singleton {
 
         //////////////// Apps //////////////////
         result = result.concat(appResultObjects);
+
+        //////////////// Recent Files //////////////////
+        result = result.concat(recentFileObjects);
 
         ////////// Launcher actions ////////////
         result = result.concat(launcherActionObjects);

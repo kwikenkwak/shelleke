@@ -26,6 +26,22 @@ Item { // Player instance
     property int visualizerSmoothing: 2 // Number of points to average for smoothing
     property real radius
 
+    // Height of the player (non-lyrics) area; the popup grows below it for lyrics.
+    property real playerHeight: 160
+    readonly property real playerContentHeight: root.playerHeight - Appearance.sizes.elevationMargin * 2
+    readonly property bool lyricsEnabled: Config.options.media.lyrics.enabled
+    readonly property bool lyricsShown: root.lyricsEnabled && Config.options.media.lyrics.show
+    property real lyricsPanelHeight: 210
+    // The layer-shell surface stays a FIXED height: the compositor only animates a
+    // surface grow (never a shrink) and resizing it per-frame stutters. Instead we
+    // animate the inner card height in QML and reveal a fixed-size (cached) blur.
+    // The area below the card is transparent and made click-through via maskHeight.
+    readonly property real fullContentHeight: root.playerContentHeight + (root.lyricsEnabled ? root.lyricsPanelHeight : 0)
+    implicitHeight: root.playerHeight + (root.lyricsEnabled ? root.lyricsPanelHeight : 0)
+
+    // Visible card height (incl. elevation margins) — MediaControls masks input to this.
+    readonly property real maskHeight: background.height + Appearance.sizes.elevationMargin * 2
+
     property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) : ""
 
     component TrackChangeButton: RippleButton {
@@ -99,8 +115,18 @@ Item { // Player instance
     }
     Rectangle { // Background
         id: background
-        anchors.fill: parent
-        anchors.margins: Appearance.sizes.elevationMargin
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            margins: Appearance.sizes.elevationMargin
+        }
+        // Only this inner card animates; the surface stays fixed (see implicitHeight).
+        // The rounded mask below tracks this height, so corners follow the reveal.
+        height: root.lyricsShown ? root.fullContentHeight : root.playerContentHeight
+        Behavior on height {
+            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+        }
         color: ColorUtils.applyAlpha(blendedColors.colLayer0, 1)
         radius: root.radius
 
@@ -115,10 +141,17 @@ Item { // Player instance
 
         Image {
             id: blurredArt
-            anchors.fill: parent
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            // Fixed full height so the blur is rasterized once and merely revealed by
+            // the animating card (no re-blur per frame). The card's mask clips it.
+            height: root.fullContentHeight
             source: root.displayedArtFilePath
             sourceSize.width: background.width
-            sourceSize.height: background.height
+            sourceSize.height: root.fullContentHeight
             fillMode: Image.PreserveAspectCrop
             cache: false
             antialiasing: true
@@ -138,7 +171,12 @@ Item { // Player instance
 
         WaveVisualizer {
             id: visualizerCanvas
-            anchors.fill: parent
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            height: root.playerContentHeight
             live: root.player?.isPlaying
             points: root.visualizerPoints
             maxVisualizerValue: root.maxVisualizerValue
@@ -147,8 +185,13 @@ Item { // Player instance
         }
 
         RowLayout {
-            anchors.fill: parent
-            anchors.margins: 13
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                margins: 13
+            }
+            height: root.playerContentHeight - 26
             spacing: 15
 
             Rectangle { // Art background
@@ -165,6 +208,15 @@ Item { // Player instance
                         height: artBackground.height
                         radius: artBackground.radius
                     }
+                }
+
+                MaterialSymbol { // Placeholder when no art is available
+                    anchors.centerIn: parent
+                    visible: mediaArt.status !== Image.Ready
+                    text: "music_note"
+                    iconSize: Appearance.font.pixelSize.huge * 1.5
+                    fill: 1
+                    color: blendedColors.colOnLayer1
                 }
 
                 StyledImage { // Art image
@@ -188,16 +240,47 @@ Item { // Player instance
                 Layout.fillHeight: true
                 spacing: 2
 
-                StyledText {
-                    id: trackTitle
+                RowLayout {
                     Layout.fillWidth: true
-                    font.pixelSize: Appearance.font.pixelSize.large
-                    color: blendedColors.colOnLayer0
-                    elide: Text.ElideRight
-                    text: StringUtils.cleanMusicTitle(root.player?.trackTitle) || "Untitled"
-                    animateChange: true
-                    animationDistanceX: 6
-                    animationDistanceY: 0
+                    spacing: 4
+
+                    StyledText {
+                        id: trackTitle
+                        Layout.fillWidth: true
+                        font.pixelSize: Appearance.font.pixelSize.large
+                        color: blendedColors.colOnLayer0
+                        elide: Text.ElideRight
+                        text: StringUtils.cleanMusicTitle(root.player?.trackTitle) || "Untitled"
+                        animateChange: true
+                        animationDistanceX: 6
+                        animationDistanceY: 0
+                    }
+
+                    RippleButton { // Lyrics toggle
+                        id: lyricsToggle
+                        visible: root.lyricsEnabled
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        toggled: root.lyricsShown
+                        buttonRadius: height / 2
+                        colBackground: ColorUtils.transparentize(blendedColors.colSecondaryContainer, 1)
+                        colBackgroundHover: blendedColors.colSecondaryContainerHover
+                        colBackgroundToggled: blendedColors.colPrimary
+                        colBackgroundToggledHover: blendedColors.colPrimaryHover
+                        colRipple: blendedColors.colSecondaryContainerActive
+                        colRippleToggled: blendedColors.colPrimaryActive
+                        releaseAction: () => {
+                            Config.options.media.lyrics.show = !Config.options.media.lyrics.show;
+                        }
+                        contentItem: MaterialSymbol {
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "lyrics"
+                            iconSize: Appearance.font.pixelSize.larger
+                            fill: lyricsToggle.toggled ? 1 : 0
+                            color: lyricsToggle.toggled ? blendedColors.colOnPrimary : blendedColors.colOnLayer0
+                        }
+                    }
                 }
                 StyledText {
                     id: trackArtist
@@ -310,6 +393,24 @@ Item { // Player instance
                     }
                 }
             }
+        }
+
+        LyricsView { // Live lyrics
+            id: lyricsView
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                topMargin: root.playerContentHeight
+            }
+            // Fixed position/height: the card's animating mask reveals or clips it.
+            height: root.lyricsPanelHeight
+            clip: true
+            // Stay mounted through the reveal/collapse animation; hidden (timers off)
+            // only once fully collapsed.
+            visible: root.lyricsEnabled && background.height > root.playerContentHeight + 1
+            player: root.player
+            colors: root.blendedColors
         }
     }
 }

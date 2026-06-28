@@ -90,5 +90,35 @@ StyledPopup {
                 }
             }
         }
+
+        Column {
+            visible: ClaudeUsage.available
+            anchors.top: parent.top
+            spacing: 8
+
+            StyledPopupHeaderRow {
+                icon: "smart_toy"
+                label: "Claude"
+            }
+            Column {
+                spacing: 4
+                StyledPopupValueRow {
+                    icon: "clock_loader_60"
+                    label: Translation.tr("Session:")
+                    value: `${Math.round(ClaudeUsage.sessionPercent)}% · ${ClaudeUsage.formatReset(ClaudeUsage.sessionResetsAt)}`
+                }
+                StyledPopupValueRow {
+                    icon: "calendar_month"
+                    label: Translation.tr("Week:")
+                    value: `${Math.round(ClaudeUsage.weekPercent)}% · ${ClaudeUsage.formatReset(ClaudeUsage.weekResetsAt)}`
+                }
+                StyledPopupValueRow {
+                    visible: ClaudeUsage.opusPercent >= 0
+                    icon: "auto_awesome"
+                    label: Translation.tr("Opus (week):")
+                    value: `${Math.round(ClaudeUsage.opusPercent)}%`
+                }
+            }
+        }
     }
 }

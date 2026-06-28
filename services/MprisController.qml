@@ -16,14 +16,23 @@ import qs.modules.common
  */
 Singleton {
 	id: root;
-	property list<MprisPlayer> players: Mpris.players.values;
+	property list<MprisPlayer> players: Mpris.players.values.filter(p => root.isRealPlayer(p));
 	property MprisPlayer trackedPlayer: null;
-	property MprisPlayer activePlayer: trackedPlayer ?? Mpris.players.values[0] ?? null;
+	// Never expose a deduped/native duplicate as the active player: if the tracked
+	// one got filtered out (e.g. the browser's native bus), fall back to a real one.
+	property MprisPlayer activePlayer: (trackedPlayer && root.isRealPlayer(trackedPlayer))
+		? trackedPlayer : (root.players[0] ?? null);
 	signal trackChanged(reverse: bool);
 
 	property bool __reverse: false;
 
 	property var activeTrack;
+
+	// Browsers expose BOTH a native MPRIS bus (often without album art) and the
+	// richer Plasma browser-integration bus for the same tab. Only treat the
+	// native bus as a duplicate when this Plasma bus is actually present.
+	readonly property bool plasmaPlayerPresent: Mpris.players.values.some(p =>
+		p.dbusName?.startsWith('org.mpris.MediaPlayer2.plasma-browser-integration'));
 
 	property bool hasPlasmaIntegration: false
     Process {
@@ -39,8 +48,9 @@ Singleton {
             return true;
         }
         return (
-            // Remove unecessary native buses from browsers if there's plasma integration
-            !(hasPlasmaIntegration && player.dbusName.startsWith('org.mpris.MediaPlayer2.firefox')) && !(hasPlasmaIntegration && player.dbusName.startsWith('org.mpris.MediaPlayer2.chromium')) &&
+            // Remove unnecessary native buses from browsers when the richer Plasma
+            // browser-integration bus is present for the same tab.
+            !(player.dbusName?.startsWith('org.mpris.MediaPlayer2.firefox')) && !(player.dbusName?.startsWith('org.mpris.MediaPlayer2.chromium')) &&
             // playerctld just copies other buses and we don't need duplicates
             !player.dbusName?.startsWith('org.mpris.MediaPlayer2.playerctld') &&
             // Non-instance mpd bus
@@ -56,28 +66,28 @@ Singleton {
 			target: modelData;
 
 			Component.onCompleted: {
-				if (root.trackedPlayer == null || modelData.isPlaying) {
+				if (root.isRealPlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
 					root.trackedPlayer = modelData;
 				}
 			}
 
 			Component.onDestruction: {
 				if (root.trackedPlayer == null || !root.trackedPlayer.isPlaying) {
-					for (const player of Mpris.players.values) {
-						if (player.playbackState.isPlaying) {
+					for (const player of root.players) {
+						if (player.isPlaying) {
 							root.trackedPlayer = player;
 							break;
 						}
 					}
 
-					if (trackedPlayer == null && Mpris.players.values.length != 0) {
-						trackedPlayer = Mpris.players.values[0];
+					if (trackedPlayer == null && root.players.length != 0) {
+						trackedPlayer = root.players[0];
 					}
 				}
 			}
 
 			function onPlaybackStateChanged() {
-				if (root.trackedPlayer !== modelData) root.trackedPlayer = modelData;
+				if (root.isRealPlayer(modelData) && root.trackedPlayer !== modelData) root.trackedPlayer = modelData;
 			}
 		}
 	}

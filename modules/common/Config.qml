@@ -241,6 +241,12 @@ Singleton {
                     property int swapWarningThreshold: 85
                     property int cpuWarningThreshold: 90
                 }
+                property JsonObject claudeUsage: JsonObject {
+                    property bool enable: true
+                    property string credentialsPath: "" // Defaults to ~/.claude/.credentials.json when empty
+                    property int warningThreshold: 80 // Ring turns red at/above this session usage %
+                    property int fetchIntervalMinutes: 2
+                }
                 property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
                 property JsonObject utilButtons: JsonObject {
                     property bool showScreenSnip: true
@@ -384,6 +390,15 @@ Singleton {
             property JsonObject media: JsonObject {
                 // Attempt to remove dupes (the aggregator playerctl one and browsers' native ones when there's plasma browser integration)
                 property bool filterDuplicatePlayers: true
+                property JsonObject lyrics: JsonObject {
+                    property bool enabled: true // Fetch lyrics at all
+                    property bool show: true // Expand the lyrics panel in the media controls popup
+                    // Sources are queried in parallel; the highest-priority one that
+                    // passes sanity checks wins. LRCLIB is always on.
+                    property bool useMusixmatch: true // Musixmatch (synced)
+                    property bool usePlainFallback: true // lyrics.ovh (plain/unsynced, last resort)
+                    property int durationToleranceSeconds: 4 // Max song-length mismatch when matching lyrics
+                }
             }
 
             property JsonObject networking: JsonObject {

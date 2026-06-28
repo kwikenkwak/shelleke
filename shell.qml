@@ -21,7 +21,6 @@ import qs.modules.ii.polkit
 import qs.modules.ii.regionSelector
 import qs.modules.ii.screenCorners
 import qs.modules.ii.sessionScreen
-import qs.modules.ii.sidebarLeft
 import qs.modules.ii.sidebarRight
 import qs.modules.ii.overlay
 import qs.modules.ii.verticalBar
@@ -59,6 +58,7 @@ ShellRoot {
         Cliphist.refresh()
         Wallpapers.load()
         Updates.load()
+        LyricsService.load() // Fetch lyrics on every track change, even with the popup closed
     }
 
     // Load enabled stuff
@@ -79,7 +79,6 @@ ShellRoot {
     PanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
     PanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     PanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
-    PanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
     PanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
     PanelLoader { identifier: "iiVerticalBar"; extraCondition: Config.options.bar.vertical; component: VerticalBar {} }
     PanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }

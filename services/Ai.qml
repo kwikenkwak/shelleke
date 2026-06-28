@@ -333,6 +333,35 @@ Singleton {
             "key_get_link": "https://github.com/settings/tokens",
             "key_get_description": Translation.tr("**Pricing**: Free tier available with limited rates. See https://docs.github.com/en/billing/concepts/product-billing/github-models\n\n**Instructions**: Generate a GitHub personal access token with Models permission, then set as API key here\n\n**Note**: To use this you will have to set the temperature parameter to 1"),
         }),
+        "cerebras": aiModelComponent.createObject(this, {
+            "name": "Cerebras",
+            "icon": "github-symbolic",
+            "api_format": "openai",
+            "description": Translation.tr("Online via %1 | %2's model").arg("GitHub Models").arg("OpenAI"),
+            "homepage": "https://github.com/marketplace/models",
+            "endpoint": "https://api.cerebras.ai/v1/chat/completions",
+            "model": "llama-3.3-70b",
+            "requires_key": true,
+            "key_id": "cerebras",
+            "key_get_link": "https://github.com/settings/tokens",
+            "key_get_description": Translation.tr("**Pricing**: Free tier available with limited rates. See https://docs.github.com/en/billing/concepts/product-billing/github-models\n\n**Instructions**: Generate a GitHub personal access token with Models permission, then set as API key here\n\n**Note**: To use this you will have to set the temperature parameter to 1"),
+        }),
+
+        "github-werkend": aiModelComponent.createObject(this, {
+
+            "name": "Github Werkend",
+            "icon": "github-symbolic",
+            "api_format": "openai",
+            "description": Translation.tr("Online via %1 | %2's model").arg("GitHub Models").arg("OpenAI"),
+            "homepage": "https://github.com/marketplace/models",
+            "endpoint": "https://models.inference.ai.azure.com/chat/completions",
+            "model": "openai/gpt-5",
+            "requires_key": true,
+            "key_id": "github",
+            "key_get_link": "https://github.com/settings/tokens",
+            "key_get_description": Translation.tr("**Pricing**: Free tier available with limited rates. See https://docs.github.com/en/billing/concepts/product-billing/github-models\n\n**Instructions**: Generate a GitHub personal access token with Models permission, then set as API key here\n\n**Note**: To use this you will have to set the temperature parameter to 1"),
+        }),
+
         "openrouter-deepseek-r1": aiModelComponent.createObject(this, {
             "name": "DeepSeek R1",
             "icon": "deepseek-symbolic",

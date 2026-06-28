@@ -26,6 +26,7 @@ RowLayout {
     }
     function forceCurrentIndex(index) {
         context.currentIndex = index;
+        console.error(index);
         // Somehow this hack is needed
         if (index === 0) {
             resultList.incrementCurrentIndex();
@@ -39,6 +40,7 @@ RowLayout {
     Connections {
         target: context
         function onAccepted() {
+            console.error(resultList.currentItem);
             resultList.currentItem?.execute();
         }
     }

@@ -51,7 +51,7 @@ Scope {
             filtered.push(players[chosenIdx]);
             group.forEach(idx => used.add(idx));
         }
-        filtered.add(activePlayer);
+        if (activePlayer && !filtered.includes(activePlayer)) filtered.push(activePlayer);
         return filtered;
     }
 
@@ -106,8 +106,12 @@ Scope {
                 right: Appearance.sizes.barHeight
             }
 
+            // The PlayerControl surface is a fixed height but its visible card
+            // animates; mask input to the card so the transparent area below stays
+            // click-through (and clicking it still dismisses the popup).
             mask: Region {
-                item: playerColumnLayout
+                width: playerColumnLayout.width
+                height: root.activePlayer ? playerControl.maskHeight : playerColumnLayout.implicitHeight
             }
 
             HyprlandFocusGrab {
@@ -126,11 +130,12 @@ Scope {
                 spacing: -Appearance.sizes.elevationMargin // Shadow overlap okay
 
                 PlayerControl {
+                    id: playerControl
                     visible: !!root.activePlayer
                     player: root.activePlayer
                     visualizerPoints: root.visualizerPoints
                     implicitWidth: root.widgetWidth
-                    implicitHeight: root.widgetHeight
+                    playerHeight: root.widgetHeight
                     radius: root.popupRounding
                 }
 

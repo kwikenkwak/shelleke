@@ -45,6 +45,10 @@ MouseArea {
             warningThreshold: Config.options.bar.resources.cpuWarningThreshold
         }
 
+        ClaudeUsageResource {
+            Layout.leftMargin: shown ? 6 : 0
+        }
+
     }
 
     ResourcesPopup {
