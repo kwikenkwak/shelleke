@@ -1,21 +1,22 @@
 //! pixelscape — an auto-playing, pure 1-bit black-and-white scrolling map
 //! rendered headlessly for the "pixel" quickshell family's background.
 //!
-//! This is one continuous, zoomed-out landscape (no tile grid) drawn in the
-//! illustrative 3/4 bird's-eye style of Carcassonne tile artwork: walled cities
-//! with church spires, castles with round conical-roofed towers and a keep,
-//! little clusters of pitched-roof village houses, monasteries with a bell
-//! tower, plus forests, mountains, scattered field trees and grazing sheep —
-//! all linked by a road network between settlements. The view pans gently
-//! rightward each tick, so features scroll off the left edge and new terrain
-//! continuously enters from the right.
+//! This is one continuous, zoomed-out landscape (no tile grid / no seams)
+//! built from hand-authored pixel-art sprites blitted 1:1, so every element is
+//! crisp and deliberate at the target resolution. A coarse value-noise biome
+//! layer groups terrain naturally — woodlands (many forests together), mountain
+//! ranges (chains of peaks), and settled plains (villages/towns/castles) — and
+//! features are jittered so the underlying tile lattice never shows. Settlements
+//! are linked by a wandering, zig-zagging road network. The view pans gently
+//! rightward each tick, so features scroll off the left and new terrain enters
+//! from the right.
 //!
 //! The world is deterministic and hash-based, so it is perfectly stable as it
 //! scrolls. Bevy drives the loop (MinimalPlugins + ScheduleRunnerPlugin at
-//! 2 FPS), headless, no GPU/window. Each frame is rendered to a tiny-skia
-//! Pixmap (white background, black shapes), then **every pixel is thresholded
-//! to pure black (0) or pure white (255)** — no anti-aliased grays survive — so
-//! the saved PNG is crisp 1-bit pixel-art that quickshell upscales
+//! 2 FPS), headless, no GPU/window. Sprites are pure black-on-transparent
+//! bitmaps composited onto a white canvas; the final frame is thresholded so it
+//! contains **only pure black (0) and pure white (255)** — no anti-aliased
+//! grays — giving crisp 1-bit pixel-art that quickshell upscales
 //! nearest-neighbour. Everything is black on white; quickshell inverts it for
 //! dark mode.
 //!
@@ -27,43 +28,19 @@ use bevy::prelude::*;
 use image::{GrayImage, Luma};
 use std::path::PathBuf;
 use std::time::Duration;
-use tiny_skia::{
-    Color, Paint, PathBuilder, Pixmap, Stroke, Transform as SkTransform,
-};
-use usvg::Transform as UTransform;
 
-// ---------------------------------------------------------------------------
-// Embedded SVG assets (top-down, black on transparent).
-// ---------------------------------------------------------------------------
-
-const SVG_MOUNTAIN: &str = include_str!("../assets/mountain.svg");
-const SVG_FOREST: &str = include_str!("../assets/forest.svg");
-const SVG_TREE: &str = include_str!("../assets/tree.svg");
-const SVG_VILLAGE: &str = include_str!("../assets/village.svg");
-const SVG_CITY: &str = include_str!("../assets/city.svg");
-const SVG_CASTLE: &str = include_str!("../assets/castle.svg");
-const SVG_MONASTERY: &str = include_str!("../assets/monastery.svg");
-const SVG_SHEEP: &str = include_str!("../assets/sheep.svg");
-const SVG_BIRD: &str = include_str!("../assets/bird.svg");
+mod sprites;
+use sprites::Sprite;
 
 // ---------------------------------------------------------------------------
 // World layout constants.
 // ---------------------------------------------------------------------------
 
 /// Spacing between feature slots in world units (== pixels at 1:1). Zoomed
-/// out: a large slot so much open landscape (fields/forests/mountains) sits
-/// between settlements and many slots fit on screen.
-const SLOT: i64 = 90;
-/// World units the camera pans (rightward, +X) per tick. Small for a slow,
-/// gentle drift.
+/// out so much open landscape sits between settlements.
+const SLOT: i64 = 64;
+/// World units the camera pans (rightward, +X) per tick. Small = slow drift.
 const PAN_PER_TICK: i64 = 3;
-/// Rendered side length of the main feature sprite, in pixels (smaller than the
-/// slot, so features read as little illustrations dotted over the landscape).
-const FEATURE_PX: f32 = 38.0;
-/// Rendered side length of small scatter sprites (lone trees, sheep), in pixels.
-const SMALL_PX: f32 = 14.0;
-/// Rendered size of a bird, in pixels.
-const BIRD_PX: f32 = 12.0;
 
 #[derive(Resource)]
 struct Cfg {
@@ -75,24 +52,48 @@ struct Cfg {
 #[derive(Resource, Default)]
 struct Scene {
     /// World X offset of the left edge of the viewport. Grows each tick (the
-    /// camera advances along +X, so the board pans leftward past the window).
+    /// camera advances along +X, so the world pans leftward past the window).
     pan: i64,
     /// Tick counter, used to animate birds.
     tick: u64,
 }
 
-/// Pre-rendered SVG pixmaps, rasterized once at startup.
-#[derive(Resource)]
-struct Assets {
-    mountain: Pixmap,
-    forest: Pixmap,
-    tree: Pixmap,
-    village: Pixmap,
-    city: Pixmap,
-    castle: Pixmap,
-    monastery: Pixmap,
-    sheep: Pixmap,
-    bird: Pixmap,
+/// A 1-bit canvas: one byte per pixel, 0 = white (background), 1 = black.
+struct Canvas {
+    w: i64,
+    h: i64,
+    px: Vec<u8>,
+}
+
+impl Canvas {
+    fn new(w: u32, h: u32) -> Self {
+        Canvas {
+            w: w as i64,
+            h: h as i64,
+            px: vec![0u8; (w * h) as usize],
+        }
+    }
+    #[inline]
+    fn set(&mut self, x: i64, y: i64) {
+        if x >= 0 && y >= 0 && x < self.w && y < self.h {
+            self.px[(y * self.w + x) as usize] = 1;
+        }
+    }
+    /// Blit a sprite so its center lands at world->screen (cx, cy). `flip_x`
+    /// mirrors horizontally (cheap extra variant). Black cells are drawn; '.'
+    /// cells are transparent.
+    fn blit(&mut self, s: &Sprite, cx: i64, cy: i64, flip_x: bool) {
+        let ox = cx - (s.w as i64) / 2;
+        let oy = cy - (s.h as i64) / 2;
+        for ry in 0..s.h as i64 {
+            for rx in 0..s.w as i64 {
+                let srx = if flip_x { s.w as i64 - 1 - rx } else { rx };
+                if s.get(srx as usize, ry as usize) {
+                    self.set(ox + rx, oy + ry);
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -108,17 +109,7 @@ fn main() {
         let _ = std::fs::create_dir_all(parent);
     }
 
-    let assets = Assets {
-        mountain: rasterize_svg(SVG_MOUNTAIN, FEATURE_PX as u32),
-        forest: rasterize_svg(SVG_FOREST, FEATURE_PX as u32),
-        tree: rasterize_svg(SVG_TREE, SMALL_PX as u32),
-        village: rasterize_svg(SVG_VILLAGE, FEATURE_PX as u32),
-        city: rasterize_svg(SVG_CITY, FEATURE_PX as u32),
-        castle: rasterize_svg(SVG_CASTLE, FEATURE_PX as u32),
-        monastery: rasterize_svg(SVG_MONASTERY, FEATURE_PX as u32),
-        sheep: rasterize_svg(SVG_SHEEP, SMALL_PX as u32),
-        bird: rasterize_svg(SVG_BIRD, BIRD_PX as u32),
-    };
+    let lib = sprites::Library::build();
 
     App::new()
         .add_plugins(
@@ -126,7 +117,7 @@ fn main() {
         )
         .insert_resource(Cfg { width, height, out })
         .insert_resource(Scene::default())
-        .insert_resource(assets)
+        .insert_resource(lib)
         .add_systems(Update, (advance, render).chain())
         .run();
 }
@@ -134,27 +125,6 @@ fn main() {
 fn advance(mut scene: ResMut<Scene>) {
     scene.pan = scene.pan.wrapping_add(PAN_PER_TICK);
     scene.tick = scene.tick.wrapping_add(1);
-}
-
-// ---------------------------------------------------------------------------
-// SVG rasterization
-// ---------------------------------------------------------------------------
-
-/// Rasterize an SVG string into a square `size`×`size` premultiplied pixmap,
-/// scaling the SVG to fit. Black-on-transparent.
-fn rasterize_svg(svg: &str, size: u32) -> Pixmap {
-    let opt = usvg::Options::default();
-    let tree = usvg::Tree::from_str(svg, &opt).expect("valid embedded SVG");
-    let mut pixmap = Pixmap::new(size.max(1), size.max(1)).expect("nonzero pixmap");
-    let ts = tree.size();
-    let sx = size as f32 / ts.width();
-    let sy = size as f32 / ts.height();
-    let scale = sx.min(sy);
-    let tx = (size as f32 - ts.width() * scale) * 0.5;
-    let ty = (size as f32 - ts.height() * scale) * 0.5;
-    let transform = UTransform::from_scale(scale, scale).post_translate(tx, ty);
-    resvg::render(&tree, transform, &mut pixmap.as_mut());
-    pixmap
 }
 
 // ---------------------------------------------------------------------------
@@ -171,7 +141,54 @@ fn hash(n: i64) -> u64 {
 
 /// Combine two grid coordinates into one hash input.
 fn hash2(gx: i64, gy: i64) -> u64 {
-    hash(gx.wrapping_mul(0x100000001B3).wrapping_add(gy))
+    hash(gx.wrapping_mul(0x100000001B3).wrapping_add(gy).wrapping_add(0x51ED))
+}
+
+/// Smooth value noise in [0,1] over coarse cells of side `period` slots, using
+/// bilinear interpolation of per-lattice-point random values. Salt picks an
+/// independent noise field.
+fn value_noise(gx: i64, gy: i64, period: i64, salt: i64) -> f32 {
+    let fx = gx.div_euclid(period);
+    let fy = gy.div_euclid(period);
+    let tx = (gx.rem_euclid(period)) as f32 / period as f32;
+    let ty = (gy.rem_euclid(period)) as f32 / period as f32;
+    let corner = |cx: i64, cy: i64| -> f32 {
+        (hash(hash2(cx, cy) as i64 ^ salt.wrapping_mul(0x2545F4914F6CDD1D)) % 1000) as f32 / 1000.0
+    };
+    let v00 = corner(fx, fy);
+    let v10 = corner(fx + 1, fy);
+    let v01 = corner(fx, fy + 1);
+    let v11 = corner(fx + 1, fy + 1);
+    // smoothstep the interpolants for organic blobs
+    let sx = tx * tx * (3.0 - 2.0 * tx);
+    let sy = ty * ty * (3.0 - 2.0 * ty);
+    let a = v00 + (v10 - v00) * sx;
+    let b = v01 + (v11 - v01) * sx;
+    a + (b - a) * sy
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Biome {
+    Plains,   // open fields + settlements
+    Woodland, // dense forests
+    Range,    // mountain chains
+}
+
+/// Coarse biome for a slot, from two low-frequency noise fields. The dominant
+/// field decides forest vs mountain vs open; thresholds keep plains common so
+/// settlements have room.
+fn biome(gx: i64, gy: i64) -> Biome {
+    let forest = value_noise(gx, gy, 6, 1);
+    let mountain = value_noise(gx, gy, 7, 2);
+    // Mountains form ridges: bias toward a chain by sampling an elongated field.
+    let ridge = value_noise(gx, gy * 3, 9, 5);
+    if mountain * 0.45 + ridge * 0.55 > 0.62 {
+        Biome::Range
+    } else if forest > 0.55 {
+        Biome::Woodland
+    } else {
+        Biome::Plains
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -185,20 +202,33 @@ enum Kind {
     Monastery,
 }
 
-/// What terrain occupies slot (gx, gy). The landscape is continuous — slots are
-/// just a placement lattice, not drawn tiles — and mostly open country so the
-/// zoomed-out view shows lots of fields/forests/mountains between settlements.
+/// What occupies slot (gx, gy), conditioned on its biome so terrain clusters
+/// naturally (woodland -> mostly forest, range -> mostly mountains, plains ->
+/// fields with the occasional settlement).
 fn cell_kind(gx: i64, gy: i64) -> Kind {
     let h = hash2(gx, gy);
-    match h % 40 {
-        0 | 1 | 2 | 3 => Kind::Mountain,
-        4 | 5 | 6 | 7 | 8 | 9 => Kind::Forest,
-        10 | 11 | 12 => Kind::Village,
-        13 | 14 => Kind::City,
-        15 => Kind::Castle,
-        16 | 17 => Kind::Monastery,
-        // Remainder: open fields (occasionally with a grazing sheep / tree).
-        _ => Kind::Field,
+    match biome(gx, gy) {
+        Biome::Range => match h % 10 {
+            0 | 1 | 2 | 3 | 4 | 5 | 6 => Kind::Mountain,
+            7 => Kind::Forest,
+            8 => Kind::Castle, // a fortress guarding the pass
+            _ => Kind::Field,
+        },
+        Biome::Woodland => match h % 10 {
+            0 | 1 | 2 | 3 | 4 | 5 | 6 => Kind::Forest,
+            7 => Kind::Monastery, // a cloister in the woods
+            8 => Kind::Village,
+            _ => Kind::Field,
+        },
+        Biome::Plains => match h % 18 {
+            0 | 1 | 2 => Kind::Village,
+            3 | 4 => Kind::City,
+            5 => Kind::Castle,
+            6 => Kind::Monastery,
+            7 => Kind::Forest, // a stray copse
+            8 => Kind::Mountain, // a lone hill
+            _ => Kind::Field,
+        },
     }
 }
 
@@ -206,44 +236,90 @@ fn is_settlement(k: Kind) -> bool {
     matches!(k, Kind::Village | Kind::City | Kind::Castle | Kind::Monastery)
 }
 
-/// World-space center of the feature in slot (gx, gy), with a deterministic
-/// jitter so the placement lattice never reads as a grid (no tile seams).
+/// World-space center of the feature in slot (gx, gy), jittered so the lattice
+/// never reads as a grid.
 fn cell_center(gx: i64, gy: i64) -> (i64, i64) {
     let h = hash2(gx, gy);
-    let span = SLOT / 2; // jitter up to +-(span/2) within the slot
+    let span = SLOT * 3 / 5; // jitter up to +-(span/2) within the slot
     let jx = (h % span as u64) as i64 - span / 2;
     let jy = ((h >> 12) % span as u64) as i64 - span / 2;
     (gx * SLOT + SLOT / 2 + jx, gy * SLOT + SLOT / 2 + jy)
 }
 
 // ---------------------------------------------------------------------------
-// Canvas compositing
+// Zig-zagging roads
 // ---------------------------------------------------------------------------
 
-/// Blit a feature pixmap centered at screen (cx, cy).
-fn blit_centered(canvas: &mut Pixmap, sprite: &Pixmap, cx: f32, cy: f32) {
-    let x = (cx - sprite.width() as f32 * 0.5).round();
-    let y = (cy - sprite.height() as f32 * 0.5).round();
-    canvas.draw_pixmap(
-        x as i32,
-        y as i32,
-        sprite.as_ref(),
-        &tiny_skia::PixmapPaint::default(),
-        SkTransform::identity(),
-        None,
-    );
+/// Draw a naturally wandering path from (ax,ay) to (bx,by) in *screen* space by
+/// recursive midpoint displacement: the midpoint is nudged perpendicular to the
+/// segment by a deterministic, hash-seeded amount, recursing until segments are
+/// short, then the polyline is rasterized 1:1 with a 1px Bresenham line. Seed
+/// keeps the same path stable while scrolling.
+fn draw_wandering(canvas: &mut Canvas, ax: i64, ay: i64, bx: i64, by: i64, seed: u64) {
+    let mut pts: Vec<(f32, f32)> = vec![(ax as f32, ay as f32), (bx as f32, by as f32)];
+    // 4 rounds of displacement.
+    for round in 0..4u32 {
+        let mut next: Vec<(f32, f32)> = Vec::with_capacity(pts.len() * 2 - 1);
+        for i in 0..pts.len() - 1 {
+            let (x0, y0) = pts[i];
+            let (x1, y1) = pts[i + 1];
+            next.push((x0, y0));
+            let mx = (x0 + x1) * 0.5;
+            let my = (y0 + y1) * 0.5;
+            let dx = x1 - x0;
+            let dy = y1 - y0;
+            let len = (dx * dx + dy * dy).sqrt().max(1.0);
+            // perpendicular unit vector
+            let px = -dy / len;
+            let py = dx / len;
+            let hh = hash(seed as i64 ^ (round as i64 * 7919) ^ (i as i64 * 104729));
+            // displacement shrinks with each round (and never overshoots short segs)
+            let amp = (len * 0.28).min(11.0) / (round as f32 + 1.0);
+            let disp = ((hh % 2000) as f32 / 1000.0 - 1.0) * amp;
+            next.push((mx + px * disp, my + py * disp));
+        }
+        next.push(*pts.last().unwrap());
+        pts = next;
+    }
+    for i in 0..pts.len() - 1 {
+        line(canvas, pts[i].0 as i64, pts[i].1 as i64, pts[i + 1].0 as i64, pts[i + 1].1 as i64);
+    }
+}
+
+/// Bresenham 1px line, 1-bit.
+fn line(canvas: &mut Canvas, x0: i64, y0: i64, x1: i64, y1: i64) {
+    let dx = (x1 - x0).abs();
+    let dy = -(y1 - y0).abs();
+    let sx = if x0 < x1 { 1 } else { -1 };
+    let sy = if y0 < y1 { 1 } else { -1 };
+    let mut err = dx + dy;
+    let (mut x, mut y) = (x0, y0);
+    loop {
+        canvas.set(x, y);
+        if x == x1 && y == y1 {
+            break;
+        }
+        let e2 = 2 * err;
+        if e2 >= dy {
+            err += dy;
+            x += sx;
+        }
+        if e2 <= dx {
+            err += dx;
+            y += sy;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 
-fn render(cfg: Res<Cfg>, scene: Res<Scene>, assets: Res<Assets>) {
+fn render(cfg: Res<Cfg>, scene: Res<Scene>, lib: Res<sprites::Library>) {
     let (w, h) = (cfg.width, cfg.height);
     let pan = scene.pan;
 
-    let mut canvas = Pixmap::new(w, h).expect("nonzero canvas");
-    canvas.fill(Color::WHITE);
+    let mut canvas = Canvas::new(w, h);
 
     // Visible slot range (+ margin so features straddling edges still draw).
     let margin = SLOT;
@@ -252,55 +328,41 @@ fn render(cfg: Res<Cfg>, scene: Res<Scene>, assets: Res<Assets>) {
     let gy0 = (-margin).div_euclid(SLOT);
     let gy1 = (h as i64 + margin).div_euclid(SLOT);
 
-    // World -> screen: pan along +X (subtract pan from world X); y is identity.
-    let to_screen = |wx: i64, wy: i64| -> (f32, f32) { ((wx - pan) as f32, wy as f32) };
+    let to_screen = |wx: i64, wy: i64| -> (i64, i64) { (wx - pan, wy) };
 
-    let black = {
-        let mut p = Paint::default();
-        p.set_color(Color::from_rgba8(0, 0, 0, 255));
-        p.anti_alias = true;
-        p
-    };
-
-    // --- 1. Roads: connect each settlement to nearby settlements (the next
-    // ones found scanning right, down, and diagonally), forming a continuous
-    // network across the open landscape. Drawn first so feature sprites sit on
-    // top. No tile grid — this is one continuous landscape. ---
-    {
-        let mut roads = PathBuilder::new();
-        let mut any = false;
-        for gx in gx0 - 1..=gx1 + 1 {
-            for gy in gy0 - 1..=gy1 + 1 {
-                if !is_settlement(cell_kind(gx, gy)) {
-                    continue;
-                }
-                let (ax, ay) = cell_center(gx, gy);
-                let (sax, say) = to_screen(ax, ay);
-                for (ngx, ngy) in [(gx + 1, gy), (gx, gy + 1), (gx + 1, gy + 1), (gx + 1, gy - 1)] {
-                    if is_settlement(cell_kind(ngx, ngy)) {
-                        let (bx, by) = cell_center(ngx, ngy);
-                        let (sbx, sby) = to_screen(bx, by);
-                        roads.move_to(sax, say);
-                        roads.line_to(sbx, sby);
-                        any = true;
-                    }
-                }
+    // --- 1. Roads: each settlement links to nearby settlements via a wandering
+    // path, forming a connected, zig-zagging network. Drawn first so sprites
+    // sit on top. ---
+    for gx in gx0 - 1..=gx1 + 1 {
+        for gy in gy0 - 1..=gy1 + 1 {
+            if !is_settlement(cell_kind(gx, gy)) {
+                continue;
             }
-        }
-        if any {
-            if let Some(path) = roads.finish() {
-                let mut s = Stroke::default();
-                s.width = 1.6;
-                s.line_cap = tiny_skia::LineCap::Round;
-                canvas.stroke_path(&path, &black, &s, SkTransform::identity(), None);
+            let (ax, ay) = cell_center(gx, gy);
+            let (sax, say) = to_screen(ax, ay);
+            for (ngx, ngy) in [(gx + 1, gy), (gx, gy + 1), (gx + 1, gy + 1), (gx + 1, gy - 1)] {
+                if is_settlement(cell_kind(ngx, ngy)) {
+                    let (bx, by) = cell_center(ngx, ngy);
+                    let (sbx, sby) = to_screen(bx, by);
+                    // Seed on world coords (not screen) so the wander is stable.
+                    let seed = hash2(gx, gy) ^ hash2(ngx, ngy).rotate_left(21);
+                    draw_wandering(&mut canvas, sax, say, sbx, sby, seed);
+                }
             }
         }
     }
 
-    // --- 2. Feature sprites, painted terrain-first (mountains/forests) then
-    // settlements on top. Fields get small scatter (lone trees + sheep) for
-    // density. ---
-    let draw_pass = |canvas: &mut Pixmap, want: Kind| {
+    // Helper to pick a deterministic sprite variant for a slot.
+    let pick = |slot: &[Sprite], gx: i64, gy: i64| -> usize {
+        if slot.is_empty() {
+            0
+        } else {
+            (hash2(gx, gy).rotate_left(33) as usize) % slot.len()
+        }
+    };
+
+    // --- 2. Terrain first (mountains, forests), then settlements on top. ---
+    let draw_pass = |canvas: &mut Canvas, want: Kind| {
         for gx in gx0..=gx1 {
             for gy in gy0..=gy1 {
                 let k = cell_kind(gx, gy);
@@ -309,44 +371,47 @@ fn render(cfg: Res<Cfg>, scene: Res<Scene>, assets: Res<Assets>) {
                 }
                 let (wx, wy) = cell_center(gx, gy);
                 let (sx, sy) = to_screen(wx, wy);
-                let sprite = match k {
-                    Kind::Mountain => &assets.mountain,
-                    Kind::Forest => &assets.forest,
-                    Kind::Village => &assets.village,
-                    Kind::City => &assets.city,
-                    Kind::Castle => &assets.castle,
-                    Kind::Monastery => &assets.monastery,
+                let h0 = hash2(gx, gy);
+                let flip = (h0 >> 50) & 1 == 1;
+                let slot: &[Sprite] = match k {
+                    Kind::Mountain => &lib.mountain,
+                    Kind::Forest => &lib.forest,
+                    Kind::Village => &lib.village,
+                    Kind::City => &lib.city,
+                    Kind::Castle => &lib.castle,
+                    Kind::Monastery => &lib.monastery,
                     Kind::Field => continue,
                 };
-                blit_centered(canvas, sprite, sx, sy);
+                let idx = pick(slot, gx, gy);
+                canvas.blit(&slot[idx], sx, sy, flip);
             }
         }
     };
     draw_pass(&mut canvas, Kind::Mountain);
     draw_pass(&mut canvas, Kind::Forest);
 
-    // Field scatter: a few deterministic lone trees and/or grazing sheep spread
-    // across each open field slot, for fine extra detail over the open land.
+    // Field scatter: lone trees / grazing sheep spread across open field slots.
     for gx in gx0..=gx1 {
         for gy in gy0..=gy1 {
             if cell_kind(gx, gy) != Kind::Field {
                 continue;
             }
             let h0 = hash2(gx, gy);
-            let n = (h0 % 5) as i64; // 0..4 scatter items
-            let spread = SLOT - 24;
+            let n = (h0 % 4) as i64; // 0..3 scatter items
+            let spread = SLOT - 16;
             for i in 0..n {
                 let hi = hash(h0 as i64 ^ (i * 0x9E37));
                 let jx = (hi % spread as u64) as i64 - spread / 2;
                 let jy = ((hi >> 20) % spread as u64) as i64 - spread / 2;
                 let (wx, wy) = cell_center(gx, gy);
                 let (sx, sy) = to_screen(wx + jx, wy + jy);
-                let sprite = if (hi >> 40) & 1 == 0 {
-                    &assets.tree
+                let flip = (hi >> 41) & 1 == 1;
+                if (hi >> 40) & 1 == 0 {
+                    let idx = (hi as usize) % lib.tree.len();
+                    canvas.blit(&lib.tree[idx], sx, sy, flip);
                 } else {
-                    &assets.sheep
-                };
-                blit_centered(&mut canvas, sprite, sx, sy);
+                    canvas.blit(&lib.sheep, sx, sy, flip);
+                }
             }
         }
     }
@@ -369,26 +434,19 @@ fn render(cfg: Res<Cfg>, scene: Res<Scene>, assets: Res<Assets>) {
         let t = scene.tick as f64;
         let bx = ((phase_x + t * vx) % span_x) - 20.0;
         let by = ((phase_y + t * vy) % span_y) - 20.0;
-        blit_centered(&mut canvas, &assets.bird, bx as f32, by as f32);
+        let idx = (seed as usize) % lib.bird.len();
+        canvas.blit(&lib.bird[idx], bx as i64, by as i64, (seed >> 3) & 1 == 1);
     }
 
-    // --- 4. Threshold the whole composite to pure 1-bit black/white. resvg /
-    // tiny-skia anti-alias their edges into gray, which the user does not want;
-    // we collapse every pixel to 0 or 255 (luma < 128 -> black, else white) so
-    // the PNG contains only pure black and pure white. Then write atomically. ---
+    // --- 4. Emit pure 1-bit PNG (only 0 and 255). The canvas is already 1-bit,
+    // so this is a direct map: black cell -> 0, else -> 255. No anti-aliasing
+    // ever entered the pipeline. Write atomically. ---
     let mut gray = GrayImage::new(w, h);
-    for (i, px) in canvas.pixels().iter().enumerate() {
-        let a = px.alpha();
-        let (r, g, b) = if a == 0 {
-            (255, 255, 255)
-        } else {
-            (px.red(), px.green(), px.blue())
-        };
-        let lum = 0.299 * r as f32 + 0.587 * g as f32 + 0.114 * b as f32;
-        let bw: u8 = if lum < 128.0 { 0 } else { 255 };
-        let x = (i as u32) % w;
-        let y = (i as u32) / w;
-        gray.put_pixel(x, y, Luma([bw]));
+    for y in 0..h {
+        for x in 0..w {
+            let on = canvas.px[(y as i64 * canvas.w + x as i64) as usize] == 1;
+            gray.put_pixel(x, y, Luma([if on { 0 } else { 255 }]));
+        }
     }
 
     let tmp = cfg.out.with_extension("png.tmp");

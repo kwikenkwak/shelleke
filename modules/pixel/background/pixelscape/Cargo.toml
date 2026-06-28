@@ -7,11 +7,9 @@ description = "Auto-playing black/white scrolling terrain background for the pix
 [dependencies]
 # Bevy headless: just the ECS/app loop, no rendering/windowing backend.
 bevy = { version = "0.15", default-features = false }
+# PNG encoding of the final 1-bit frame. Sprites are hand-authored pixel-art
+# bitmaps blitted 1:1, so no SVG/vector rasteriser is needed.
 image = { version = "0.25", default-features = false, features = ["png"] }
-# SVG rasterization + 2D canvas compositing for the top-down map.
-resvg = { version = "0.44", default-features = false }
-usvg = { version = "0.44", default-features = false }
-tiny-skia = "0.11"
 
 [profile.release]
 opt-level = 3
