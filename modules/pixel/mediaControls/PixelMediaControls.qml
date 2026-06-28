@@ -29,7 +29,7 @@ Scope {
 
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property real widgetWidth: 360
-    readonly property real playerHeight: 170
+    readonly property real playerHeight: 150
     readonly property real lyricsPanelHeight: 210
     readonly property bool lyricsEnabled: Config.options.media.lyrics.enabled
     readonly property bool lyricsShown: root.lyricsEnabled && Config.options.media.lyrics.show
@@ -123,17 +123,21 @@ Scope {
                     top: parent.top
                     left: parent.left
                     right: parent.right
+                    topMargin: 14
+                    leftMargin: 16
+                    rightMargin: 16
                 }
-                height: root.playerHeight
+                // Bounded so content never extends past the fixed card height.
+                height: root.playerHeight - 28
                 visible: card.hasPlayer
-                anchors.margins: 16
                 spacing: 14
 
-                // Album art — the ONE sanctioned color exception.
+                // Album art — the ONE sanctioned color exception. Fixed size.
                 PixPanel {
                     id: artFrame
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
+                    Layout.preferredWidth: 100
+                    Layout.preferredHeight: 100
+                    Layout.alignment: Qt.AlignVCenter
                     borderWidth: PixTheme.borderWidth
 
                     Image {
