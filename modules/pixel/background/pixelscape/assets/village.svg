@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Top-down village: cluster of rooftop squares at slight angles. -->
+  <g fill="#000">
+    <rect x="14" y="20" width="22" height="22" transform="rotate(8 25 31)"/>
+    <rect x="52" y="14" width="18" height="18" transform="rotate(-12 61 23)"/>
+    <rect x="64" y="46" width="24" height="24" transform="rotate(6 76 58)"/>
+    <rect x="30" y="50" width="20" height="20" transform="rotate(-6 40 60)"/>
+    <rect x="16" y="66" width="16" height="16" transform="rotate(14 24 74)"/>
+    <rect x="54" y="74" width="18" height="18" transform="rotate(-10 63 83)"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Top-down mountain: nested contour rings around a peak. -->
+  <g fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round">
+    <path d="M50 8 L86 40 L74 90 L26 90 L14 40 Z"/>
+    <path d="M50 26 L72 48 L64 78 L36 78 L28 48 Z"/>
+  </g>
+  <!-- Peak marker -->
+  <path d="M50 40 L60 60 L50 54 L40 60 Z" fill="#000"/>
+</svg>
