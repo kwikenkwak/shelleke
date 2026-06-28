@@ -28,8 +28,8 @@ Scope {
     id: root
 
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
-    readonly property real widgetWidth: 360
-    readonly property real playerHeight: 150
+    readonly property real widgetWidth: 460
+    readonly property real playerHeight: 170
     readonly property real lyricsPanelHeight: 210
     readonly property bool lyricsEnabled: Config.options.media.lyrics.enabled
     readonly property bool lyricsShown: root.lyricsEnabled && Config.options.media.lyrics.show
@@ -135,8 +135,8 @@ Scope {
                 // Album art — the ONE sanctioned color exception. Fixed size.
                 PixPanel {
                     id: artFrame
-                    Layout.preferredWidth: 100
-                    Layout.preferredHeight: 100
+                    Layout.preferredWidth: root.playerHeight - 28
+                    Layout.preferredHeight: root.playerHeight - 28
                     Layout.alignment: Qt.AlignVCenter
                     borderWidth: PixTheme.borderWidth
 
@@ -165,8 +165,11 @@ Scope {
                 ColumnLayout {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    spacing: 3
+                    spacing: 8
 
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
                     RowLayout { // title + lyrics toggle
                         Layout.fillWidth: true
                         spacing: 8
@@ -198,6 +201,7 @@ Scope {
                         font.pixelSize: PixTheme.font.pixelSize.normal
                         elide: Text.ElideRight
                     }
+                }
 
                     Item { Layout.fillHeight: true } // spacer
 

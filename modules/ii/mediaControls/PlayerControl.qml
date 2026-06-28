@@ -27,11 +27,11 @@ Item { // Player instance
     property real radius
 
     // Height of the player (non-lyrics) area; the popup grows below it for lyrics.
-    property real playerHeight: 160
+    property real playerHeight: 270
     readonly property real playerContentHeight: root.playerHeight - Appearance.sizes.elevationMargin * 2
     readonly property bool lyricsEnabled: Config.options.media.lyrics.enabled
     readonly property bool lyricsShown: root.lyricsEnabled && Config.options.media.lyrics.show
-    property real lyricsPanelHeight: 210
+    property real lyricsPanelHeight: 510
     // The layer-shell surface stays a FIXED height: the compositor only animates a
     // surface grow (never a shrink) and resizing it per-frame stutters. Instead we
     // animate the inner card height in QML and reveal a fixed-size (cached) blur.

@@ -45,6 +45,7 @@ import qs.modules.pixel.notificationPopup
 import qs.modules.pixel.onScreenDisplay
 import qs.modules.pixel.sessionScreen
 import qs.modules.pixel.mediaControls
+import qs.modules.pixel.overview
 
 import QtQuick
 import QtQuick.Window
@@ -111,6 +112,7 @@ ShellRoot {
     PanelLoader { identifier: "pixelOnScreenDisplay"; component: PixelOnScreenDisplay {} }
     PanelLoader { identifier: "pixelSessionScreen"; component: PixelSessionScreen {} }
     PanelLoader { identifier: "pixelMediaControls"; component: PixelMediaControls {} }
+    PanelLoader { identifier: "pixelOverview"; component: PixelOverview {} }
     ReloadPopup {}
 
     component PanelLoader: LazyLoader {
@@ -124,7 +126,7 @@ ShellRoot {
     property var panelFamilies: ({
         "ii": ["iiBar", "iiBackground", "iiCheatsheet", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector"],
         "waffle": ["wActionCenter", "wBar", "wBackground", "wLock", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wTaskView", "wPolkit", "wScreenSnip", "wSessionScreen", "wStartMenu", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiWallpaperSelector"],
-        "pixel": ["pixelBar", "pixelQuickSettings", "pixelNotificationPopup", "pixelOnScreenDisplay", "pixelSessionScreen", "pixelMediaControls", "iiBackground", "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector"],
+        "pixel": ["pixelBar", "pixelQuickSettings", "pixelNotificationPopup", "pixelOnScreenDisplay", "pixelSessionScreen", "pixelMediaControls", "pixelOverview", "iiBackground", "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector"],
     })
     function cyclePanelFamily() {
         const currentIndex = families.indexOf(Config.options.panelFamily)
