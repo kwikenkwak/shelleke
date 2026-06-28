@@ -28,9 +28,47 @@ Singleton {
     readonly property bool dark: Appearance.m3colors.darkmode
 
     // ---- Fonts (bundled under assets/fonts) ----
+    //
+    // To try a different body/clock font, change `fontMainChoice` below to one of
+    // the keys in the `mainFonts` map and reload the shell. This is intentionally
+    // a code-level switch (no UI toggle).
+    //
+    //   "pixelify"  - Pixelify Sans (original; rounded, mushy 5/8/2 at bar size)
+    //   "departure" - Departure Mono (modern terminal mono; open, tabular digits)
+    //   "jersey10"  - Jersey 10 (tall narrow LED look; very distinct 2/5/8)
+    //   "pressstart"- Press Start 2P (NES 8-bit; crispest digits but very WIDE)
+    //   "vt323"     - VT323 (VT220 terminal; thin, tall, legible)
+    //   "handjet"   - Handjet (dot-matrix; stylish, rounder dots)
+    //   "tiny5"     - Tiny5 (5px micro bitmap; crisp tiny, blocky scaled up)
+    property string fontMainChoice: "tiny5"
+
     FontLoader {
         id: pixelifyLoader
         source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/PixelifySans.ttf"))
+    }
+    FontLoader {
+        id: departureLoader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/DepartureMono-Regular.otf"))
+    }
+    FontLoader {
+        id: jersey10Loader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/Jersey10-Regular.ttf"))
+    }
+    FontLoader {
+        id: pressStartLoader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/PressStart2P-Regular.ttf"))
+    }
+    FontLoader {
+        id: vt323Loader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/VT323-Regular.ttf"))
+    }
+    FontLoader {
+        id: handjetLoader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/Handjet.ttf"))
+    }
+    FontLoader {
+        id: tiny5Loader
+        source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/Tiny5-Regular.ttf"))
     }
     FontLoader {
         id: silkscreenRegularLoader
@@ -41,7 +79,19 @@ Singleton {
         source: Qt.resolvedUrl(Quickshell.shellPath("assets/fonts/Silkscreen-Bold.ttf"))
     }
 
-    readonly property string fontMain: pixelifyLoader.status === FontLoader.Ready ? pixelifyLoader.name : "Pixelify Sans"
+    // Maps fontMainChoice -> [loader, fallback family name].
+    readonly property var mainFonts: ({
+        "pixelify": [pixelifyLoader, "Pixelify Sans"],
+        "departure": [departureLoader, "Departure Mono"],
+        "jersey10": [jersey10Loader, "Jersey 10"],
+        "pressstart": [pressStartLoader, "Press Start 2P"],
+        "vt323": [vt323Loader, "VT323"],
+        "handjet": [handjetLoader, "Handjet"],
+        "tiny5": [tiny5Loader, "Tiny5"]
+    })
+
+    readonly property var _mainEntry: mainFonts[fontMainChoice] ?? mainFonts["pixelify"]
+    readonly property string fontMain: _mainEntry[0].status === FontLoader.Ready ? _mainEntry[0].name : _mainEntry[1]
     readonly property string fontTitle: silkscreenRegularLoader.status === FontLoader.Ready ? silkscreenRegularLoader.name : "Silkscreen"
 
     // ---- Colors ----
