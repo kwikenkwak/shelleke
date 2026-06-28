@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Tiny top-down sheep / field marker: a fluffy body outline with a dark head. -->
+  <g fill="none" stroke="#000" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M30 56 q-6 -18 12 -20 q8 -14 22 -4 q18 -2 14 16 q6 14 -10 18 q-12 10 -24 0 q-16 0 -14 -10 Z"/>
+  </g>
+  <circle cx="70" cy="44" r="7" fill="#000"/>
+</svg>

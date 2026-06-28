@@ -1,11 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Top-down village: cluster of rooftop squares at slight angles. -->
-  <g fill="#000">
-    <rect x="14" y="20" width="22" height="22" transform="rotate(8 25 31)"/>
-    <rect x="52" y="14" width="18" height="18" transform="rotate(-12 61 23)"/>
-    <rect x="64" y="46" width="24" height="24" transform="rotate(6 76 58)"/>
-    <rect x="30" y="50" width="20" height="20" transform="rotate(-6 40 60)"/>
-    <rect x="16" y="66" width="16" height="16" transform="rotate(14 24 74)"/>
-    <rect x="54" y="74" width="18" height="18" transform="rotate(-10 63 83)"/>
+  <!-- Top-down village: small cluster of pitched-roof houses (each roof a
+       filled square with a white ridge line), grouped loosely. -->
+  <g>
+    <g transform="rotate(8 30 32)">
+      <rect x="20" y="22" width="20" height="20" fill="#000"/>
+      <line x1="30" y1="22" x2="30" y2="42" stroke="#fff" stroke-width="3"/>
+    </g>
+    <g transform="rotate(-10 62 28)">
+      <rect x="54" y="20" width="16" height="16" fill="#000"/>
+      <line x1="62" y1="20" x2="62" y2="36" stroke="#fff" stroke-width="3"/>
+    </g>
+    <g transform="rotate(6 70 60)">
+      <rect x="60" y="50" width="20" height="20" fill="#000"/>
+      <line x1="70" y1="50" x2="70" y2="70" stroke="#fff" stroke-width="3"/>
+    </g>
+    <g transform="rotate(-6 36 62)">
+      <rect x="26" y="52" width="18" height="18" fill="#000"/>
+      <line x1="35" y1="52" x2="35" y2="70" stroke="#fff" stroke-width="3"/>
+    </g>
+    <g transform="rotate(12 30 82)">
+      <rect x="22" y="74" width="14" height="14" fill="#000"/>
+      <line x1="29" y1="74" x2="29" y2="88" stroke="#fff" stroke-width="2.5"/>
+    </g>
   </g>
 </svg>

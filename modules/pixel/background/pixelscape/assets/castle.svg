@@ -1,11 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Top-down castle: square keep with four corner towers and a courtyard. -->
-  <rect x="24" y="24" width="52" height="52" fill="none" stroke="#000" stroke-width="6"/>
+  <!-- Top-down castle: crenellated curtain wall with four round corner
+       towers and a square keep in the courtyard. -->
+  <!-- curtain wall with battlements -->
+  <path fill="none" stroke="#000" stroke-width="5" stroke-linejoin="miter"
+        d="M22 30 h6 v-5 h6 v5 h6 v-5 h6 v5 h6 v-5 h6 v5 h6
+           v6 h5 v6 h-5 v6 h5 v6 h-5 v6
+           h-6 v5 h-6 v-5 h-6 v5 h-6 v-5 h-6 v5 h-6 v-5 h-6
+           v-6 h-5 v-6 h5 v-6 h-5 v-6 h5 Z"/>
+  <!-- round corner towers -->
   <g fill="#000">
-    <rect x="10" y="10" width="22" height="22"/>
-    <rect x="68" y="10" width="22" height="22"/>
-    <rect x="10" y="68" width="22" height="22"/>
-    <rect x="68" y="68" width="22" height="22"/>
-    <rect x="44" y="44" width="12" height="12"/>
+    <circle cx="22" cy="22" r="10"/>
+    <circle cx="78" cy="22" r="10"/>
+    <circle cx="22" cy="78" r="10"/>
+    <circle cx="78" cy="78" r="10"/>
   </g>
+  <!-- inner ring of towers (white) and keep -->
+  <g fill="#fff">
+    <circle cx="22" cy="22" r="4"/>
+    <circle cx="78" cy="22" r="4"/>
+    <circle cx="22" cy="78" r="4"/>
+    <circle cx="78" cy="78" r="4"/>
+  </g>
+  <rect x="42" y="42" width="16" height="16" fill="#000"/>
 </svg>

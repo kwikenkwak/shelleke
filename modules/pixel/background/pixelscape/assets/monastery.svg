@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Top-down monastery / cloister: a small church with a cross,
+       enclosed by a thin cloister wall around a courtyard. -->
+  <rect x="22" y="22" width="56" height="56" fill="none" stroke="#000" stroke-width="4"/>
+  <!-- chapel building in the middle -->
+  <rect x="40" y="34" width="20" height="32" fill="#000"/>
+  <!-- apse / rounded end -->
+  <circle cx="50" cy="34" r="8" fill="#000"/>
+  <!-- cross on top -->
+  <g stroke="#000" stroke-width="4" stroke-linecap="round">
+    <line x1="50" y1="12" x2="50" y2="26"/>
+    <line x1="43" y1="18" x2="57" y2="18"/>
+  </g>
+</svg>
