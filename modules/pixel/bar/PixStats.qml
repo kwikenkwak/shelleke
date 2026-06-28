@@ -69,12 +69,7 @@ MouseArea {
             // Open-only (closing is handled by the media controls' focus grab /
             // Escape), matching the quick-settings sliders button. Publish this
             // indicator's scene x so the panel opens right under the media title.
-            onClicked: {
-                // Scene x of this indicator within the bar window (full-width at
-                // the screen's left edge), the same mapping PixelBarPopup uses.
-                GlobalStates.mediaControlsX = mediaArea.QsWindow.mapFromItem(mediaArea, 0, 0).x;
-                GlobalStates.mediaControlsOpen = true;
-            }
+            onClicked: GlobalStates.mediaControlsOpen = true
 
             Row {
                 id: mediaRow

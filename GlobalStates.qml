@@ -14,7 +14,6 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
     property bool mediaControlsOpen: false
-    property real mediaControlsX: 12 // x (scene px) to anchor the pixel media controls under
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool oskOpen: false
