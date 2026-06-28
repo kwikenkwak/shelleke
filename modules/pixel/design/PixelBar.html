@@ -1,0 +1,76 @@
+<!-- Pixel top bar design. CSS vars (light mode): bg #fff, fg #141414, grey #6e6e6e, grey2 #bdbdbd, line #141414, bd 2px solid line, popbd 3px, barbd 3px. Dark mode inverts: bg #0b0b0b, fg #f4f4f4, grey #9b9b9b, grey2 #555. Body font 'Pixelify Sans', titles 'Silkscreen'. <pix-icon name="..."> = 7x7 bitmap icon. -->
+<div style="display:flex;align-items:center;width:100%;height:46px;box-sizing:border-box;padding:0 12px;background:var(--bg);color:var(--fg);border-bottom:var(--barbd,3px solid var(--line));font-family:'Pixelify Sans';font-feature-settings:'tnum';gap:0;overflow:visible">
+
+  <!-- LEFT: app + window title -->
+  <span style="display:inline-flex;align-items:center;gap:9px;flex:0 0 auto">
+    <pix-icon name="sparkle" px="18"></pix-icon>
+    <span style="display:flex;flex-direction:column;line-height:1.05;justify-content:center">
+      <span style="font-size:10px;color:var(--grey);letter-spacing:.5px">org.mozilla.firefox</span>
+      <span style="font-size:15px;font-weight:700">Claude Design — Mozilla Firefox</span>
+    </span>
+  </span>
+
+  <span style="width:2px;height:22px;background:var(--line);margin:0 14px;flex:0 0 auto"></span>
+
+  <!-- STATS: ram/swap/cpu/proc + media note -->
+  <span style="display:inline-flex;align-items:center;gap:14px;flex:0 0 auto;font-size:15px;font-weight:600">
+    <span style="display:inline-flex;align-items:center;gap:5px"><pix-icon name="ram"></pix-icon>35</span>
+    <span style="display:inline-flex;align-items:center;gap:5px"><pix-icon name="swap"></pix-icon>0</span>
+    <span style="display:inline-flex;align-items:center;gap:5px"><pix-icon name="cpu"></pix-icon>6</span>
+    <span style="display:inline-flex;align-items:center;gap:5px"><pix-icon name="proc"></pix-icon>4</span>
+    <span style="display:inline-flex;align-items:center;gap:6px;color:var(--grey)"><pix-icon name="note"></pix-icon>No&nbsp;media</span>
+  </span>
+
+  <span style="flex:1 1 auto"></span>
+
+  <!-- CENTER: pinned apps chip + workspaces (filled square = active, hollow = inactive) -->
+  <span style="display:inline-flex;align-items:center;gap:10px;flex:0 0 auto">
+    <span style="display:inline-flex;align-items:center;gap:8px;padding:3px 8px;border:var(--bd,2px solid var(--line));background:transparent">
+      <pix-icon name="terminal" px="16"></pix-icon>
+      <pix-icon name="message" px="16"></pix-icon>
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:7px">
+      <span style="width:9px;height:9px;background:var(--fg)"></span>
+      <span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>
+      <span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>
+      <span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>
+      <span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>
+      <span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>
+    </span>
+  </span>
+
+  <span style="flex:1 1 auto"></span>
+
+  <!-- CLOCK -->
+  <span style="font-size:16px;font-weight:700;flex:0 0 auto;letter-spacing:.5px">09:45 · Sun, 28/06</span>
+
+  <span style="width:2px;height:22px;background:var(--line);margin:0 14px;flex:0 0 auto"></span>
+
+  <!-- CONTROLS: fullscreen, keyboard, sun(dark mode), battery chip -->
+  <span style="display:inline-flex;align-items:center;gap:13px;flex:0 0 auto">
+    <pix-icon name="fullscreen" px="16"></pix-icon>
+    <pix-icon name="keyboard" px="16"></pix-icon>
+    <pix-icon name="sun" px="16"></pix-icon>
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 7px 2px 6px;border:var(--bd,2px solid var(--line));font-size:14px;font-weight:700">
+      <!-- battery glyph: 18x11 box, 2px border, filled inner, 2x5 nub -->
+      <span style="display:inline-flex;align-items:center;flex:0 0 auto">
+        <span style="position:relative;width:18px;height:11px;border:2px solid var(--fg);box-sizing:border-box;display:inline-block">
+          <span style="position:absolute;left:1px;top:1px;bottom:1px;right:1px;background:var(--fg)"></span>
+        </span>
+        <span style="width:2px;height:5px;background:var(--fg)"></span>
+      </span>
+      100
+    </span>
+  </span>
+
+  <span style="width:2px;height:22px;background:var(--line);margin:0 14px;flex:0 0 auto"></span>
+
+  <!-- TRAY: status glyphs + system tray items (snow=idle inhibitor, dot=passive, wifi, bluetooth) -->
+  <span style="display:inline-flex;align-items:center;gap:13px;flex:0 0 auto">
+    <pix-icon name="snow" px="16"></pix-icon>
+    <span style="width:5px;height:5px;background:var(--grey)"></span>
+    <pix-icon name="wifi" px="16"></pix-icon>
+    <pix-icon name="bluetooth" px="16"></pix-icon>
+  </span>
+
+</div>

@@ -1,0 +1,41 @@
+<!-- Hover popups shown when hovering bar items. Same CSS vars as PixelBar. popbd = 3px solid line. Filled square = "used", hollow square = "free". -->
+
+<!-- SYSTEM MONITOR popup (hover the stats cluster): RAM / Swap / CPU / Claude columns -->
+<div style="background:var(--bg);color:var(--fg);border:var(--popbd,3px solid var(--line));padding:16px 20px">
+  <div style="display:flex;gap:30px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:center;gap:7px;font-size:16px;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:6px"><pix-icon name="ram" px="16"></pix-icon>RAM</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><span style="width:9px;height:9px;background:var(--fg)"></span>Used: <b>5.3 GB</b></div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><span style="width:9px;height:9px;border:2px solid var(--fg);box-sizing:border-box"></span>Free: <b>10.2 GB</b></div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><pix-icon name="ram" px="11"></pix-icon>Total: <b>15.5 GB</b></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:center;gap:7px;font-size:16px;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:6px"><pix-icon name="swap" px="16"></pix-icon>Swap</div>
+      <div>...Used / Free / Total...</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:center;gap:7px;font-size:16px;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:6px"><pix-icon name="cpu" px="16"></pix-icon>CPU</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><pix-icon name="bolt" px="12"></pix-icon>Load: <b>5%</b></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:center;gap:7px;font-size:16px;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:6px"><pix-icon name="sparkle" px="16"></pix-icon>Claude</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><pix-icon name="clock" px="12"></pix-icon>Session: <b>4% · 4h 45m</b></div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px"><pix-icon name="calendar" px="12"></pix-icon>Week: <b>11% · 7h 15m</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLOCK popup (hover the clock): date + uptime + To Do -->
+<div style="background:var(--bg);color:var(--fg);border:var(--popbd,3px solid var(--line));padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-width:230px">
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600"><pix-icon name="calendar" px="15"></pix-icon>Sunday, June 28, 2026</div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px"><pix-icon name="clock" px="15"></pix-icon>System uptime: <b>26m</b></div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;border-top:2px solid var(--line);padding-top:9px"><pix-icon name="todo" px="15"></pix-icon>To Do</div>
+  <div style="font-size:14px;color:var(--grey);padding-left:23px">No pending tasks</div>
+</div>
+
+<!-- BATTERY popup (hover the battery chip) -->
+<div style="background:var(--bg);color:var(--fg);border:var(--popbd,3px solid var(--line));padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-width:190px">
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700"><!-- battery glyph -->Battery</div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px"><pix-icon name="bolt" px="15"></pix-icon>Fully charged</div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:15px"><pix-icon name="heart" px="15"></pix-icon>Health: <b>90.9%</b></div>
+</div>

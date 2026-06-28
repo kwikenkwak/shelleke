@@ -1,0 +1,86 @@
+<!-- Right-side Quick Settings panel. width 360, padding 12, gap 11. Same CSS vars. popbd 3px outer border, bd 2px on inner chips. Filled icon-square (bg fg / color bg) = ACTIVE; hollow square (2px border) = inactive. -->
+<div style="width:360px;box-sizing:border-box;background:var(--bg);color:var(--fg);border:var(--popbd,3px solid var(--line));font-family:'Pixelify Sans';padding:12px;display:flex;flex-direction:column;gap:11px">
+
+  <!-- HEADER: uptime chip + edit / refresh / settings / power buttons (38x34 bordered squares) -->
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <span style="display:inline-flex;align-items:center;gap:7px;border:var(--bd,2px solid var(--line));padding:5px 10px;font-size:14px;font-weight:600"><pix-icon name="note" px="14"></pix-icon>Up 27m</span>
+    <span style="display:inline-flex;gap:8px">
+      <span style="display:flex;align-items:center;justify-content:center;width:38px;height:34px;border:var(--bd,2px solid var(--line))"><pix-icon name="pencil" px="15"></pix-icon></span>
+      <span style="display:flex;align-items:center;justify-content:center;width:38px;height:34px;border:var(--bd,2px solid var(--line))"><pix-icon name="refresh" px="15"></pix-icon></span>
+      <span style="display:flex;align-items:center;justify-content:center;width:38px;height:34px;border:var(--bd,2px solid var(--line))"><pix-icon name="gear" px="15"></pix-icon></span>
+      <span style="display:flex;align-items:center;justify-content:center;width:38px;height:34px;border:var(--bd,2px solid var(--line))"><pix-icon name="power" px="15"></pix-icon></span>
+    </span>
+  </div>
+
+  <!-- CONNECTIVITY ROW A: Internet (active=filled wifi square), Bluetooth (hollow), coffee(idle-inhibitor) 44px square -->
+  <div style="display:flex;gap:8px;align-items:stretch">
+    <div style="flex:1;display:flex;align-items:center;gap:9px;padding:8px;border:var(--bd,2px solid var(--line));min-width:0">
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--fg);color:var(--bg);flex:0 0 auto"><pix-icon name="wifi" px="16"></pix-icon></span>
+      <span style="display:flex;flex-direction:column;line-height:1.15;min-width:0;overflow:hidden"><span style="font-size:13px;font-weight:700">Internet</span><span style="font-size:11px;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MyWiFi-2.4</span></span>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:9px;padding:8px;border:var(--bd,2px solid var(--line));min-width:0">
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--fg);flex:0 0 auto"><pix-icon name="bluetooth" px="16"></pix-icon></span>
+      <span style="display:flex;flex-direction:column;line-height:1.15;min-width:0;overflow:hidden"><span style="font-size:13px;font-weight:700">Bluetooth</span><span style="font-size:11px;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Not connected</span></span>
+    </div>
+    <div style="width:44px;display:flex;align-items:center;justify-content:center;border:var(--bd,2px solid var(--line));flex:0 0 auto"><pix-icon name="coffee" px="18"></pix-icon></div>
+  </div>
+
+  <!-- ROW B: mic(44px filled=on) | Audio output (hollow speaker) | Night Light (hollow moon) -->
+  <div style="display:flex;gap:8px;align-items:stretch">
+    <div style="width:44px;display:flex;align-items:center;justify-content:center;background:var(--fg);color:var(--bg);flex:0 0 auto;border:var(--bd,2px solid var(--line))"><pix-icon name="mic" px="18"></pix-icon></div>
+    <div style="flex:1;display:flex;align-items:center;gap:9px;padding:8px;border:var(--bd,2px solid var(--line));min-width:0">
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--fg);flex:0 0 auto"><pix-icon name="speaker" px="16"></pix-icon></span>
+      <span style="display:flex;flex-direction:column;line-height:1.15;min-width:0;overflow:hidden"><span style="font-size:13px;font-weight:700">Audio output</span><span style="font-size:11px;color:var(--grey)">Unmuted</span></span>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:9px;padding:8px;border:var(--bd,2px solid var(--line));min-width:0">
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--fg);flex:0 0 auto"><pix-icon name="moon" px="16"></pix-icon></span>
+      <span style="display:flex;flex-direction:column;line-height:1.15;min-width:0;overflow:hidden"><span style="font-size:13px;font-weight:700">Night Light</span><span style="font-size:11px;color:var(--grey)">Inactive</span></span>
+    </div>
+  </div>
+
+  <!-- ROW C: 5 equal small toggle buttons height 38 (nodes/warp, fullscreen/game, sliders/easyeffects, flashoff/antiflash, dropper/colorpicker) -->
+  <div style="display:flex;gap:8px;justify-content:space-between">
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:38px;border:var(--bd,2px solid var(--line))"><pix-icon name="nodes" px="16"></pix-icon></span>
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:38px;border:var(--bd,2px solid var(--line))"><pix-icon name="fullscreen" px="16"></pix-icon></span>
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:38px;border:var(--bd,2px solid var(--line))"><pix-icon name="sliders" px="16"></pix-icon></span>
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:38px;border:var(--bd,2px solid var(--line))"><pix-icon name="flashoff" px="16"></pix-icon></span>
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:38px;border:var(--bd,2px solid var(--line))"><pix-icon name="dropper" px="16"></pix-icon></span>
+  </div>
+
+  <!-- NOTIFICATIONS list (border-top 2px). Each: 34x34 hollow APP ICON square + title row (app name, time, count chip with chevD) + summary + body. APP ICONS MUST USE PixAppIcon (grayscale+pixelated). -->
+  <div style="display:flex;flex-direction:column;gap:8px;border-top:2px solid var(--line);padding-top:11px">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:2px solid var(--fg);flex:0 0 auto"><pix-icon name="terminal" px="18"></pix-icon></span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="font-weight:700">kitty</span><span style="flex:1"></span><span style="color:var(--grey)">4m</span><span style="display:inline-flex;align-items:center;gap:3px;border:2px solid var(--line);padding:0 5px;font-size:11px">46<pix-icon name="chevD" px="9"></pix-icon></span></div>
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claude Code — Claude needs your permission</div>
+        <div style="font-size:12px;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claude is waiting for your input</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIF FOOTER: bell(44x36) | "198 notifications" stretch | trash(44x36) -->
+  <div style="display:flex;gap:8px;align-items:stretch">
+    <span style="display:flex;align-items:center;justify-content:center;width:44px;height:36px;border:var(--bd,2px solid var(--line))"><pix-icon name="bell" px="16"></pix-icon></span>
+    <span style="flex:1;display:flex;align-items:center;justify-content:center;height:36px;border:var(--bd,2px solid var(--line));font-size:13px;font-weight:600">198 notifications</span>
+    <span style="display:flex;align-items:center;justify-content:center;width:44px;height:36px;border:var(--bd,2px solid var(--line))"><pix-icon name="trash" px="16"></pix-icon></span>
+  </div>
+
+  <!-- CALENDAR (border-top 2px): "June 2026" title + chevL/chevR nav (30x28). Left column of 60px mini-buttons (Calendar/To Do/Timer). 7-col grid Mo..Su, today = filled square bg fg / color bg, out-of-month days color grey2 -->
+  <div style="border-top:2px solid var(--line);padding-top:11px;display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <pix-icon name="chevD" px="14"></pix-icon>
+      <span style="font-size:16px;font-weight:700;flex:1">June 2026</span>
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:28px;border:var(--bd,2px solid var(--line))"><pix-icon name="chevL" px="13"></pix-icon></span>
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:28px;border:var(--bd,2px solid var(--line))"><pix-icon name="chevR" px="13"></pix-icon></span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:8px;width:60px;flex:0 0 auto">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border:var(--bd,2px solid var(--line))"><pix-icon name="calendar" px="16"></pix-icon><span style="font-size:10px">Calendar</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border:var(--bd,2px solid var(--line))"><pix-icon name="todo" px="16"></pix-icon><span style="font-size:10px">To Do</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border:var(--bd,2px solid var(--line))"><pix-icon name="timer" px="16"></pix-icon><span style="font-size:10px">Timer</span></div>
+      </div>
+      <div style="flex:1"><!-- 7-col weekday header (grey) then day grid; today highlighted with filled square --></div>
+    </div>
+  </div>
+</div>

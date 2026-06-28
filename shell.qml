@@ -39,6 +39,12 @@ import qs.modules.waffle.startMenu
 import qs.modules.waffle.sessionScreen
 import qs.modules.waffle.taskView
 
+import qs.modules.pixel.bar
+import qs.modules.pixel.quickSettings
+import qs.modules.pixel.notificationPopup
+import qs.modules.pixel.onScreenDisplay
+import qs.modules.pixel.sessionScreen
+
 import QtQuick
 import QtQuick.Window
 import Quickshell
@@ -95,6 +101,12 @@ ShellRoot {
     PanelLoader { identifier: "wStartMenu"; component: WaffleStartMenu {} }
     PanelLoader { identifier: "wSessionScreen"; component: WaffleSessionScreen {} }
     PanelLoader { identifier: "wTaskView"; component: WaffleTaskView {} }
+
+    PanelLoader { identifier: "pixelBar"; component: PixelBar {} }
+    PanelLoader { identifier: "pixelQuickSettings"; component: PixelQuickSettings {} }
+    PanelLoader { identifier: "pixelNotificationPopup"; component: PixelNotificationPopup {} }
+    PanelLoader { identifier: "pixelOnScreenDisplay"; component: PixelOnScreenDisplay {} }
+    PanelLoader { identifier: "pixelSessionScreen"; component: PixelSessionScreen {} }
     ReloadPopup {}
 
     component PanelLoader: LazyLoader {
@@ -104,10 +116,11 @@ ShellRoot {
     }
 
     // Panel families
-    property list<string> families: ["ii", "waffle"]
+    property list<string> families: ["ii", "waffle", "pixel"]
     property var panelFamilies: ({
         "ii": ["iiBar", "iiBackground", "iiCheatsheet", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector"],
         "waffle": ["wActionCenter", "wBar", "wBackground", "wLock", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wTaskView", "wPolkit", "wScreenSnip", "wSessionScreen", "wStartMenu", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiWallpaperSelector"],
+        "pixel": ["pixelBar", "pixelQuickSettings", "pixelNotificationPopup", "pixelOnScreenDisplay", "pixelSessionScreen", "iiBackground", "iiCheatsheet", "iiLock", "iiMediaControls", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector"],
     })
     function cyclePanelFamily() {
         const currentIndex = families.indexOf(Config.options.panelFamily)

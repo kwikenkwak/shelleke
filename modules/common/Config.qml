@@ -81,7 +81,7 @@ Singleton {
             property list<string> enabledPanels: [
                 "iiBar", "iiBackground", "iiCheatsheet", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiReloadPopup", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector"
             ]
-            property string panelFamily: "ii" // "ii", "w"
+            property string panelFamily: "ii" // "ii", "waffle", "pixel"
 
             property JsonObject policies: JsonObject {
                 property int ai: 1 // 0: No | 1: Yes | 2: Local
