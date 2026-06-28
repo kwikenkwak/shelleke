@@ -293,8 +293,12 @@ Scope {
         }
     }
 
+    // Use the SAME IPC target + GlobalShortcut names as the ii session screen so
+    // existing binds (e.g. Ctrl-Alt-Delete -> quickshell:sessionToggle, and
+    // `ipc call session toggle`) trigger the pixel one. Only one family loads at
+    // a time, so these don't collide with ii's session screen.
     IpcHandler {
-        target: "pixelSession"
+        target: "session"
         function toggle(): void {
             GlobalStates.sessionOpen = !GlobalStates.sessionOpen;
         }
@@ -307,18 +311,18 @@ Scope {
     }
 
     GlobalShortcut {
-        name: "pixelSessionToggle"
-        description: "Toggles pixel session screen on press"
+        name: "sessionToggle"
+        description: "Toggles session screen on press"
         onPressed: GlobalStates.sessionOpen = !GlobalStates.sessionOpen
     }
     GlobalShortcut {
-        name: "pixelSessionOpen"
-        description: "Opens pixel session screen on press"
+        name: "sessionOpen"
+        description: "Opens session screen on press"
         onPressed: GlobalStates.sessionOpen = true
     }
     GlobalShortcut {
-        name: "pixelSessionClose"
-        description: "Closes pixel session screen on press"
+        name: "sessionClose"
+        description: "Closes session screen on press"
         onPressed: GlobalStates.sessionOpen = false
     }
 }
