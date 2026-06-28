@@ -70,8 +70,12 @@ Scope {
         }
     }
 
+    // Use the SAME IPC target + GlobalShortcut names as the ii sidebar so the
+    // user's existing Hyprland keybinds (quickshell:sidebarRightToggle, and
+    // `ipc call sidebarRight toggle`) work identically. Only one panel family is
+    // loaded at a time, so these names don't collide with ii's sidebar.
     IpcHandler {
-        target: "pixelSidebar"
+        target: "sidebarRight"
 
         function toggle(): void {
             GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
@@ -85,13 +89,18 @@ Scope {
     }
 
     GlobalShortcut {
-        name: "pixelSidebarToggle"
-        description: "Toggles the pixel quick-settings sidebar on press"
+        name: "sidebarRightToggle"
+        description: "Toggles right sidebar on press"
         onPressed: GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
     }
     GlobalShortcut {
-        name: "pixelSidebarClose"
-        description: "Closes the pixel quick-settings sidebar on press"
+        name: "sidebarRightOpen"
+        description: "Opens right sidebar on press"
+        onPressed: GlobalStates.sidebarRightOpen = true
+    }
+    GlobalShortcut {
+        name: "sidebarRightClose"
+        description: "Closes right sidebar on press"
         onPressed: GlobalStates.sidebarRightOpen = false
     }
 }

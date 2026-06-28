@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
@@ -13,6 +14,9 @@ PixPanel {
     property string title: ""
     property string status: ""
     property bool active: false
+    property alias tooltip: tooltip.text
+    // Public hover state so a child PixTooltip can react.
+    readonly property bool hovered: tileMouse.containsMouse
 
     signal activated()
 
@@ -67,8 +71,16 @@ PixPanel {
     }
 
     MouseArea {
+        id: tileMouse
         anchors.fill: parent
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.activated()
+    }
+
+    PixTooltip {
+        id: tooltip
+        anchorEdges: Edges.Left
+        anchorGravity: Edges.Left
     }
 }

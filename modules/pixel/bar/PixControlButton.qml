@@ -10,6 +10,8 @@ MouseArea {
     id: root
     property string icon: ""
     property bool active: true
+    // Optional hover hint label. Empty string = no tooltip.
+    property string tooltipText: ""
     signal triggered()
 
     hoverEnabled: true
@@ -23,5 +25,10 @@ MouseArea {
         name: root.icon
         size: 16
         color: (root.active || root.containsMouse) ? PixTheme.colors.fg : PixTheme.colors.grey
+    }
+
+    PixTooltip {
+        text: root.tooltipText
+        visibleCondition: root.containsMouse
     }
 }

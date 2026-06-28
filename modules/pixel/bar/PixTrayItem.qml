@@ -38,6 +38,11 @@ MouseArea {
         source: root.item?.icon ?? ""
     }
 
+    PixTooltip {
+        text: root.item ? TrayService.getTooltipForItem(root.item) : ""
+        visibleCondition: root.containsMouse
+    }
+
     QsMenuAnchor {
         id: menu
         menu: root.item?.menu

@@ -1,18 +1,24 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import qs.services
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * Monochrome month calendar. Title "MMMM yyyy" with chevL/chevR month nav, a
- * left column of three 60px mini-buttons (Calendar/To Do/Timer) and a
- * Monday-first 7-column day grid. Today is a filled square; out-of-month days
+ * Monochrome calendar / utility area. A left column of three mini-buttons
+ * (Calendar / To Do / Timer) switches the right-hand area between the month
+ * Calendar, a PixTodoView and a PixTimerView. The active mini-button is filled.
+ * In Calendar mode: title "MMMM yyyy" with chevL/chevR month nav and a
+ * Monday-first 7-column day grid; today is a filled square; out-of-month days
  * are rendered in grey2.
  */
 Column {
     id: root
     spacing: 9
+
+    // Which view the right area shows: "calendar" | "todo" | "timer".
+    property string view: "calendar"
 
     // Year/month currently displayed. Initialised to the real "now".
     property int displayYear: now.getFullYear()
@@ -61,10 +67,11 @@ Column {
         root.displayYear = y;
     }
 
-    // ---- Title + month nav ----
+    // ---- Title + month nav (Calendar view only) ----
     Row {
         width: parent.width
         spacing: 10
+        visible: root.view === "calendar"
 
         PixIcon {
             anchors.verticalCenter: parent.verticalCenter
@@ -105,26 +112,36 @@ Column {
         }
     }
 
-    // ---- Left mini-buttons + day grid ----
+    // ---- Title (To Do / Timer views) ----
+    PixTitle {
+        width: parent.width
+        visible: root.view !== "calendar"
+        text: root.view === "todo" ? "TO DO" : "TIMER"
+        font.pixelSize: PixTheme.font.pixelSize.title
+    }
+
+    // ---- Left mini-buttons + active view ----
     Row {
         width: parent.width
         spacing: 10
 
         Column {
-            width: 60
+            width: 64
             spacing: 8
 
             Repeater {
                 model: [
-                    { icon: "calendar", label: "Calendar" },
-                    { icon: "todo", label: "To Do" },
-                    { icon: "timer", label: "Timer" }
+                    { icon: "calendar", label: "CAL", view: "calendar", tip: "Calendar" },
+                    { icon: "todo", label: "TODO", view: "todo", tip: "To Do" },
+                    { icon: "timer", label: "TIME", view: "timer", tip: "Timer" }
                 ]
                 delegate: PixButton {
                     id: miniBtn
                     required property var modelData
-                    width: 60
-                    implicitHeight: 52
+                    width: 64
+                    implicitHeight: 54
+                    filled: root.view === miniBtn.modelData.view
+                    onClicked: root.view = miniBtn.modelData.view
                     Column {
                         anchors.centerIn: parent
                         spacing: 3
@@ -134,72 +151,96 @@ Column {
                             size: 16
                             color: miniBtn.contentColor
                         }
-                        PixTitle {
+                        PixText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: miniBtn.modelData.label
-                            font.pixelSize: PixTheme.font.pixelSize.smallest
-                            font.letterSpacing: 0
+                            font.pixelSize: 9
+                            font.bold: true
+                            font.letterSpacing: 1
                             color: miniBtn.contentColor
                         }
+                    }
+                    PixTooltip {
+                        text: miniBtn.modelData.tip
+                        anchorEdges: Edges.Left
+                        anchorGravity: Edges.Left
                     }
                 }
             }
         }
 
-        // Day grid
-        Grid {
-            id: dayGrid
-            width: parent.width - 60 - parent.spacing
-            columns: 7
-            readonly property real cellW: width / 7
+        // Active view: month grid / todo / timer.
+        Item {
+            width: parent.width - 64 - parent.spacing
+            // Match the natural height of the day grid (header 22 + 6*26).
+            height: 178
 
-            // Weekday header
-            Repeater {
-                model: root.weekDays
-                delegate: Item {
-                    id: weekdayCell
-                    required property var modelData
-                    width: dayGrid.cellW
-                    height: 22
-                    PixText {
-                        anchors.centerIn: parent
-                        text: weekdayCell.modelData
-                        color: PixTheme.colors.grey
-                        font.pixelSize: PixTheme.font.pixelSize.smaller
+            // Day grid
+            Grid {
+                id: dayGrid
+                anchors.fill: parent
+                visible: root.view === "calendar"
+                columns: 7
+                readonly property real cellW: width / 7
+
+                // Weekday header
+                Repeater {
+                    model: root.weekDays
+                    delegate: Item {
+                        id: weekdayCell
+                        required property var modelData
+                        width: dayGrid.cellW
+                        height: 22
+                        PixText {
+                            anchors.centerIn: parent
+                            text: weekdayCell.modelData
+                            color: PixTheme.colors.grey
+                            font.pixelSize: PixTheme.font.pixelSize.smaller
+                        }
+                    }
+                }
+
+                // Days
+                Repeater {
+                    model: root.grid
+                    delegate: Item {
+                        id: dayCell
+                        required property var modelData
+                        width: dayGrid.cellW
+                        height: 26
+
+                        readonly property bool today: root.isToday(modelData)
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 24
+                            height: 22
+                            radius: 0
+                            antialiasing: false
+                            visible: dayCell.today
+                            color: PixTheme.colors.fg
+                        }
+                        PixText {
+                            anchors.centerIn: parent
+                            text: dayCell.modelData.day
+                            font.bold: dayCell.today
+                            font.pixelSize: PixTheme.font.pixelSize.small
+                            color: dayCell.today ? PixTheme.colors.bg
+                                : dayCell.modelData.inMonth ? PixTheme.colors.fg
+                                : PixTheme.colors.grey2
+                        }
                     }
                 }
             }
 
-            // Days
-            Repeater {
-                model: root.grid
-                delegate: Item {
-                    id: dayCell
-                    required property var modelData
-                    width: dayGrid.cellW
-                    height: 26
+            PixTodoView {
+                anchors.fill: parent
+                visible: root.view === "todo"
+            }
 
-                    readonly property bool today: root.isToday(modelData)
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 24
-                        height: 22
-                        radius: 0
-                        antialiasing: false
-                        visible: dayCell.today
-                        color: PixTheme.colors.fg
-                    }
-                    PixText {
-                        anchors.centerIn: parent
-                        text: dayCell.modelData.day
-                        font.bold: dayCell.today
-                        font.pixelSize: PixTheme.font.pixelSize.small
-                        color: dayCell.today ? PixTheme.colors.bg
-                            : dayCell.modelData.inMonth ? PixTheme.colors.fg
-                            : PixTheme.colors.grey2
-                    }
-                }
+            PixTimerView {
+                anchors.fill: parent
+                visible: root.view === "timer"
             }
         }
     }

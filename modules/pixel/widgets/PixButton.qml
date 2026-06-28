@@ -21,6 +21,8 @@ Rectangle {
 
     readonly property bool active: filled || checked || (interactive && fillOnHover && mouseArea.containsMouse)
     readonly property bool pressed: interactive && mouseArea.containsPress
+    // Public hover state so children (e.g. PixTooltip) can react.
+    readonly property bool hovered: mouseArea.containsMouse
     // Content (icons/text) should bind to this so it inverts on fill.
     readonly property color contentColor: active ? PixTheme.colors.bg : PixTheme.colors.fg
 

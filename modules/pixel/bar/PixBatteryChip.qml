@@ -57,6 +57,13 @@ MouseArea {
         }
     }
 
+    PixTooltip {
+        text: root.charging
+            ? Math.round(root.percent) + "% · Charging"
+            : Math.round(root.percent) + "%"
+        visibleCondition: root.containsMouse
+    }
+
     PixelBarPopup {
         hoverTarget: root
         PixBatteryPopup {}

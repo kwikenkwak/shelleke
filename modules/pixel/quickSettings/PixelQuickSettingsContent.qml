@@ -94,12 +94,13 @@ PixPanel {
 
                 Repeater {
                     model: [
-                        { icon: "pencil", action: "edit" },
-                        { icon: "refresh", action: "refresh" },
-                        { icon: "gear", action: "settings" },
-                        { icon: "power", action: "power" }
+                        { icon: "pencil", action: "edit", tip: "Edit" },
+                        { icon: "refresh", action: "refresh", tip: "Refresh" },
+                        { icon: "gear", action: "settings", tip: "Settings" },
+                        { icon: "power", action: "power", tip: "Power" }
                     ]
                     delegate: PixButton {
+                        id: headerBtn
                         required property var modelData
                         implicitWidth: 38
                         implicitHeight: 34
@@ -115,9 +116,14 @@ PixPanel {
                         }
                         PixIcon {
                             anchors.centerIn: parent
-                            name: modelData.icon
+                            name: headerBtn.modelData.icon
                             size: 15
-                            color: parent.contentColor
+                            color: headerBtn.contentColor
+                        }
+                        PixTooltip {
+                            text: headerBtn.modelData.tip
+                            anchorEdges: Edges.Left
+                            anchorGravity: Edges.Left
                         }
                     }
                 }
@@ -133,6 +139,7 @@ PixPanel {
                 Layout.fillWidth: true
                 iconName: "wifi"
                 title: "Internet"
+                tooltip: "Wi-Fi"
                 status: Network.networkName !== "" ? Network.networkName
                     : (root.internetConnected ? "Connected" : "Not connected")
                 active: root.internetConnected
@@ -142,11 +149,13 @@ PixPanel {
                 Layout.fillWidth: true
                 iconName: "bluetooth"
                 title: "Bluetooth"
+                tooltip: "Bluetooth"
                 status: bluetoothToggle.statusText
                 active: bluetoothToggle.toggled
                 onActivated: root.overlay = "bluetooth"
             }
             PixButton {
+                id: idleBtn
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 46
                 filled: idleToggle.toggled
@@ -155,7 +164,12 @@ PixPanel {
                     anchors.centerIn: parent
                     name: "coffee"
                     size: 18
-                    color: parent.contentColor
+                    color: idleBtn.contentColor
+                }
+                PixTooltip {
+                    text: "Keep awake"
+                    anchorEdges: Edges.Left
+                    anchorGravity: Edges.Left
                 }
             }
         }
@@ -166,6 +180,7 @@ PixPanel {
             spacing: 8
 
             PixButton {
+                id: micBtn
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 46
                 filled: root.micActive
@@ -174,13 +189,19 @@ PixPanel {
                     anchors.centerIn: parent
                     name: "mic"
                     size: 18
-                    color: parent.contentColor
+                    color: micBtn.contentColor
+                }
+                PixTooltip {
+                    text: "Microphone"
+                    anchorEdges: Edges.Left
+                    anchorGravity: Edges.Left
                 }
             }
             PixToggleTile {
                 Layout.fillWidth: true
                 iconName: "speaker"
                 title: "Audio output"
+                tooltip: "Audio output"
                 status: root.audioMuted ? "Muted" : "Unmuted"
                 active: !root.audioMuted
                 onActivated: Audio.toggleMute()
@@ -189,6 +210,7 @@ PixPanel {
                 Layout.fillWidth: true
                 iconName: "moon"
                 title: "Night Light"
+                tooltip: "Night Light"
                 status: nightLightToggle.toggled ? "Active" : "Inactive"
                 active: nightLightToggle.toggled
                 onActivated: nightLightToggle.mainAction()
@@ -202,23 +224,29 @@ PixPanel {
 
             Repeater {
                 model: [
-                    { icon: "nodes", toggle: warpToggle },
-                    { icon: "fullscreen", toggle: gameModeToggle },
-                    { icon: "sliders", toggle: easyEffectsToggle },
-                    { icon: "flashoff", toggle: antiFlashbangToggle },
-                    { icon: "dropper", toggle: colorPickerToggle }
+                    { icon: "nodes", toggle: warpToggle, tip: "Cloudflare WARP" },
+                    { icon: "fullscreen", toggle: gameModeToggle, tip: "Game mode" },
+                    { icon: "sliders", toggle: easyEffectsToggle, tip: "Easy Effects" },
+                    { icon: "flashoff", toggle: antiFlashbangToggle, tip: "Anti-flashbang" },
+                    { icon: "dropper", toggle: colorPickerToggle, tip: "Color picker" }
                 ]
                 delegate: PixButton {
+                    id: extraBtn
                     required property var modelData
                     Layout.fillWidth: true
                     Layout.preferredHeight: 38
-                    filled: modelData.toggle.toggled
-                    onClicked: modelData.toggle.mainAction()
+                    filled: extraBtn.modelData.toggle.toggled
+                    onClicked: extraBtn.modelData.toggle.mainAction()
                     PixIcon {
                         anchors.centerIn: parent
-                        name: modelData.icon
+                        name: extraBtn.modelData.icon
                         size: 16
-                        color: parent.contentColor
+                        color: extraBtn.contentColor
+                    }
+                    PixTooltip {
+                        text: extraBtn.modelData.tip
+                        anchorEdges: Edges.Left
+                        anchorGravity: Edges.Left
                     }
                 }
             }
@@ -277,6 +305,11 @@ PixPanel {
                     size: 16
                     color: markReadButton.contentColor
                 }
+                PixTooltip {
+                    text: "Mark all read"
+                    anchorEdges: Edges.Left
+                    anchorGravity: Edges.Left
+                }
             }
             PixButton {
                 id: notifCountLabel
@@ -296,6 +329,7 @@ PixPanel {
                 }
             }
             PixButton {
+                id: clearAllBtn
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 36
                 onClicked: Notifications.discardAllNotifications()
@@ -303,7 +337,12 @@ PixPanel {
                     anchors.centerIn: parent
                     name: "trash"
                     size: 16
-                    color: parent.contentColor
+                    color: clearAllBtn.contentColor
+                }
+                PixTooltip {
+                    text: "Clear all"
+                    anchorEdges: Edges.Left
+                    anchorGravity: Edges.Left
                 }
             }
         }

@@ -27,39 +27,69 @@ MouseArea {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 14
 
-        PixStatItem { icon: "ram"; value: root.pct(ResourceUsage.memoryUsedPercentage) }
-        PixStatItem { icon: "swap"; value: root.pct(ResourceUsage.swapUsedPercentage) }
-        PixStatItem { icon: "cpu"; value: root.pct(ResourceUsage.cpuUsage) }
-        PixStatItem {
-            icon: "sparkle"
-            value: Math.round(ClaudeUsage.sessionPercent ?? 0)
-            visible: ClaudeUsage.available
-        }
-
-        // Media note indicator
-        Row {
+        // System stats — hovering this group shows the system-monitor popup.
+        MouseArea {
+            id: statsArea
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            PixIcon {
+            hoverEnabled: true
+            implicitWidth: statsRow.implicitWidth
+            implicitHeight: 32
+
+            Row {
+                id: statsRow
                 anchors.verticalCenter: parent.verticalCenter
-                name: "note"
-                size: 14
-                color: PixTheme.colors.grey
+                spacing: 14
+
+                PixStatItem { icon: "ram"; value: root.pct(ResourceUsage.memoryUsedPercentage) }
+                PixStatItem { icon: "swap"; value: root.pct(ResourceUsage.swapUsedPercentage) }
+                PixStatItem { icon: "cpu"; value: root.pct(ResourceUsage.cpuUsage) }
+                PixStatItem {
+                    icon: "sparkle"
+                    value: Math.round(ClaudeUsage.sessionPercent ?? 0)
+                    visible: ClaudeUsage.available
+                }
             }
-            PixText {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.trackTitle !== "" ? root.trackTitle : "No media"
-                color: PixTheme.colors.grey
-                font.pixelSize: PixTheme.font.pixelSize.larger
-                elide: Text.ElideRight
-                width: Math.min(implicitWidth, 200)
+
+            PixelBarPopup {
+                hoverTarget: statsArea
+                contentMargin: 16
+                PixSystemMonitorPopup {}
             }
         }
-    }
 
-    PixelBarPopup {
-        hoverTarget: root
-        contentMargin: 16
-        PixSystemMonitorPopup {}
+        // Media note indicator — hovering it shows the media popup.
+        MouseArea {
+            id: mediaArea
+            anchors.verticalCenter: parent.verticalCenter
+            hoverEnabled: true
+            implicitWidth: mediaRow.implicitWidth
+            implicitHeight: 32
+
+            Row {
+                id: mediaRow
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 6
+                PixIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "note"
+                    size: 14
+                    color: PixTheme.colors.grey
+                }
+                PixText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.trackTitle !== "" ? root.trackTitle : "No media"
+                    color: PixTheme.colors.grey
+                    font.pixelSize: PixTheme.font.pixelSize.larger
+                    elide: Text.ElideRight
+                    width: Math.min(implicitWidth, 200)
+                }
+            }
+
+            PixelBarPopup {
+                hoverTarget: mediaArea
+                contentMargin: 14
+                PixMediaPopup {}
+            }
+        }
     }
 }

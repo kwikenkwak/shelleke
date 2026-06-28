@@ -123,18 +123,21 @@ Scope {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "fullscreen"
                                 active: true
+                                tooltipText: "Fullscreen"
                                 onTriggered: Hyprland.dispatch("fullscreen")
                             }
                             PixControlButton {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "keyboard"
                                 active: GlobalStates.oskOpen
+                                tooltipText: "On-screen keyboard"
                                 onTriggered: GlobalStates.oskOpen = !GlobalStates.oskOpen
                             }
                             PixControlButton {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "sun"
                                 active: !PixTheme.dark   // sun "on" in light mode
+                                tooltipText: "Toggle dark mode"
                                 onTriggered: {
                                     const mode = Appearance.m3colors.darkmode ? "light" : "dark";
                                     Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode ${mode} --noswitch`);
@@ -149,6 +152,7 @@ Scope {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "sliders"
                                 active: GlobalStates.sidebarRightOpen
+                                tooltipText: "Quick settings"
                                 onTriggered: GlobalStates.sidebarRightOpen = true
                             }
                             PixBatteryChip {

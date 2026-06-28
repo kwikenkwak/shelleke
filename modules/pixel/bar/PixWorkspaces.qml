@@ -20,7 +20,7 @@ import qs.modules.pixel.widgets
 Item {
     id: root
     readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.QsWindow.window?.screen)
-    readonly property int workspacesShown: 6
+    readonly property int workspacesShown: 10
     readonly property int activeId: monitor?.activeWorkspace?.id ?? 1
     readonly property int workspaceGroup: Math.floor((activeId - 1) / workspacesShown)
 
