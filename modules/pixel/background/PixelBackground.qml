@@ -83,7 +83,11 @@ Scope {
             Item {
                 id: stack
                 anchors.fill: parent
-                visible: false
+                // Must stay visible: a non-visible item doesn't render to its
+                // layer texture, which would leave LevelAdjust's source empty
+                // (the background went pure white). The opaque LevelAdjust on top
+                // fully covers it, so showing it underneath is harmless.
+                visible: true
                 layer.enabled: true
 
                 Image {
@@ -119,12 +123,15 @@ Scope {
             }
 
             // Identity in light mode; swapped output levels invert it in dark mode
-            // (black/grey on white -> white/grey on black). Tracks PixTheme.dark.
+            // (black on white -> white on black). Tracks PixTheme.dark.
+            // NOTE: outputs must be OPAQUE — an alpha-0 color like "#00000000"
+            // makes those pixels transparent (revealing the layer underneath)
+            // instead of black, which broke dark-mode inversion.
             LevelAdjust {
                 anchors.fill: parent
                 source: stack
-                minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
-                maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
+                minimumOutput: PixTheme.dark ? "#ffffff" : "#000000"
+                maximumOutput: PixTheme.dark ? "#000000" : "#ffffff"
             }
         }
     }
