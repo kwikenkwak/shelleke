@@ -38,8 +38,8 @@ Scope {
 
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
-        implicitWidth: panel.implicitWidth
-        implicitHeight: panel.implicitHeight
+        implicitWidth: contentLoader.implicitWidth
+        implicitHeight: contentLoader.implicitHeight
         color: "transparent"
         WlrLayershell.namespace: "quickshell:pixelMediaControls"
 
@@ -87,7 +87,13 @@ Scope {
 
                 ColumnLayout {
                     id: contentColumn
-                    anchors.fill: parent
+                    // Anchor top/left/right (NOT fill) so the column is sized by
+                    // its content; the panel's implicitHeight derives from it
+                    // without a binding loop (the bug that collapsed the panel to
+                    // just the album art).
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     anchors.margins: 16
                     spacing: 14
 
