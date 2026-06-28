@@ -19,14 +19,15 @@ import Quickshell.Hyprland
  * a second. The frame is black-on-white and inverted in dark mode so it tracks
  * the theme.
  *
- * To avoid the flash that a single reloading Image produces, frames are
- * double-buffered: the next frame is loaded into the hidden back image and only
- * cross-faded in once it is fully Ready — the visible image is never blanked.
- * The renderer runs as one process for all monitors, managed by quickshell.
+ * Flicker-free updates via double buffering with an INSTANT swap (no fade): the
+ * next frame is loaded into the hidden buffer while the current one stays shown;
+ * only once the new frame is fully Ready do we flip visibility to it. The shown
+ * surface is therefore never blanked, so there is no flash.
  */
 Scope {
     id: root
     readonly property string framePath: "/tmp/quickshell/pixel-bg/frame.png"
+    readonly property string frameUrl: "file://" + framePath
     readonly property int frameWidth: 480
     readonly property int frameHeight: 270
 
@@ -60,26 +61,25 @@ Scope {
             }
             color: PixTheme.colors.bg
 
-            // The image currently shown. The other one is the hidden back buffer.
-            property Image frontImage: imgA
-            function backImage(): Image {
-                return frontImage === imgA ? imgB : imgA;
-            }
+            // Whichever image is currently shown. The other is the back buffer.
+            property Image front: imgA
 
-            // Each tick, (re)load the back buffer. It's hidden, so its transient
-            // blanking never shows; we swap to it only once it's Ready.
+            // Prime the first frame so something appears immediately.
+            Component.onCompleted: imgA.source = root.frameUrl
+
+            // Each tick: reload the (hidden) back buffer. The visible front frame
+            // stays up untouched; we flip to the back buffer only once it's Ready.
             Timer {
                 interval: 500
                 running: true
                 repeat: true
                 onTriggered: {
-                    const b = bgRoot.backImage();
-                    b.source = "";
-                    b.source = "file://" + root.framePath;
+                    const back = bgRoot.front === imgA ? imgB : imgA;
+                    back.source = "";            // force a re-read of the same path
+                    back.source = root.frameUrl;
                 }
             }
 
-            // Composited (cross-faded) frame stack, fed into the dark-mode inverter.
             Item {
                 id: stack
                 anchors.fill: parent
@@ -94,14 +94,11 @@ Scope {
                     mipmap: false
                     asynchronous: true
                     fillMode: Image.PreserveAspectCrop
-                    opacity: bgRoot.frontImage === imgA ? 1 : 0
-                    Behavior on opacity {
-                        NumberAnimation { duration: 220; easing.type: Easing.InOutQuad }
-                    }
+                    visible: bgRoot.front === imgA
                     onStatusChanged: {
-                        // A freshly-loaded back buffer becomes the new front.
-                        if (status === Image.Ready && bgRoot.frontImage !== imgA)
-                            bgRoot.frontImage = imgA;
+                        // Back buffer finished loading → swap to it instantly.
+                        if (status === Image.Ready && bgRoot.front !== imgA)
+                            bgRoot.front = imgA;
                     }
                 }
 
@@ -113,13 +110,10 @@ Scope {
                     mipmap: false
                     asynchronous: true
                     fillMode: Image.PreserveAspectCrop
-                    opacity: bgRoot.frontImage === imgB ? 1 : 0
-                    Behavior on opacity {
-                        NumberAnimation { duration: 220; easing.type: Easing.InOutQuad }
-                    }
+                    visible: bgRoot.front === imgB
                     onStatusChanged: {
-                        if (status === Image.Ready && bgRoot.frontImage !== imgB)
-                            bgRoot.frontImage = imgB;
+                        if (status === Image.Ready && bgRoot.front !== imgB)
+                            bgRoot.front = imgB;
                     }
                 }
             }
