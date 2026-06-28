@@ -170,11 +170,20 @@ Scope {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        // Controls: fullscreen, OSK, dark mode, battery chip
+                        // Controls: screenshot, fullscreen, OSK, dark mode, quick settings, battery
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 13
 
+                            // Region screenshot (same IPC as the ii bar's snip button).
+                            PixControlButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: "crop"
+                                active: true
+                                visible: Config.options.bar.utilButtons.showScreenSnip
+                                tooltipText: "Screenshot region"
+                                onTriggered: Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "region", "screenshot"])
+                            }
                             PixControlButton {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "fullscreen"
