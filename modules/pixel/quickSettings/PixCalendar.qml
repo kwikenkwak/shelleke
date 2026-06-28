@@ -138,7 +138,7 @@ Column {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: miniBtn.modelData.label
                             font.pixelSize: PixTheme.font.pixelSize.smallest
-                            letterSpacing: 0
+                            font.letterSpacing: 0
                             color: miniBtn.contentColor
                         }
                     }
