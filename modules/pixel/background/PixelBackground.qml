@@ -33,6 +33,10 @@ Scope {
     readonly property int segH: 270
     readonly property int tiles: 3
     readonly property real speed: 22 // screen px per second (gentle drift)
+    // Random world offset, generated once per shell startup and shared by every
+    // segment/monitor — so each launch shows a different landscape while tiles
+    // still abut seamlessly (they all pass the same seed to the renderer).
+    readonly property int worldSeed: Math.floor(Math.random() * 2000000000)
 
     Variants {
         model: Quickshell.screens
@@ -78,9 +82,17 @@ Scope {
                 }
             }
 
+            // A layer-shell surface usually has width 0 at Component.onCompleted
+            // (the compositor configures its size a moment later). Start the
+            // scroll as soon as a real width arrives, so motion begins promptly
+            // instead of waiting/never starting.
+            function startScroll(): void {
+                if (bgRoot.screenW > 0 && !scrollAnim.running)
+                    scrollAnim.restart();
+            }
+            onScreenWChanged: startScroll()
             Component.onCompleted: {
-                if (bgRoot.screenW > 0)
-                    scrollAnim.start();
+                startScroll();
                 recycleTimer.start();
             }
 
@@ -140,7 +152,7 @@ Scope {
 
                         function render(): void {
                             gen.running = false;
-                            gen.command = [root.bin, "segment", String(tile.seg), tile.file, String(root.segW), String(root.segH)];
+                            gen.command = [root.bin, "segment", String(tile.seg), tile.file, String(root.segW), String(root.segH), String(root.worldSeed)];
                             gen.running = true;
                         }
                         function recycle(): void {

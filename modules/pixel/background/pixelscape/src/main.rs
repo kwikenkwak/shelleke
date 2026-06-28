@@ -112,11 +112,17 @@ fn main() {
         );
         let width: u32 = args.get(4).and_then(|s| s.parse().ok()).unwrap_or(480);
         let height: u32 = args.get(5).and_then(|s| s.parse().ok()).unwrap_or(270);
+        // Optional per-session seed: a shared world-X offset so every launch
+        // shows a different stretch of the (infinite, deterministic) world. All
+        // segments in a session pass the SAME seed, so they still tile seamlessly.
+        // Multiplied by a large stride so nearby seeds look very different.
+        let seed: i64 = args.get(6).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let world_x0 = seed.wrapping_mul(7_919).wrapping_add(k * width as i64);
         if let Some(parent) = out.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
         let lib = sprites::Library::build();
-        let gray = render_frame(k * width as i64, width, height, &lib);
+        let gray = render_frame(world_x0, width, height, &lib);
         atomic_write(&out, gray);
         return;
     }
