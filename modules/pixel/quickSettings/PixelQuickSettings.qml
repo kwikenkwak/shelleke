@@ -11,95 +11,87 @@ import qs.modules.pixel.common
 /**
  * Right-side Quick Settings panel for the pixel family.
  *
- * Mirrors WaffleActionCenter's structure (Loader -> PanelWindow gated by a
- * GlobalStates open flag + HyprlandFocusGrab), but anchored top + right and
- * styled monochrome. Gated by GlobalStates.sidebarRightOpen.
+ * Structure mirrors the KNOWN-WORKING `modules/ii/sidebarRight/SidebarRight.qml`
+ * EXACTLY: the PanelWindow is always instantiated and toggled with `visible`
+ * (NOT created on-demand by a Loader). A Loader-created surface is mapped at the
+ * same instant the focus grab activates, so the grab never attaches and the
+ * panel can't be clicked-out closed — keeping the window alive fixes that.
+ *
+ * Gated by GlobalStates.sidebarRightOpen. Anchored top+bottom+right (full height).
  */
 Scope {
     id: root
 
-    function toggleOpen() {
-        GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-    }
+    PanelWindow {
+        id: sidebarRoot
+        visible: GlobalStates.sidebarRightOpen
 
-    Connections {
-        target: GlobalStates
-
-        function onSidebarRightOpenChanged() {
-            if (GlobalStates.sidebarRightOpen)
-                panelLoader.active = true;
+        function hide() {
+            GlobalStates.sidebarRightOpen = false;
         }
-    }
 
-    Loader {
-        id: panelLoader
-        active: GlobalStates.sidebarRightOpen
-        sourceComponent: PanelWindow {
-            id: panelWindow
-            exclusiveZone: 0
-            WlrLayershell.namespace: "quickshell:pixelQuickSettings"
-            // Hyprland 0.49: focus is always exclusive and setting
-            // WlrLayershell.keyboardFocus breaks the mouse focus grab (the panel
-            // never receives `cleared`, so it can't be clicked-out closed and it
-            // swallows global keybinds). Leave it unset, matching the
-            // KNOWN-WORKING ii sidebarRight.
-            color: "transparent"
+        exclusiveZone: 0
+        implicitWidth: 360 // matches PixelQuickSettingsContent's fixed width
+        WlrLayershell.namespace: "quickshell:pixelQuickSettings"
+        // Hyprland 0.49: focus is always exclusive and setting
+        // WlrLayershell.keyboardFocus breaks the mouse focus grab. Leave it unset.
+        color: "transparent"
 
-            // Full screen height: anchor top + bottom + right so the panel fills
-            // the entire right edge. Width is content-driven (360px).
-            anchors {
-                top: true
-                bottom: true
-                right: true
+        anchors {
+            top: true
+            right: true
+            bottom: true
+        }
+
+        HyprlandFocusGrab {
+            id: grab
+            windows: [sidebarRoot]
+            active: GlobalStates.sidebarRightOpen
+            onCleared: () => {
+                if (!active)
+                    sidebarRoot.hide();
             }
+        }
 
-            implicitWidth: content.implicitWidth
+        Loader {
+            id: contentLoader
+            active: GlobalStates.sidebarRightOpen || (Config?.options.sidebar.keepRightSidebarLoaded ?? false)
+            anchors.fill: parent
 
-            // Click-outside-to-close. `active` tracks the open flag; guarding
-            // onCleared with `if (!active)` suppresses the spurious clear that
-            // fires during activation, matching the ii sidebarRight pattern.
-            HyprlandFocusGrab {
-                id: focusGrab
-                windows: [panelWindow]
-                active: GlobalStates.sidebarRightOpen
-                onCleared: () => {
-                    if (!active)
-                        GlobalStates.sidebarRightOpen = false;
+            focus: GlobalStates.sidebarRightOpen
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Escape) {
+                    sidebarRoot.hide();
+                    event.accepted = true;
                 }
             }
 
-            PixelQuickSettingsContent {
-                id: content
-                // Window height is driven by the screen (top+bottom anchors), so
-                // give the content the full window height to fill.
-                anchors.fill: parent
-
-                // Escape closes the panel. focus follows the open flag so the
-                // key handler is live whenever the panel is shown, scoped to the
-                // content item rather than grabbing keyboard focus globally.
-                focus: GlobalStates.sidebarRightOpen
-                Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Escape) {
-                        GlobalStates.sidebarRightOpen = false;
-                        event.accepted = true;
-                    }
-                }
-            }
+            sourceComponent: PixelQuickSettingsContent {}
         }
     }
 
     IpcHandler {
         target: "pixelSidebar"
 
-        function toggle() {
-            root.toggleOpen();
+        function toggle(): void {
+            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+        }
+        function close(): void {
+            GlobalStates.sidebarRightOpen = false;
+        }
+        function open(): void {
+            GlobalStates.sidebarRightOpen = true;
         }
     }
 
     GlobalShortcut {
         name: "pixelSidebarToggle"
         description: "Toggles the pixel quick-settings sidebar on press"
-
-        onPressed: root.toggleOpen()
+        onPressed: GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+    }
+    GlobalShortcut {
+        name: "pixelSidebarClose"
+        description: "Closes the pixel quick-settings sidebar on press"
+        onPressed: GlobalStates.sidebarRightOpen = false
     }
 }

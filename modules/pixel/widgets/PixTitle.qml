@@ -10,6 +10,7 @@ Text {
     font {
         family: PixTheme.fontTitle
         pixelSize: PixTheme.font.pixelSize.title
+        weight: Font.Bold
         letterSpacing: 1
         hintingPreference: Font.PreferFullHinting
     }

@@ -1,15 +1,21 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import qs.services
 import qs.modules.pixel.common
+import qs.modules.pixel.widgets
 
 /**
- * Pixel workspaces: a row of small squares with three distinct states.
- *   - empty (no windows):  hollow 2px-bordered square, dimmed to grey.
- *   - occupied (windows, not focused):  solid filled fg square.
- *   - current (focused):  elongated filled fg pill, ~double width.
+ * Pixel workspaces: a row of square cells, each holding the icon of the
+ * representative app running on that workspace. Three distinct states:
+ *   - empty (no windows):  hollow grey-bordered cell with a faint number, no icon.
+ *   - occupied (windows, not focused):  fg-bordered cell containing the
+ *     grayscale app icon (via PixAppIcon, so it contributes no color).
+ *   - current (focused):  fg-FILLED cell with a heavier border and the icon,
+ *     clearly dominant over the merely-occupied cells.
  * Clicking a cell switches to that workspace; scrolling cycles workspaces.
- * Occupancy logic mirrors the ii bar.
+ * Occupancy/focus logic mirrors the ii bar; window->workspace->icon mapping
+ * uses HyprlandData (hyprctl clients) like ii's Workspaces.qml.
  */
 Item {
     id: root
@@ -18,9 +24,9 @@ Item {
     readonly property int activeId: monitor?.activeWorkspace?.id ?? 1
     readonly property int workspaceGroup: Math.floor((activeId - 1) / workspacesShown)
 
-    property int square: 9
-    property int activeWidth: 20   // elongated pill width for the focused workspace
-    property int gap: 7
+    property int cellSize: 24
+    property int iconSize: 18
+    property int gap: 6
 
     property list<bool> workspaceOccupied: []
 
@@ -29,6 +35,15 @@ Item {
     function updateWorkspaceOccupied() {
         workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) =>
             Hyprland.workspaces.values.some(ws => ws.id === root.baseId(i)));
+    }
+
+    // Representative app icon name for a workspace, or "" when empty.
+    // Uses the biggest window on the workspace (HyprlandData/hyprctl clients),
+    // matching the ii bar's window->workspace->class->icon mapping.
+    function iconForWorkspace(wsId) {
+        const win = HyprlandData.biggestWindowForWorkspace(wsId);
+        if (!win || !win.class) return "";
+        return AppSearch.guessIcon(win.class);
     }
 
     Component.onCompleted: updateWorkspaceOccupied()
@@ -41,9 +56,14 @@ Item {
         target: Hyprland
         function onFocusedWorkspaceChanged() { root.updateWorkspaceOccupied(); }
     }
+    // Window list changes (open/close/move) should refresh the per-cell icons.
+    Connections {
+        target: HyprlandData
+        function onWindowListChanged() { root.updateWorkspaceOccupied(); }
+    }
 
     implicitWidth: row.implicitWidth
-    implicitHeight: 32
+    implicitHeight: cellSize
 
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -67,31 +87,62 @@ Item {
                 readonly property int wsId: root.baseId(index)
                 readonly property bool active: root.activeId === wsId
                 readonly property bool occupied: root.workspaceOccupied[index] ?? false
+                // Recomputed whenever occupancy/group/window-list updates.
+                readonly property string iconName:
+                    (root.workspaceOccupied, cell.occupied) ? root.iconForWorkspace(cell.wsId) : ""
 
-                width: active ? root.activeWidth : root.square
-                height: root.square
+                width: root.cellSize
+                height: root.cellSize
                 anchors.verticalCenter: parent.verticalCenter
 
-                Behavior on width {
-                    NumberAnimation {
-                        duration: PixTheme.animation.duration
-                        easing.type: PixTheme.animation.type
+                // Keep the fill transparent in all states so the grayscale app
+                // icon stays visible (a filled fg cell would hide a dark icon).
+                // Distinguish states by border instead:
+                //   current  = heavy 3px fg border + inset double border
+                //   occupied = 2px fg border
+                //   empty    = 2px dim grey border
+                Rectangle {
+                    id: cellBox
+                    anchors.fill: parent
+                    antialiasing: false
+                    color: "transparent"
+                    border.width: cell.active ? 3 : 2
+                    border.color: cell.active ? PixTheme.colors.fg
+                        : (cell.occupied ? PixTheme.colors.fg : PixTheme.colors.grey)
+
+                    // Inner border (double-border "selected" cue for the focused ws).
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 3
+                        visible: cell.active
+                        antialiasing: false
+                        color: "transparent"
+                        border.width: 1
+                        border.color: PixTheme.colors.fg
                     }
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    antialiasing: false
-                    // current = filled fg pill; occupied = filled fg square;
-                    // empty = hollow grey bordered square.
-                    color: (cell.active || cell.occupied) ? PixTheme.colors.fg : "transparent"
-                    border.width: (cell.active || cell.occupied) ? 0 : 2
-                    border.color: cell.occupied ? PixTheme.colors.fg : PixTheme.colors.grey
+                // App icon for occupied workspaces. PixAppIcon is grayscale so
+                // it stays monochrome and visible on the transparent cell.
+                PixAppIcon {
+                    anchors.centerIn: parent
+                    visible: cell.iconName !== ""
+                    icon: cell.iconName
+                    size: root.iconSize
+                    pixelResolution: 16
+                }
+
+                // Faint workspace number for empty cells only.
+                PixText {
+                    anchors.centerIn: parent
+                    visible: !cell.occupied
+                    text: cell.wsId
+                    font.pixelSize: PixTheme.font.pixelSize.smallest
+                    color: PixTheme.colors.grey2
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -3   // easier hit target
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Hyprland.dispatch(`workspace ${cell.wsId}`)
                 }

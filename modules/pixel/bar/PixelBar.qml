@@ -91,19 +91,12 @@ Scope {
                         }
                     }
 
-                    // CENTER cluster: app chip + workspaces (truly centered)
-                    Row {
+                    // CENTER cluster: workspaces (app icons now live inside the
+                    // workspace cells, so the standalone app chip is gone).
+                    PixWorkspaces {
                         id: centerCluster
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 10
-
-                        PixAppChip {
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        PixWorkspaces {
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
                     }
 
                     // RIGHT cluster: clock, controls, tray

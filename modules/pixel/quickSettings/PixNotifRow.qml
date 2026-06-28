@@ -19,9 +19,9 @@ Item {
     property var group: null
 
     readonly property var notifications: group?.notifications ?? []
-    // Newest first for display.
-    readonly property var orderedNotifications: [...notifications].reverse()
-    readonly property var latest: orderedNotifications.length > 0 ? orderedNotifications[0] : null
+    // Newest first for display. Index access (not spread) mirrors ii's proven path.
+    readonly property var orderedNotifications: notifications.slice().reverse()
+    readonly property var latest: notifications.length ? notifications[notifications.length - 1] : null
     readonly property string appName: group?.appName ?? ""
     readonly property int count: notifications.length
     readonly property bool expandable: count > 1
@@ -137,27 +137,52 @@ Item {
                 }
             }
 
-            // Collapsed preview: latest summary + body.
-            Column {
+            // Collapsed preview: latest summary + body. The MouseArea must NOT
+            // be anchored inside a Column (that breaks the positioner and the
+            // text stops laying out / goes blank), so the text lives in its own
+            // Column and the click target fills the wrapping Item alongside it.
+            Item {
+                id: preview
                 width: parent.width
-                spacing: 1
+                height: previewCol.implicitHeight
                 visible: !root.expanded
 
-                PixText {
-                    width: parent.width
-                    text: root.latest?.summary ?? ""
-                    font.bold: true
-                    font.pixelSize: PixTheme.font.pixelSize.normal
-                    elide: Text.ElideRight
-                    visible: text.length > 0
+                // Primary line: prefer the summary, fall back to the body so the
+                // collapsed row is never blank when there is any content.
+                readonly property string primary: {
+                    const s = root.latest?.summary ?? "";
+                    return s.length > 0 ? s : (root.latest?.body ?? "");
                 }
-                PixText {
-                    width: parent.width
-                    text: root.latest?.body ?? ""
-                    color: PixTheme.colors.grey
-                    font.pixelSize: PixTheme.font.pixelSize.small
-                    elide: Text.ElideRight
-                    visible: text.length > 0
+                // Secondary line: the body, but only when it isn't already shown
+                // as the primary line.
+                readonly property string secondary: {
+                    const s = root.latest?.summary ?? "";
+                    const b = root.latest?.body ?? "";
+                    return (s.length > 0 && b.length > 0) ? b : "";
+                }
+
+                Column {
+                    id: previewCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: 1
+
+                    PixText {
+                        width: parent.width
+                        text: preview.primary
+                        font.bold: true
+                        font.pixelSize: PixTheme.font.pixelSize.normal
+                        elide: Text.ElideRight
+                        visible: text.length > 0
+                    }
+                    PixText {
+                        width: parent.width
+                        text: preview.secondary
+                        color: PixTheme.colors.grey
+                        font.pixelSize: PixTheme.font.pixelSize.small
+                        elide: Text.ElideRight
+                        visible: text.length > 0
+                    }
                 }
 
                 MouseArea {

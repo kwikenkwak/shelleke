@@ -68,14 +68,14 @@ Singleton {
 
     readonly property QtObject font: QtObject {
         readonly property QtObject pixelSize: QtObject {
-            readonly property int smallest: 10
-            readonly property int smaller: 11
-            readonly property int small: 12
-            readonly property int normal: 13
-            readonly property int large: 14
-            readonly property int larger: 15
+            readonly property int smallest: 12
+            readonly property int smaller: 12
+            readonly property int small: 14
+            readonly property int normal: 14
+            readonly property int large: 16
+            readonly property int larger: 16
             readonly property int title: 16
-            readonly property int huge: 20
+            readonly property int huge: 24
         }
     }
 
