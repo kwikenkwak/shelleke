@@ -11,17 +11,18 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 
 /**
- * Auto-playing black & white landscape background for the pixel family.
+ * Auto-playing black & white top-down landscape background for the pixel family.
  *
- * Instead of a wallpaper, a separate Rust/Bevy process
- * (modules/pixel/background/pixelscape) headlessly renders a scrolling
- * monochrome scene — rolling terrain with mountains, forests, villages and
- * castles joined by roads — and writes a PNG frame ~twice a second. quickshell
- * reloads that frame and upscales it nearest-neighbor (chunky pixels). The
- * frame is black-on-white; it is inverted in dark mode so it tracks the theme.
+ * A separate Rust/Bevy process (modules/pixel/background/pixelscape) headlessly
+ * renders a scrolling top-down monochrome map (terrain, mountains, forests,
+ * villages, castles joined by roads, with birds) and writes a PNG frame ~twice
+ * a second. The frame is black-on-white and inverted in dark mode so it tracks
+ * the theme.
  *
- * The renderer runs as one process for all monitors (a single shared frame),
- * managed by quickshell so it dies with the shell / on family switch.
+ * To avoid the flash that a single reloading Image produces, frames are
+ * double-buffered: the next frame is loaded into the hidden back image and only
+ * cross-faded in once it is fully Ready — the visible image is never blanked.
+ * The renderer runs as one process for all monitors, managed by quickshell.
  */
 Scope {
     id: root
@@ -59,46 +60,77 @@ Scope {
             }
             color: PixTheme.colors.bg
 
-            // Reload the frame ~every half second (the renderer's tick rate).
-            // Clearing then re-setting the source forces a re-read of the file;
-            // a "?query" cache-bust isn't reliable for file:// URLs.
+            // The image currently shown. The other one is the hidden back buffer.
+            property Image frontImage: imgA
+            function backImage(): Image {
+                return frontImage === imgA ? imgB : imgA;
+            }
+
+            // Each tick, (re)load the back buffer. It's hidden, so its transient
+            // blanking never shows; we swap to it only once it's Ready.
             Timer {
                 interval: 500
                 running: true
                 repeat: true
                 onTriggered: {
-                    frame.source = "";
-                    frame.source = "file://" + root.framePath;
+                    const b = bgRoot.backImage();
+                    b.source = "";
+                    b.source = "file://" + root.framePath;
                 }
             }
 
+            // Composited (cross-faded) frame stack, fed into the dark-mode inverter.
             Item {
+                id: stack
                 anchors.fill: parent
-                clip: true
+                visible: false
+                layer.enabled: true
 
                 Image {
-                    id: frame
+                    id: imgA
                     anchors.fill: parent
-                    visible: false
                     cache: false
                     smooth: false
                     mipmap: false
                     asynchronous: true
                     fillMode: Image.PreserveAspectCrop
-                    // Re-read each tick via the Timer above (atomic writes on the
-                    // renderer side mean we never read a torn frame).
-                    source: "file://" + root.framePath
+                    opacity: bgRoot.frontImage === imgA ? 1 : 0
+                    Behavior on opacity {
+                        NumberAnimation { duration: 220; easing.type: Easing.InOutQuad }
+                    }
+                    onStatusChanged: {
+                        // A freshly-loaded back buffer becomes the new front.
+                        if (status === Image.Ready && bgRoot.frontImage !== imgA)
+                            bgRoot.frontImage = imgA;
+                    }
                 }
 
-                // The frame is already black/white; invert it in dark mode so it
-                // matches the theme (black/grey on white -> white/grey on black).
-                LevelAdjust {
+                Image {
+                    id: imgB
                     anchors.fill: parent
-                    source: frame
-                    visible: frame.status === Image.Ready
-                    minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
-                    maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
+                    cache: false
+                    smooth: false
+                    mipmap: false
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    opacity: bgRoot.frontImage === imgB ? 1 : 0
+                    Behavior on opacity {
+                        NumberAnimation { duration: 220; easing.type: Easing.InOutQuad }
+                    }
+                    onStatusChanged: {
+                        if (status === Image.Ready && bgRoot.frontImage !== imgB)
+                            bgRoot.frontImage = imgB;
+                    }
                 }
+            }
+
+            // Identity in light mode; swapped output levels invert it in dark mode
+            // (black/grey on white -> white/grey on black). Tracks PixTheme.dark.
+            LevelAdjust {
+                anchors.fill: parent
+                source: stack
+                minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
+                maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
             }
         }
     }
