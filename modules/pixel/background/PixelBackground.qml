@@ -60,12 +60,16 @@ Scope {
             color: PixTheme.colors.bg
 
             // Reload the frame ~every half second (the renderer's tick rate).
-            property int frameTick: 0
+            // Clearing then re-setting the source forces a re-read of the file;
+            // a "?query" cache-bust isn't reliable for file:// URLs.
             Timer {
                 interval: 500
                 running: true
                 repeat: true
-                onTriggered: bgRoot.frameTick++
+                onTriggered: {
+                    frame.source = "";
+                    frame.source = "file://" + root.framePath;
+                }
             }
 
             Item {
@@ -81,9 +85,9 @@ Scope {
                     mipmap: false
                     asynchronous: true
                     fillMode: Image.PreserveAspectCrop
-                    // Cache-busting query forces a reload each tick (atomic writes
-                    // on the renderer side mean we never read a torn frame).
-                    source: "file://" + root.framePath + "?" + bgRoot.frameTick
+                    // Re-read each tick via the Timer above (atomic writes on the
+                    // renderer side mean we never read a torn frame).
+                    source: "file://" + root.framePath
                 }
 
                 // The frame is already black/white; invert it in dark mode so it
