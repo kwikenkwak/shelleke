@@ -66,6 +66,8 @@ ShellRoot {
         Wallpapers.load()
         Updates.load()
         LyricsService.load() // Fetch lyrics on every track change, even with the popup closed
+        if (Config.ready)
+            root.reconcilePanelFamily()
     }
 
     // Load enabled stuff
@@ -129,6 +131,22 @@ ShellRoot {
         const nextIndex = (currentIndex + 1) % families.length
         Config.options.panelFamily = families[nextIndex]
         Config.options.enabledPanels = panelFamilies[Config.options.panelFamily]
+    }
+
+    // Keep the saved enabledPanels in sync with the current family's definition.
+    // Without this, panels added to a family (e.g. pixelMediaControls) never load
+    // until the user re-cycles, because enabledPanels is persisted in the config.
+    function reconcilePanelFamily() {
+        const fam = Config.options.panelFamily
+        if (families.includes(fam) && JSON.stringify(Config.options.enabledPanels) !== JSON.stringify(panelFamilies[fam]))
+            Config.options.enabledPanels = panelFamilies[fam]
+    }
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (Config.ready)
+                root.reconcilePanelFamily()
+        }
     }
 
     IpcHandler {

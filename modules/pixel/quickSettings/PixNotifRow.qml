@@ -55,6 +55,7 @@ Item {
                 size: 22
                 pixelResolution: 16
                 icon: root.group?.appIcon ?? ""
+                fallbackIcon: "message" // notifications without a theme icon
             }
         }
 
@@ -72,7 +73,7 @@ Item {
                     id: titleText
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.appName
+                    text: root.appName !== "" ? root.appName : "Notification"
                     font.bold: true
                     font.pixelSize: PixTheme.font.pixelSize.small
                     elide: Text.ElideRight

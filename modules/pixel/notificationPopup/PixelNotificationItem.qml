@@ -91,6 +91,7 @@ PixPanel {
                 anchors.centerIn: parent
                 size: 24
                 icon: root.appIcon
+                fallbackIcon: "message"
             }
         }
 
