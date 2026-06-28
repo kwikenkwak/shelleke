@@ -57,8 +57,14 @@ Scope {
             }
             color: PixTheme.colors.bg
 
-            readonly property real screenW: width
-            readonly property real screenH: height
+            // Use the monitor's geometry (known synchronously from the ShellScreen)
+            // rather than the PanelWindow's own width/height, which are the wlr
+            // layer-surface size and can stay 0 until the compositor configures
+            // the surface — on a quick reload that left tiles 0-sized (white
+            // screen) and stopped the scroll from starting. Fall back to the
+            // surface size only if the screen geometry is somehow unavailable.
+            readonly property real screenW: (screen && screen.width > 0) ? screen.width : width
+            readonly property real screenH: (screen && screen.height > 0) ? screen.height : height
 
             // Monotonic scroll offset (screen px). `phase` animates one screen
             // width then re-bases into `baseOffset`, so motion is continuous and
