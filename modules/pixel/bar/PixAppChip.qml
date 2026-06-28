@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.services
+import qs.modules.common
 import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 

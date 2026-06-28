@@ -49,15 +49,36 @@ Scope {
             implicitWidth: content.implicitWidth
             implicitHeight: content.implicitHeight
 
+            // Click-outside-to-close. `active` tracks the open flag rather than
+            // being hardcoded `true`: if it were always on, activating the grab
+            // while the triggering click is still on the *bar* surface (outside
+            // [panelWindow]) makes the compositor emit `cleared` immediately and
+            // the panel would close the instant it opens. Guarding onCleared with
+            // `if (!active)` further suppresses that spurious clear that fires
+            // during activation, matching the ii sidebarRight pattern.
             HyprlandFocusGrab {
                 id: focusGrab
-                active: true
                 windows: [panelWindow]
-                onCleared: GlobalStates.sidebarRightOpen = false
+                active: GlobalStates.sidebarRightOpen
+                onCleared: () => {
+                    if (!active)
+                        GlobalStates.sidebarRightOpen = false;
+                }
             }
 
             PixelQuickSettingsContent {
                 id: content
+                anchors.fill: parent
+
+                // Escape closes the panel. focus follows the open flag so the
+                // key handler is live whenever the panel is shown.
+                focus: GlobalStates.sidebarRightOpen
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Escape) {
+                        GlobalStates.sidebarRightOpen = false;
+                        event.accepted = true;
+                    }
+                }
             }
         }
     }

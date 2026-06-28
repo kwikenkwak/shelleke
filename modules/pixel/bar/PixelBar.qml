@@ -147,6 +147,17 @@ Scope {
                                     Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode ${mode} --noswitch`);
                                 }
                             }
+                            // Dedicated, obvious quick-settings entry point.
+                            // Open-only: closing is handled by the panel's focus
+                            // grab (outside-click) and Escape. A toggle here would
+                            // race the grab's onCleared (which closes on the same
+                            // outside click) and immediately re-open the panel.
+                            PixControlButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: "sliders"
+                                active: GlobalStates.sidebarRightOpen
+                                onTriggered: GlobalStates.sidebarRightOpen = true
+                            }
                             PixBatteryChip {
                                 anchors.verticalCenter: parent.verticalCenter
                                 onActivated: GlobalStates.sidebarRightOpen = true

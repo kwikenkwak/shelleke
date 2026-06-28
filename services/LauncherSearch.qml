@@ -37,13 +37,11 @@ Singleton {
             while ((match = regex.exec(content)) !== null) {
                 let fullPath = decodeURIComponent(match[1]);
                 let fileName = fullPath.split('/').pop();
-                
-                const url = Qt.resolvedUrl(fullPath).exists()
-                console.info(url)
-                console.info(Object.entries(url))
-                console.info(typeof url)
-                if (!url) continue
-                // Avoid duplicates and filter out non-existent files if possible
+
+                // Note: QML has no synchronous file-existence primitive here, so we
+                // trust the XBEL recent-files list as the source of truth. Stale entries
+                // (deleted files) are harmless: opening them is a no-op.
+                // Avoid duplicates
                 if (files.some(f => f.name === fileName)) {
                     const file = files.find(f => f.name === fileName);
                     file.name = fileName;
@@ -58,7 +56,7 @@ Singleton {
             }
             return files.reverse()
         } catch (e) {
-            console.error("FUCK:",e);
+            console.warn("LauncherSearch:", e);
             return [];
         }
     }
@@ -379,7 +377,6 @@ Singleton {
             })
             .map(r => {
                 const file = r.obj;
-                console.log(file);
                 return resultComp.createObject(null, {
                     type: Translation.tr("Recent File"),
                     name: file.name,
