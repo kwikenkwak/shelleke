@@ -54,8 +54,6 @@ struct Scene {
     /// World X offset of the left edge of the viewport. Grows each tick (the
     /// camera advances along +X, so the world pans leftward past the window).
     pan: i64,
-    /// Tick counter, used to animate birds.
-    tick: u64,
 }
 
 /// A 1-bit canvas: one byte per pixel, 0 = white (background), 1 = black.
@@ -98,6 +96,32 @@ impl Canvas {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+
+    // One-shot SEGMENT mode (used by quickshell's smooth scroller):
+    //   pixelscape segment <k> <OUT_PNG> <WIDTH> <HEIGHT>
+    // Renders exactly one seamless slice of the world — the segment whose left
+    // edge is world X = k*WIDTH — then exits. Adjacent segments tile perfectly
+    // because the scene is a pure function of pan, so quickshell can lay several
+    // side by side and slide them continuously.
+    if args.get(1).map(|s| s.as_str()) == Some("segment") {
+        let k: i64 = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let out = PathBuf::from(
+            args.get(3)
+                .cloned()
+                .unwrap_or_else(|| "/tmp/quickshell/pixel-bg/seg.png".to_string()),
+        );
+        let width: u32 = args.get(4).and_then(|s| s.parse().ok()).unwrap_or(480);
+        let height: u32 = args.get(5).and_then(|s| s.parse().ok()).unwrap_or(270);
+        if let Some(parent) = out.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let lib = sprites::Library::build();
+        let gray = render_frame(k * width as i64, width, height, &lib);
+        atomic_write(&out, gray);
+        return;
+    }
+
+    // Legacy continuous mode (self-scrolling single frame), kept for back-compat.
     let out = PathBuf::from(
         args.get(1)
             .cloned()
@@ -124,7 +148,6 @@ fn main() {
 
 fn advance(mut scene: ResMut<Scene>) {
     scene.pan = scene.pan.wrapping_add(PAN_PER_TICK);
-    scene.tick = scene.tick.wrapping_add(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -316,9 +339,25 @@ fn line(canvas: &mut Canvas, x0: i64, y0: i64, x1: i64, y1: i64) {
 // ---------------------------------------------------------------------------
 
 fn render(cfg: Res<Cfg>, scene: Res<Scene>, lib: Res<sprites::Library>) {
-    let (w, h) = (cfg.width, cfg.height);
-    let pan = scene.pan;
+    let gray = render_frame(scene.pan, cfg.width, cfg.height, &lib);
+    atomic_write(&cfg.out, gray);
+}
 
+/// Atomically write a grayscale PNG (tmp + rename) so readers never see a torn frame.
+fn atomic_write(out: &std::path::Path, gray: GrayImage) {
+    let tmp = out.with_extension("png.tmp");
+    if image::DynamicImage::ImageLuma8(gray)
+        .save_with_format(&tmp, image::ImageFormat::Png)
+        .is_ok()
+    {
+        let _ = std::fs::rename(&tmp, out);
+    }
+}
+
+/// Render one seamless frame whose viewport left edge is at world X = `pan`.
+/// Pure function of `pan` + the deterministic world, so segment k (pan = k*w)
+/// tiles perfectly with segment k+1.
+fn render_frame(pan: i64, w: u32, h: u32, lib: &sprites::Library) -> GrayImage {
     let mut canvas = Canvas::new(w, h);
 
     // Visible slot range (+ margin so features straddling edges still draw).
@@ -421,26 +460,26 @@ fn render(cfg: Res<Cfg>, scene: Res<Scene>, lib: Res<sprites::Library>) {
     draw_pass(&mut canvas, Kind::Castle);
     draw_pass(&mut canvas, Kind::Monastery);
 
-    // --- 3. Birds: a few sparse fliers drifting across the map. ---
-    const N_BIRDS: u64 = 5;
-    for b in 0..N_BIRDS {
-        let seed = hash(b as i64 * 131 + 7);
-        let span_x = (w + 40) as f64;
-        let span_y = (h + 40) as f64;
-        let vx = 1.0 + (seed % 3) as f64 * 0.7;
-        let vy = 0.6 + ((seed >> 8) % 3) as f64 * 0.5;
-        let phase_x = (seed % 1000) as f64;
-        let phase_y = ((seed >> 16) % 1000) as f64;
-        let t = scene.tick as f64;
-        let bx = ((phase_x + t * vx) % span_x) - 20.0;
-        let by = ((phase_y + t * vy) % span_y) - 20.0;
-        let idx = (seed as usize) % lib.bird.len();
-        canvas.blit(&lib.bird[idx], bx as i64, by as i64, (seed >> 3) & 1 == 1);
+    // --- 3. Birds: sparse fliers placed in WORLD space (deterministic), so they
+    // tile across segment boundaries and scroll smoothly with the map. ---
+    let bcell: i64 = 96;
+    let bx0 = (pan - 40).div_euclid(bcell);
+    let bx1 = (pan + w as i64 + 40).div_euclid(bcell);
+    for bk in bx0..=bx1 {
+        let hh = hash(bk.wrapping_mul(2731).wrapping_add(17));
+        if hh % 3 == 0 {
+            continue; // gaps so birds stay irregular/sparse
+        }
+        let wx = bk * bcell + (hh % bcell as u64) as i64;
+        let sky = ((h as u64) / 2).max(1);
+        let wy = 8 + ((hh >> 16) % sky) as i64; // upper-half sky
+        let sx = wx - pan;
+        let idx = (hh as usize) % lib.bird.len();
+        canvas.blit(&lib.bird[idx], sx, wy, (hh >> 3) & 1 == 1);
     }
 
-    // --- 4. Emit pure 1-bit PNG (only 0 and 255). The canvas is already 1-bit,
-    // so this is a direct map: black cell -> 0, else -> 255. No anti-aliasing
-    // ever entered the pipeline. Write atomically. ---
+    // --- 4. Emit pure 1-bit gray (only 0 and 255). The canvas is already 1-bit,
+    // so this is a direct map: black cell -> 0, else -> 255. No AA ever entered. ---
     let mut gray = GrayImage::new(w, h);
     for y in 0..h {
         for x in 0..w {
@@ -448,12 +487,5 @@ fn render(cfg: Res<Cfg>, scene: Res<Scene>, lib: Res<sprites::Library>) {
             gray.put_pixel(x, y, Luma([if on { 0 } else { 255 }]));
         }
     }
-
-    let tmp = cfg.out.with_extension("png.tmp");
-    if image::DynamicImage::ImageLuma8(gray)
-        .save_with_format(&tmp, image::ImageFormat::Png)
-        .is_ok()
-    {
-        let _ = std::fs::rename(&tmp, &cfg.out);
-    }
+    gray
 }

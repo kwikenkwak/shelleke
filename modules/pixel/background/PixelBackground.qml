@@ -13,34 +13,26 @@ import Quickshell.Hyprland
 /**
  * Auto-playing black & white top-down landscape background for the pixel family.
  *
- * A separate Rust/Bevy process (modules/pixel/background/pixelscape) headlessly
- * renders a scrolling top-down monochrome map (terrain, mountains, forests,
- * villages, castles joined by roads, with birds) and writes a PNG frame ~twice
- * a second. The frame is black-on-white and inverted in dark mode so it tracks
- * the theme.
+ * A separate Rust process (modules/pixel/background/pixelscape) renders the
+ * world one SEGMENT at a time on demand: `pixelscape segment <k> <out> <w> <h>`
+ * draws the slice whose left edge is world X = k*w. Adjacent segments tile
+ * seamlessly (the scene is a pure function of pan), so we lay several screen-wide
+ * image tiles side by side and slide them continuously to the left — true smooth
+ * scrolling, no per-frame file reload and no stutter. When a tile slides fully
+ * off the left it is recycled to the right with the next segment index and its
+ * PNG is re-rendered (off-screen, so no flash).
  *
- * Flicker-free updates via double buffering with an INSTANT swap (no fade): the
- * next frame is loaded into the hidden buffer while the current one stays shown;
- * only once the new frame is fully Ready do we flip visibility to it. The shown
- * surface is therefore never blanked, so there is no flash.
+ * Output is pure 1-bit black-on-white; it is inverted in dark mode (opaque
+ * LevelAdjust outputs) so it tracks the theme.
  */
 Scope {
     id: root
-    readonly property string framePath: "/tmp/quickshell/pixel-bg/frame.png"
-    readonly property string frameUrl: "file://" + framePath
-    readonly property int frameWidth: 480
-    readonly property int frameHeight: 270
-
-    Process {
-        id: pixelscape
-        running: true
-        command: [
-            Quickshell.shellPath("modules/pixel/background/pixelscape/target/release/pixelscape"),
-            root.framePath,
-            String(root.frameWidth),
-            String(root.frameHeight)
-        ]
-    }
+    readonly property string dir: "/tmp/quickshell/pixel-bg"
+    readonly property string bin: Quickshell.shellPath("modules/pixel/background/pixelscape/target/release/pixelscape")
+    readonly property int segW: 480
+    readonly property int segH: 270
+    readonly property int tiles: 3
+    readonly property real speed: 22 // screen px per second (gentle drift)
 
     Variants {
         model: Quickshell.screens
@@ -61,72 +53,108 @@ Scope {
             }
             color: PixTheme.colors.bg
 
-            // Whichever image is currently shown. The other is the back buffer.
-            property Image front: imgA
+            readonly property real screenW: width
+            readonly property real screenH: height
 
-            // Prime the first frame so something appears immediately.
-            Component.onCompleted: imgA.source = root.frameUrl
+            // Monotonic scroll offset (screen px). `phase` animates one screen
+            // width then re-bases into `baseOffset`, so motion is continuous and
+            // the per-leg animation duration stays a sane integer.
+            property real baseOffset: 0
+            property real phase: 0
+            readonly property real offsetPx: baseOffset + phase
 
-            // Each tick: reload the (hidden) back buffer. The visible front frame
-            // stays up untouched; we flip to the back buffer only once it's Ready.
+            NumberAnimation {
+                id: scrollAnim
+                target: bgRoot
+                property: "phase"
+                from: 0
+                to: bgRoot.screenW
+                duration: Math.max(1, Math.round(bgRoot.screenW / root.speed * 1000))
+                easing.type: Easing.Linear
+                onFinished: {
+                    bgRoot.baseOffset += bgRoot.screenW;
+                    bgRoot.phase = 0;
+                    scrollAnim.start();
+                }
+            }
+
+            Component.onCompleted: {
+                if (bgRoot.screenW > 0)
+                    scrollAnim.start();
+                recycleTimer.start();
+            }
+
+            // Recycle tiles that have fully exited the left edge.
             Timer {
-                interval: 500
-                running: true
+                id: recycleTimer
+                interval: 150
                 repeat: true
+                running: false
                 onTriggered: {
-                    const back = bgRoot.front === imgA ? imgB : imgA;
-                    back.source = "";            // force a re-read of the same path
-                    back.source = root.frameUrl;
+                    for (let i = 0; i < root.tiles; i++) {
+                        const t = rep.itemAt(i);
+                        if (t && (t.seg * bgRoot.screenW - bgRoot.offsetPx + bgRoot.screenW) < -2)
+                            t.recycle();
+                    }
                 }
             }
 
             Item {
                 id: stack
                 anchors.fill: parent
-                // Must stay visible: a non-visible item doesn't render to its
-                // layer texture, which would leave LevelAdjust's source empty
-                // (the background went pure white). The opaque LevelAdjust on top
-                // fully covers it, so showing it underneath is harmless.
-                visible: true
+                clip: true
                 layer.enabled: true
 
-                Image {
-                    id: imgA
-                    anchors.fill: parent
-                    cache: false
-                    smooth: false
-                    mipmap: false
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectCrop
-                    visible: bgRoot.front === imgA
-                    onStatusChanged: {
-                        // Back buffer finished loading → swap to it instantly.
-                        if (status === Image.Ready && bgRoot.front !== imgA)
-                            bgRoot.front = imgA;
-                    }
-                }
+                Repeater {
+                    id: rep
+                    model: root.tiles
 
-                Image {
-                    id: imgB
-                    anchors.fill: parent
-                    cache: false
-                    smooth: false
-                    mipmap: false
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectCrop
-                    visible: bgRoot.front === imgB
-                    onStatusChanged: {
-                        if (status === Image.Ready && bgRoot.front !== imgB)
-                            bgRoot.front = imgB;
+                    delegate: Item {
+                        id: tile
+                        required property int index
+                        property int seg: index
+                        readonly property string file: root.dir + "/seg_" + index + ".png"
+
+                        width: bgRoot.screenW
+                        height: bgRoot.screenH
+                        x: tile.seg * bgRoot.screenW - bgRoot.offsetPx
+
+                        Image {
+                            id: im
+                            anchors.fill: parent
+                            smooth: false
+                            mipmap: false
+                            cache: false
+                            asynchronous: true
+                            fillMode: Image.Stretch // exact fill so tiles abut seamlessly
+                        }
+
+                        // One-shot renderer per tile; reload (off-screen) when done.
+                        Process {
+                            id: gen
+                            onExited: {
+                                im.source = "";
+                                im.source = "file://" + tile.file;
+                            }
+                        }
+
+                        function render(): void {
+                            gen.running = false;
+                            gen.command = [root.bin, "segment", String(tile.seg), tile.file, String(root.segW), String(root.segH)];
+                            gen.running = true;
+                        }
+                        function recycle(): void {
+                            tile.seg += root.tiles;
+                            tile.render();
+                        }
+
+                        Component.onCompleted: render()
                     }
                 }
             }
 
-            // Identity in light mode; swapped output levels invert it in dark mode
-            // (black on white -> white on black). Tracks PixTheme.dark.
-            // NOTE: outputs must be OPAQUE — an alpha-0 color like "#00000000"
-            // makes those pixels transparent (revealing the layer underneath)
-            // instead of black, which broke dark-mode inversion.
+            // Identity in light mode; swapped OPAQUE output levels invert it in
+            // dark mode (black on white -> white on black). Tracks PixTheme.dark.
             LevelAdjust {
                 anchors.fill: parent
                 source: stack
