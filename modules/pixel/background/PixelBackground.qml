@@ -1,124 +1,100 @@
 pragma ComponentBehavior: Bound
 
 import qs
-import qs.services
 import qs.modules.common
 import qs.modules.pixel.common
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
 /**
- * Monochrome wallpaper for the pixel family.
+ * Auto-playing black & white landscape background for the pixel family.
  *
- * Pipeline: desaturate -> boost contrast -> (dark mode) invert. The invert is
- * done by swapping LevelAdjust's output levels based on PixTheme.dark, so it
- * reliably flips when the theme toggles: black/grey on white in light mode,
- * white/grey on black in dark mode. The theme background fills behind it.
+ * Instead of a wallpaper, a separate Rust/Bevy process
+ * (modules/pixel/background/pixelscape) headlessly renders a scrolling
+ * monochrome scene — rolling terrain with mountains, forests, villages and
+ * castles joined by roads — and writes a PNG frame ~twice a second. quickshell
+ * reloads that frame and upscales it nearest-neighbor (chunky pixels). The
+ * frame is black-on-white; it is inverted in dark mode so it tracks the theme.
  *
- * Parallax: the wallpaper is zoomed slightly and panned with the active
- * workspace (and a nudge when the sidebar opens), like the ii background.
+ * The renderer runs as one process for all monitors (a single shared frame),
+ * managed by quickshell so it dies with the shell / on family switch.
  */
-Variants {
+Scope {
     id: root
-    model: Quickshell.screens
+    readonly property string framePath: "/tmp/quickshell/pixel-bg/frame.png"
+    readonly property int frameWidth: 480
+    readonly property int frameHeight: 270
 
-    PanelWindow {
-        id: bgRoot
-        required property var modelData
-        screen: modelData
+    Process {
+        id: pixelscape
+        running: true
+        command: [
+            Quickshell.shellPath("modules/pixel/background/pixelscape/target/release/pixelscape"),
+            root.framePath,
+            String(root.frameWidth),
+            String(root.frameHeight)
+        ]
+    }
 
-        readonly property HyprlandMonitor monitor: Hyprland.monitorFor(modelData)
-        readonly property bool wallpaperIsVideo: {
-            const p = Config.options.background.wallpaperPath ?? "";
-            return p.endsWith(".mp4") || p.endsWith(".webm") || p.endsWith(".mkv") || p.endsWith(".avi") || p.endsWith(".mov");
-        }
-        readonly property string wallpaperPath: wallpaperIsVideo
-            ? (Config.options.background.thumbnailPath ?? "")
-            : (Config.options.background.wallpaperPath ?? "")
+    Variants {
+        model: Quickshell.screens
 
-        // ---- Parallax ----
-        readonly property real zoom: Math.max(1.0, Config.options.background.parallax.workspaceZoom ?? 1.08)
-        readonly property int workspacesShown: Config.options.bar.workspaces.shown ?? 10
-        readonly property int activeWsId: monitor?.activeWorkspace?.id ?? 1
-        readonly property int wsGroupLower: Math.floor((activeWsId - 1) / workspacesShown) * workspacesShown
-        readonly property real wsFraction: workspacesShown > 1
-            ? (activeWsId - wsGroupLower - 1) / (workspacesShown - 1) : 0.5
-        readonly property real valueX: {
-            let v = (Config.options.background.parallax.enableWorkspace ?? true) ? wsFraction : 0.5;
-            if (Config.options.background.parallax.enableSidebar ?? true)
-                v += 0.12 * (GlobalStates.sidebarRightOpen ? 1 : 0) - 0.12 * (GlobalStates.sidebarLeftOpen ? 1 : 0);
-            return Math.max(0, Math.min(1, v));
-        }
-        readonly property real movableX: bgRoot.screen.width * (zoom - 1) / 2
-        readonly property real movableY: bgRoot.screen.height * (zoom - 1) / 2
+        PanelWindow {
+            id: bgRoot
+            required property var modelData
+            screen: modelData
 
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Bottom
-        WlrLayershell.namespace: "quickshell:pixelBackground"
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-        // Theme background fills any uncovered area (and shows if no wallpaper).
-        color: PixTheme.colors.bg
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Bottom
+            WlrLayershell.namespace: "quickshell:pixelBackground"
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+            color: PixTheme.colors.bg
 
-        Item {
-            anchors.fill: parent
-            clip: true
+            // Reload the frame ~every half second (the renderer's tick rate).
+            property int frameTick: 0
+            Timer {
+                interval: 500
+                running: true
+                repeat: true
+                onTriggered: bgRoot.frameTick++
+            }
 
-            Image {
-                id: wallpaper
-                visible: false
-                width: bgRoot.screen.width * bgRoot.zoom
-                height: bgRoot.screen.height * bgRoot.zoom
-                x: -bgRoot.movableX - (bgRoot.valueX - 0.5) * 2 * bgRoot.movableX
-                y: -bgRoot.movableY
-                Behavior on x {
-                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+            Item {
+                anchors.fill: parent
+                clip: true
+
+                Image {
+                    id: frame
+                    anchors.fill: parent
+                    visible: false
+                    cache: false
+                    smooth: false
+                    mipmap: false
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    // Cache-busting query forces a reload each tick (atomic writes
+                    // on the renderer side mean we never read a torn frame).
+                    source: "file://" + root.framePath + "?" + bgRoot.frameTick
                 }
-                source: bgRoot.wallpaperPath
-                fillMode: Image.PreserveAspectCrop
-                cache: false
-                asynchronous: true
-                sourceSize.width: bgRoot.screen.width * bgRoot.zoom
-                sourceSize.height: bgRoot.screen.height * bgRoot.zoom
-            }
 
-            // Grayscale (intermediate, fed to the next stage).
-            Desaturate {
-                id: gray
-                anchors.fill: wallpaper
-                source: wallpaper
-                desaturation: 1.0
-                visible: false
-                layer.enabled: true
-            }
-
-            // Boost contrast so it reads as crisp black/grey/white, not washed out.
-            BrightnessContrast {
-                id: punch
-                anchors.fill: wallpaper
-                source: gray
-                brightness: 0.0
-                contrast: 0.45
-                visible: false
-                layer.enabled: true
-            }
-
-            // Final stage: identity in light mode, inverted output in dark mode.
-            // Swapping the output levels (bound to PixTheme.dark) flips reliably
-            // whenever the theme toggles.
-            LevelAdjust {
-                anchors.fill: wallpaper
-                source: punch
-                visible: wallpaper.status === Image.Ready
-                minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
-                maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
+                // The frame is already black/white; invert it in dark mode so it
+                // matches the theme (black/grey on white -> white/grey on black).
+                LevelAdjust {
+                    anchors.fill: parent
+                    source: frame
+                    visible: frame.status === Image.Ready
+                    minimumOutput: PixTheme.dark ? "#ffffffff" : "#00000000"
+                    maximumOutput: PixTheme.dark ? "#00000000" : "#ffffffff"
+                }
             }
         }
     }

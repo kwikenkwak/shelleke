@@ -1,0 +1,14 @@
+[package]
+name = "pixelscape"
+version = "0.1.0"
+edition = "2021"
+description = "Auto-playing black/white scrolling terrain background for the pixel quickshell family (renders PNG frames headlessly via Bevy)."
+
+[dependencies]
+# Bevy headless: just the ECS/app loop, no rendering/windowing backend.
+bevy = { version = "0.15", default-features = false }
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
