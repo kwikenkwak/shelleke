@@ -23,6 +23,7 @@ parser.add_argument('--harmony', type=float , default=0.8, help='(0-1) Color hue
 parser.add_argument('--harmonize_threshold', type=float , default=100, help='(0-180) Max threshold angle to limit color hue shift')
 parser.add_argument('--term_fg_boost', type=float , default=0.35, help='Make terminal foreground more different from the background')
 parser.add_argument('--blend_bg_fg', action='store_true', default=False, help='Shift terminal background or foreground towards accent')
+parser.add_argument('--raw_term_colors', action='store_true', default=False, help='Use terminal colors verbatim from the scheme file, without harmonizing towards the accent')
 parser.add_argument('--cache', type=str, default=None, help='file path to store the generated color')
 parser.add_argument('--debug', action='store_true', default=False, help='debug mode')
 args = parser.parse_args()
@@ -139,7 +140,7 @@ if args.termscheme is not None:
 
     primary_color_argb = hex_to_argb(material_colors['primary_paletteKeyColor'])
     for color, val in term_source_colors.items():
-        if(args.scheme == 'monochrome') :
+        if args.raw_term_colors or args.scheme in ('monochrome', 'scheme-monochrome'):
             term_colors[color] = val
             continue
         if args.blend_bg_fg and color == "term0":

@@ -53,6 +53,17 @@ ContentPage {
                     text: Translation.tr("Ignored if terminal theming is not enabled")
                 }
             }
+            ConfigSwitch {
+                buttonIcon: "contrast"
+                text: Translation.tr("Monochrome terminal colors")
+                checked: Config.options.appearance.wallpaperTheming.terminalGenerationProps.rawColors
+                onCheckedChanged: {
+                    Config.options.appearance.wallpaperTheming.terminalGenerationProps.rawColors = checked;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Use the base terminal palette verbatim instead of tinting it towards the wallpaper accent")
+                }
+            }
         }
 
         ConfigSpinBox {

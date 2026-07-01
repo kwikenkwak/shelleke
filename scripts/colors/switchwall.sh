@@ -293,6 +293,8 @@ switch() {
         [[ "$harmony" != "null" && -n "$harmony" ]] && generate_colors_material_args+=(--harmony "$harmony")
         [[ "$harmonize_threshold" != "null" && -n "$harmonize_threshold" ]] && generate_colors_material_args+=(--harmonize_threshold "$harmonize_threshold")
         [[ "$term_fg_boost" != "null" && -n "$term_fg_boost" ]] && generate_colors_material_args+=(--term_fg_boost "$term_fg_boost")
+        raw_term_colors=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.rawColors' "$SHELL_CONFIG_FILE")
+        [[ "$raw_term_colors" == "true" ]] && generate_colors_material_args+=(--raw_term_colors)
     fi
 
     matugen "${matugen_args[@]}"

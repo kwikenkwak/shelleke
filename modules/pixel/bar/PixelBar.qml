@@ -208,6 +208,16 @@ Scope {
                                     Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode ${mode} --noswitch`);
                                 }
                             }
+                            // Displays / monitors (hyprdynamicmonitors GUI).
+                            // Open-only, like quick settings, to avoid racing the
+                            // focus grab's outside-click close.
+                            PixControlButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: "nodes"
+                                active: GlobalStates.monitorsOpen
+                                tooltipText: "Displays"
+                                onTriggered: GlobalStates.monitorsOpen = true
+                            }
                             // Dedicated, obvious quick-settings entry point.
                             // Open-only: closing is handled by the panel's focus
                             // grab (outside-click) and Escape. A toggle here would

@@ -134,6 +134,7 @@ Singleton {
                         property real harmonizeThreshold: 100
                         property real termFgBoost: 0.35
                         property bool forceDarkMode: false
+                        property bool rawColors: true // Use scheme-base.json terminal colors verbatim (no accent harmonization)
                     }
                 }
                 property JsonObject palette: JsonObject {
