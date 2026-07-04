@@ -6,18 +6,20 @@ import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * A read-only row for one of the user's hyprdynamicmonitors profiles. The active
- * profile (as reported by HDM) gets a filled marker. Profiles are shown but not
- * edited in phase 1; the trailing space is where phase-2 "Edit" / "Save current
- * here" actions will live.
+ * One row in the profiles list. The whole row is clickable and opens the editor
+ * (where enable/disable, reorder, apply-layout and remove live). Filled marker =
+ * the profile HDM currently has active; dimmed = disabled.
  */
 PixPanel {
     id: row
     property var profile: ({})
     readonly property bool active: Monitors.activeProfile === (profile.name ?? "")
+    readonly property bool isEnabled: profile.enabled ?? true
+    signal clicked
 
     borderWidth: PixTheme.borderWidth
     implicitHeight: rl.implicitHeight + 14
+    opacity: isEnabled ? 1 : 0.45
 
     RowLayout {
         id: rl
@@ -25,7 +27,6 @@ PixPanel {
         anchors.margins: 7
         spacing: 9
 
-        // Active marker: filled square when this profile is the one in effect.
         Rectangle {
             Layout.preferredWidth: 16
             Layout.preferredHeight: 16
@@ -43,7 +44,7 @@ PixPanel {
 
             PixText {
                 Layout.fillWidth: true
-                text: (row.profile.name ?? "") + (row.active ? "  · active" : "")
+                text: (row.profile.name ?? "") + (row.active ? "  · active" : "") + (row.isEnabled ? "" : "  · disabled")
                 font.bold: true
                 font.pixelSize: PixTheme.font.pixelSize.normal
                 elide: Text.ElideRight
@@ -55,20 +56,31 @@ PixPanel {
                 font.pixelSize: PixTheme.font.pixelSize.smaller
                 text: {
                     const req = row.profile.required ?? [];
-                    if (req.length === 0)
-                        return "no required monitors";
-                    return req.map(r => r.description || r.name || "?").join("  +  ");
+                    let s = req.length === 0 ? "no required monitors"
+                        : req.map(r => (r.regex ? "~" : "") + (r.value || "?")).join("  +  ");
+                    const c = [];
+                    if (row.profile.power)
+                        c.push(row.profile.power);
+                    if (row.profile.lid)
+                        c.push(row.profile.lid);
+                    if (row.profile.has_modes && row.profile.static && row.profile.static.mode)
+                        c.push("mode:" + row.profile.static.mode);
+                    return c.length ? s + "   [" + c.join(", ") + "]" : s;
                 }
             }
         }
 
-        // Static-mode hint (e.g. beide_aan mode=both), read-only.
-        PixText {
-            visible: row.profile.has_modes ?? false
+        PixIcon {
             Layout.alignment: Qt.AlignVCenter
-            text: "mode:" + ((row.profile.static_values && row.profile.static_values.mode) || "?")
+            name: "chevR"
+            size: 14
             color: PixTheme.colors.grey
-            font.pixelSize: PixTheme.font.pixelSize.smallest
         }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: row.clicked()
     }
 }

@@ -31,6 +31,9 @@ Scope {
         exclusiveZone: 0
         implicitWidth: 380 // matches PixelMonitorsContent's fixed width
         WlrLayershell.namespace: "quickshell:pixelMonitors"
+        // OnDemand lets the profile-editor text fields take keyboard focus (via
+        // forceActiveFocus) without stealing it from the compositor otherwise.
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
         color: "transparent"
 
         anchors {

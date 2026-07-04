@@ -11,6 +11,7 @@ Singleton {
     id: root
     // property string cliphistBinary: FileUtils.trimFileProtocol(`${Directories.home}/.cargo/bin/stash`)
     property string cliphistBinary: "cliphist"
+    property bool enabled: Config.options?.launcher?.clipboardHistory ?? false
     property real pasteDelay: 0.05
     property string pressPasteCommand: "ydotool key -d 1 29:1 47:1 47:0 29:0"
     property bool sloppySearch: Config.options?.search.sloppy ?? false
@@ -48,7 +49,7 @@ Singleton {
 
     function refresh() {
         readProc.buffer = []
-        readProc.running = true
+        readProc.running = root.enabled
     }
 
     function copy(entry) {
@@ -119,6 +120,7 @@ Singleton {
 
     Timer {
         id: delayedUpdateTimer
+        running: root.enabled
         interval: Config.options.hacks.arbitraryRaceConditionDelay
         repeat: false
         onTriggered: {
@@ -128,6 +130,7 @@ Singleton {
 
     Process {
         id: readProc
+        running: root.enabled
         property list<string> buffer: []
 
         command: [root.cliphistBinary, "list"]

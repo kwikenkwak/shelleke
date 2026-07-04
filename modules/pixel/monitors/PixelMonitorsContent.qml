@@ -7,11 +7,13 @@ import qs.modules.pixel.common
 import qs.modules.pixel.widgets
 
 /**
- * Body of the Displays overlay. Top: title + daemon status + reapply/reload/refresh.
- * Then a scrollable body: the quick Extend/Mirror/Single controls, the live list of
- * connected monitors, the user's profiles (read-only, active one marked), and a
- * freeze-as-new-profile + validate footer. All actions go through the Monitors
- * service, which only ever manages its own quick profile.
+ * Body of the Displays overlay. A small screen-stack:
+ *   main     — quick Extend/Mirror/Single, connected monitors, profile list
+ *   editor   — full profile create/edit (ProfileEditor), shown as an overlay
+ *   settings — HDM global settings + daemon (SettingsScreen), shown as an overlay
+ *
+ * The quick-layout bar at the top of `main` is intentionally unchanged. All writes
+ * go through the Monitors service -> hdm-control.py.
  */
 PixPanel {
     id: root
@@ -21,102 +23,73 @@ PixPanel {
     readonly property int gap: 10
     implicitWidth: 380
 
-    Component.onCompleted: Monitors.refresh()
+    property string screen: "main"        // "main" | "settings"
+    property var editingProfile: null     // null | profile object | {__new__:true}
 
-    // Refresh whenever the panel becomes visible.
+    Component.onCompleted: Monitors.refresh()
     Connections {
         target: GlobalStates
         function onMonitorsOpenChanged() {
-            if (GlobalStates.monitorsOpen)
+            if (GlobalStates.monitorsOpen) {
+                root.screen = "main";
+                root.editingProfile = null;
                 Monitors.refresh();
+            }
         }
     }
 
+    // ============ MAIN ============
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: root.pad
         spacing: root.gap
+        visible: root.screen === "main" && root.editingProfile === null
 
-        // ============ HEADER ============
+        // header
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-
-            PixTitle {
-                Layout.fillWidth: true
-                text: "DISPLAYS"
-                font.pixelSize: PixTheme.font.pixelSize.title
+            PixTitle { Layout.fillWidth: true; text: "DISPLAYS"; font.pixelSize: PixTheme.font.pixelSize.title }
+            PixButton {
+                id: refreshBtn
+                implicitWidth: 34; implicitHeight: 30
+                enabled: !Monitors.busy
+                onClicked: Monitors.refresh()
+                PixIcon { anchors.centerIn: parent; name: "refresh"; size: 14; color: refreshBtn.contentColor }
+                PixTooltip { text: "Refresh"; anchorEdges: Edges.Right; anchorGravity: Edges.Right }
             }
-
-            Repeater {
-                model: [
-                    { icon: "refresh", act: "refresh", tip: "Refresh" },
-                    { icon: "bolt", act: "reapply", tip: "Re-apply current profile" },
-                    { icon: "swap", act: "reload", tip: "Reload HDM config" }
-                ]
-                delegate: PixButton {
-                    id: hbtn
-                    required property var modelData
-                    implicitWidth: 34
-                    implicitHeight: 30
-                    enabled: !Monitors.busy
-                    onClicked: {
-                        if (modelData.act === "refresh")
-                            Monitors.refresh();
-                        else if (modelData.act === "reapply")
-                            Monitors.reapply();
-                        else
-                            Monitors.reload();
-                    }
-                    PixIcon {
-                        anchors.centerIn: parent
-                        name: hbtn.modelData.icon
-                        size: 14
-                        color: hbtn.contentColor
-                    }
-                    PixTooltip {
-                        text: hbtn.modelData.tip
-                        anchorEdges: Edges.Right
-                        anchorGravity: Edges.Right
-                    }
-                }
+            PixButton {
+                id: settingsBtn
+                implicitWidth: 34; implicitHeight: 30
+                onClicked: root.screen = "settings"
+                PixIcon { anchors.centerIn: parent; name: "gear"; size: 14; color: settingsBtn.contentColor }
+                PixTooltip { text: "Settings & daemon"; anchorEdges: Edges.Right; anchorGravity: Edges.Right }
             }
         }
 
-        // Daemon + active-profile status line.
+        // daemon + active status
         RowLayout {
             Layout.fillWidth: true
             spacing: 7
-
             Rectangle {
-                Layout.preferredWidth: 14
-                Layout.preferredHeight: 14
-                Layout.alignment: Qt.AlignVCenter
-                radius: 0
-                antialiasing: false
+                Layout.preferredWidth: 14; Layout.preferredHeight: 14; radius: 0; antialiasing: false
                 color: Monitors.daemonRunning ? PixTheme.colors.fg : "transparent"
-                border.width: PixTheme.borderWidth
-                border.color: PixTheme.colors.line
+                border.width: PixTheme.borderWidth; border.color: PixTheme.colors.line
             }
-            PixText {
-                text: Monitors.daemonRunning ? "Daemon on" : "Daemon off"
-                font.pixelSize: PixTheme.font.pixelSize.smaller
-                color: PixTheme.colors.grey
-            }
+            PixText { text: Monitors.daemonRunning ? "Daemon on" : "Daemon off"
+                font.pixelSize: PixTheme.font.pixelSize.smaller; color: PixTheme.colors.grey }
             Item { Layout.fillWidth: true }
             PixText {
                 text: Monitors.quickActive ? ("Quick: " + Monitors.quickMode)
                     : (Monitors.activeProfile ? ("Active: " + Monitors.activeProfile) : "No profile")
-                font.pixelSize: PixTheme.font.pixelSize.smaller
-                color: PixTheme.colors.grey
-                elide: Text.ElideRight
-                Layout.maximumWidth: 200
+                font.pixelSize: PixTheme.font.pixelSize.smaller; color: PixTheme.colors.grey
+                elide: Text.ElideRight; Layout.maximumWidth: 200
             }
         }
 
         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: PixTheme.borderWidth; color: PixTheme.colors.line }
 
-        // ============ SCROLLABLE BODY ============
+        // scrollable body
         Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -130,24 +103,16 @@ PixPanel {
                 width: parent.width
                 spacing: root.gap
 
-                // ---- QUICK LAYOUT ----
-                PixText {
-                    text: "QUICK LAYOUT"
-                    font.bold: true
-                    font.pixelSize: PixTheme.font.pixelSize.smaller
-                    color: PixTheme.colors.grey
-                }
+                // ---- QUICK LAYOUT (unchanged) ----
+                PixText { text: "QUICK LAYOUT"; font.bold: true; color: PixTheme.colors.grey
+                    font.pixelSize: PixTheme.font.pixelSize.smaller }
                 QuickModeBar { Layout.fillWidth: true }
 
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: PixTheme.borderWidth; color: PixTheme.colors.line }
 
-                // ---- CONNECTED MONITORS ----
-                PixText {
-                    text: "CONNECTED (" + Monitors.monitors.length + ")"
-                    font.bold: true
-                    font.pixelSize: PixTheme.font.pixelSize.smaller
-                    color: PixTheme.colors.grey
-                }
+                // ---- CONNECTED ----
+                PixText { text: "CONNECTED (" + Monitors.monitors.length + ")"; font.bold: true
+                    color: PixTheme.colors.grey; font.pixelSize: PixTheme.font.pixelSize.smaller }
                 Repeater {
                     model: Monitors.monitors
                     delegate: MonitorCard {
@@ -159,12 +124,19 @@ PixPanel {
 
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: PixTheme.borderWidth; color: PixTheme.colors.line }
 
-                // ---- PROFILES (read-only) ----
-                PixText {
-                    text: "PROFILES"
-                    font.bold: true
-                    font.pixelSize: PixTheme.font.pixelSize.smaller
-                    color: PixTheme.colors.grey
+                // ---- PROFILES ----
+                RowLayout {
+                    Layout.fillWidth: true
+                    PixText { Layout.fillWidth: true; text: "PROFILES"; font.bold: true
+                        color: PixTheme.colors.grey; font.pixelSize: PixTheme.font.pixelSize.smaller }
+                    PixButton {
+                        id: newBtn
+                        implicitHeight: 28
+                        implicitWidth: newT.implicitWidth + 18
+                        onClicked: root.editingProfile = ({ __new__: true })
+                        PixText { id: newT; anchors.centerIn: parent; text: "+ New"; font.bold: true
+                            font.pixelSize: PixTheme.font.pixelSize.smaller; color: newBtn.contentColor }
+                    }
                 }
                 Repeater {
                     model: Monitors.profiles
@@ -172,104 +144,23 @@ PixPanel {
                         required property var modelData
                         Layout.fillWidth: true
                         profile: modelData
+                        onClicked: root.editingProfile = modelData
                     }
                 }
                 PixText {
                     visible: Monitors.profiles.length === 0
-                    text: "No profiles defined"
+                    text: "No profiles yet — tap + New or use a quick layout"
                     color: PixTheme.colors.grey
                     font.pixelSize: PixTheme.font.pixelSize.small
-                }
-
-                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: PixTheme.borderWidth; color: PixTheme.colors.line }
-
-                // ---- SAVE / CHECK ----
-                PixText {
-                    text: "SAVE CURRENT SETUP"
-                    font.bold: true
-                    font.pixelSize: PixTheme.font.pixelSize.smaller
-                    color: PixTheme.colors.grey
-                }
-                RowLayout {
+                    wrapMode: Text.WordWrap
                     Layout.fillWidth: true
-                    spacing: 8
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 34
-                        radius: 0
-                        antialiasing: false
-                        color: "transparent"
-                        border.width: PixTheme.borderWidth
-                        border.color: PixTheme.colors.line
-
-                        TextInput {
-                            id: nameInput
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            verticalAlignment: TextInput.AlignVCenter
-                            clip: true
-                            color: PixTheme.colors.fg
-                            font.family: PixTheme.fontMain
-                            font.pixelSize: PixTheme.font.pixelSize.normal
-                            selectByMouse: true
-                            validator: RegularExpressionValidator { regularExpression: /[A-Za-z0-9_-]{0,40}/ }
-                            onAccepted: if (text.length > 0) Monitors.freeze(text)
-                        }
-                        PixText {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: nameInput.text.length === 0
-                            text: "new profile name"
-                            color: PixTheme.colors.grey
-                            font.pixelSize: PixTheme.font.pixelSize.normal
-                        }
-                    }
-
-                    PixButton {
-                        id: saveBtn
-                        Layout.preferredWidth: 44
-                        Layout.preferredHeight: 34
-                        enabled: !Monitors.busy && nameInput.text.length > 0
-                        interactive: enabled
-                        onClicked: Monitors.freeze(nameInput.text)
-                        PixIcon {
-                            anchors.centerIn: parent
-                            name: "note"
-                            size: 15
-                            color: saveBtn.contentColor
-                        }
-                        PixTooltip {
-                            text: "Freeze current setup as a new profile"
-                            anchorEdges: Edges.Left
-                            anchorGravity: Edges.Left
-                        }
-                    }
                 }
 
-                PixButton {
-                    id: validateBtn
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 34
-                    enabled: !Monitors.busy
-                    onClicked: Monitors.validate()
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 7
-                        PixIcon { name: "todo"; size: 14; color: validateBtn.contentColor }
-                        PixText {
-                            text: "Validate config"
-                            font.pixelSize: PixTheme.font.pixelSize.small
-                            color: validateBtn.contentColor
-                        }
-                    }
-                }
+                Item { Layout.preferredHeight: 2 }
             }
         }
 
-        // ============ STATUS LINE ============
+        // status line
         PixText {
             Layout.fillWidth: true
             visible: Monitors.busy || Monitors.lastMessage.length > 0
@@ -277,6 +168,37 @@ PixPanel {
             font.pixelSize: PixTheme.font.pixelSize.smaller
             color: (!Monitors.busy && !Monitors.lastOk) ? PixTheme.colors.fg : PixTheme.colors.grey
             elide: Text.ElideRight
+        }
+    }
+
+    // ============ OVERLAY (editor / settings) ============
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: root.borderWidth
+        visible: overlayLoader.active
+        color: PixTheme.colors.bg
+        radius: 0
+        antialiasing: false
+    }
+    Loader {
+        id: overlayLoader
+        anchors.fill: parent
+        anchors.margins: root.pad
+        active: root.editingProfile !== null || root.screen !== "main"
+        visible: active
+        sourceComponent: root.editingProfile !== null ? editorComp : settingsComp
+    }
+    Component {
+        id: editorComp
+        ProfileEditor {
+            profile: root.editingProfile
+            onDone: root.editingProfile = null
+        }
+    }
+    Component {
+        id: settingsComp
+        SettingsScreen {
+            onDone: root.screen = "main"
         }
     }
 }

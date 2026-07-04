@@ -29,6 +29,10 @@ Singleton {
     property string quickMode: ""
     property string quickTarget: ""
     property string destination: ""
+    property var scoring: ({})
+    property var notifications: ({})
+    property var general: ({})
+    property bool hasFallback: false
 
     // ---- action feedback ----
     property bool busy: false
@@ -81,6 +85,10 @@ Singleton {
             root.quickMode = s.quick ? (s.quick.mode ?? "") : "";
             root.quickTarget = s.quick ? (s.quick.single_target ?? "") : "";
             root.destination = s.destination ?? "";
+            root.scoring = s.scoring ?? {};
+            root.notifications = s.notifications ?? {};
+            root.general = s.general ?? {};
+            root.hasFallback = s.has_fallback ?? false;
         } catch (e) {
             console.warn("Monitors: failed to parse state:", e);
         }
@@ -136,6 +144,30 @@ Singleton {
     }
     function reload() {
         _run(["reload"], "Reload");
+    }
+
+    // ---- full profile management (phase 2) ----
+    // spec: {name, new, from_current, config_file_type, required:[{by,value,regex,tag}], power, lid, static}
+    function saveProfile(spec) {
+        _run(["save-profile", JSON.stringify(spec)], (spec.new ? "Create " : "Save ") + spec.name);
+    }
+    function applyCurrent(name) {
+        _run(["apply-current", name], "Apply layout → " + name);
+    }
+    function setProfileEnabled(name, enabled) {
+        _run(["set-enabled", name, enabled ? "1" : "0"], (enabled ? "Enable " : "Disable ") + name);
+    }
+    function removeProfile(name, deleteTemplate) {
+        _run(deleteTemplate ? ["remove", name, "--delete-template"] : ["remove", name], "Remove " + name);
+    }
+    function moveProfile(name, direction) {
+        _run(["move", name, direction], "Reorder " + name);
+    }
+    function setScoring(obj) {
+        _run(["set-scoring", JSON.stringify(obj)], "Update scoring");
+    }
+    function setNotifications(obj) {
+        _run(["set-notifications", JSON.stringify(obj)], "Update notifications");
     }
 
     Component.onCompleted: refresh()

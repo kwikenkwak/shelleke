@@ -86,7 +86,7 @@ EOF`;
         running: root.enabled
         repeat: true
         interval: root.fetchInterval
-        triggeredOnStart: false
+        triggeredOnStart: true
         onTriggered: root.getData()
     }
 
