@@ -18,6 +18,7 @@ Row {
 
     // Idle inhibitor toggle (snow = keep-awake). Click toggles.
     PixIcon {
+        visible: false
         anchors.verticalCenter: parent.verticalCenter
         name: "snow"
         size: 16
@@ -48,6 +49,7 @@ Row {
 
     // Wifi status (click opens quick settings)
     PixIcon {
+        visible: false
         anchors.verticalCenter: parent.verticalCenter
         name: "wifi"
         size: 16
@@ -62,6 +64,7 @@ Row {
 
     // Bluetooth status (click opens quick settings)
     PixIcon {
+        visible: false
         anchors.verticalCenter: parent.verticalCenter
         name: "bluetooth"
         size: 16

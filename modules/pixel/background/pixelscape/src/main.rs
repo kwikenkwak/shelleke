@@ -1,6 +1,14 @@
 //! pixelscape — an auto-playing, pure 1-bit black-and-white scrolling map
 //! rendered headlessly for the "pixel" quickshell family's background.
 //!
+//! SEGMENT mode (what quickshell drives) now renders a Carcassonne-style tile
+//! map: the hand-authored 64x64 edge-coded tiles in assets/tiles are laid out
+//! by a backtracking layouter (src/tiles.rs) so every shared edge matches
+//! (grass/road/city/water) and tiles are never rotated. The board is a
+//! horizontal cylinder, so segments abut seamlessly and the map scrolls
+//! forever. If the tile assets are missing it falls back to the original
+//! procedural landscape described below.
+//!
 //! This is one continuous, zoomed-out landscape (no tile grid / no seams)
 //! built from hand-authored pixel-art sprites blitted 1:1, so every element is
 //! crisp and deliberate at the target resolution. A coarse value-noise biome
@@ -30,6 +38,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 mod sprites;
+mod tiles;
 use sprites::Sprite;
 
 // ---------------------------------------------------------------------------
@@ -41,6 +50,9 @@ use sprites::Sprite;
 const SLOT: i64 = 64;
 /// World units the camera pans (rightward, +X) per tick. Small = slow drift.
 const PAN_PER_TICK: i64 = 3;
+/// Width (in tiles) of the cylindrical Carcassonne board. The world repeats
+/// every TILE_PERIOD_COLS*64 px; large enough that the loop never reads.
+const TILE_PERIOD_COLS: usize = 240;
 
 #[derive(Resource)]
 struct Cfg {
@@ -121,8 +133,20 @@ fn main() {
         if let Some(parent) = out.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        let lib = sprites::Library::build();
-        let gray = render_frame(world_x0, width, height, &lib);
+        // Carcassonne tile mode: lay the edge-coded tiles on a cylindrical,
+        // edge-matched board and render the visible slice. Falls back to the
+        // legacy procedural landscape if the tile assets can't be loaded.
+        let gray = match tiles::TileSet::load() {
+            Ok(ts) => {
+                let rows = (height as i64).div_euclid(tiles::TILE) + 2;
+                let layout = tiles::generate(&ts, seed, rows as usize, TILE_PERIOD_COLS);
+                render_tiles(world_x0, width, height, &ts, &layout)
+            }
+            Err(e) => {
+                eprintln!("pixelscape: tiles unavailable ({e}); using legacy landscape");
+                render_frame(world_x0, width, height, &sprites::Library::build())
+            }
+        };
         atomic_write(&out, gray);
         return;
     }
@@ -358,6 +382,49 @@ fn atomic_write(out: &std::path::Path, gray: GrayImage) {
     {
         let _ = std::fs::rename(&tmp, out);
     }
+}
+
+/// Render the Carcassonne tile slice whose viewport left edge is at world
+/// X = `world_x0`. Tiles are blitted 1:1 at their world position; the board is
+/// a horizontal cylinder so adjacent segments abut seamlessly and the map
+/// scrolls forever. Tile art is white-on-black; we emit it as black ink on a
+/// white canvas (0 = ink, 255 = background), matching the 1-bit convention
+/// quickshell inverts for dark mode.
+fn render_tiles(
+    world_x0: i64,
+    w: u32,
+    h: u32,
+    ts: &tiles::TileSet,
+    layout: &tiles::Layout,
+) -> GrayImage {
+    let tile = tiles::TILE;
+    let mut px = vec![255u8; (w * h) as usize];
+    let c0 = world_x0.div_euclid(tile);
+    let c1 = (world_x0 + w as i64 - 1).div_euclid(tile);
+    for cw in c0..=c1 {
+        let base_x = cw * tile - world_x0; // screen x of this tile column's left edge
+        let board_c = cw.rem_euclid(layout.cols as i64) as usize;
+        for r in 0..layout.rows {
+            let base_y = r as i64 * tile;
+            let t = &ts.tiles[layout.grid[board_c * layout.rows + r] as usize];
+            for ty in 0..tile {
+                let sy = base_y + ty;
+                if sy < 0 || sy >= h as i64 {
+                    continue;
+                }
+                for tx in 0..tile {
+                    let sx = base_x + tx;
+                    if sx < 0 || sx >= w as i64 {
+                        continue;
+                    }
+                    if t.bits[(ty * tile + tx) as usize] {
+                        px[(sy * w as i64 + sx) as usize] = 0;
+                    }
+                }
+            }
+        }
+    }
+    GrayImage::from_raw(w, h, px).expect("buffer sized w*h")
 }
 
 /// Render one seamless frame whose viewport left edge is at world X = `pan`.

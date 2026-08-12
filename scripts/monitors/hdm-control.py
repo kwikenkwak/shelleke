@@ -14,7 +14,9 @@ ordering, formatting) is preserved. This mirrors how HDM's own freeze/TUI edit t
 
 Subcommands
   state                       JSON snapshot for the UI (read-only)
-  quick <extend|mirror|single> [target]   write managed quick profile + apply
+  quick <extend|mirror|single> [target] [--arrange right|left|up|down] [--anchor NAME]
+                              write managed quick profile + apply
+  scale <output> <factor>     set one screen's zoom in the quick profile + apply
   clear                       remove managed quick profile + apply
   save-profile <json>         create or edit a user profile (metadata block)
   apply-current <name>        write current live monitor layout into a profile's template
@@ -45,6 +47,8 @@ OFF = "#HDMGUI-OFF# "  # prefix marking a disabled (commented) profile
 TUI_START = "# <<<<< TUI AUTO START"
 TUI_END = "# <<<<< TUI AUTO END"
 MODES = ("extend", "mirror", "single")
+# Where secondary screens go relative to the primary one (Hyprland `auto-<dir>`).
+ARRANGES = ("right", "left", "up", "down")
 
 HDM = shutil.which("hyprdynamicmonitors") or "hyprdynamicmonitors"
 HEADER_RE = re.compile(r'^(' + re.escape(OFF) + r')?\s*(\[\[?)\s*([^\]]+?)\s*(\]\]?)\s*$')
@@ -315,13 +319,16 @@ def cmd_state(args):
     notifications = top.get("notifications") or {}
 
     profiles = []
-    quick = {"active": False, "mode": None, "single_target": None}
+    quick = {"active": False, "mode": None, "single_target": None,
+             "arrange": None, "anchor": None, "scales": {}}
     for order, sp in enumerate(list_profile_spans(lines)):
         d = parse_block(lines, sp)
         stv = d.get("static_template_values") or {}
         if sp["name"] == QUICK:
             quick = {"active": not sp["disabled"], "mode": stv.get("mode"),
-                     "single_target": stv.get("single_target")}
+                     "single_target": stv.get("single_target"),
+                     "arrange": stv.get("arrange"), "anchor": stv.get("anchor"),
+                     "scales": scales_of(stv)}
             continue
         conds = d.get("conditions") or {}
         req = []
@@ -344,6 +351,7 @@ def cmd_state(args):
         "destination": dest,
         "destination_exists": bool(dest) and os.path.exists(dest),
         "quick": quick,
+        "quick_profile": QUICK,
         "profiles": profiles,
         "has_fallback": bool(top.get("fallback_profile")),
         "scoring": {
@@ -376,15 +384,25 @@ def cmd_state(args):
 
 # ---------- quick profile (unchanged behaviour) ----------
 
-QUICK_TEMPLATE = """# Managed by the pixel-shell Displays overlay. Safe to delete.
+# Per-monitor zoom: static values carry a "scale_<output>" key (see cmd_scale), so the
+# lookup has to be dynamic. Missing key -> "" -> falls back to 1.
+SCALE_VAR = ('{{ $s := index $ (printf "scale_%s" .Name) }}'
+             '{{ if not $s }}{{ $s = "1" }}{{ end }}')
+
+QUICK_TEMPLATE = ("""# Managed by the pixel-shell Displays overlay. Safe to delete.
 # Ranges over every connected monitor, so it adapts to whatever is plugged in.
-{{ if eq .mode "extend" }}{{ range .Monitors }}
-monitor={{ .Name }},preferred,auto,1{{ end }}{{ end }}
-{{ if eq .mode "mirror" }}{{ $p := (index .Monitors 0).Name }}{{ range $i, $m := .Monitors }}
-monitor={{ $m.Name }},preferred,auto,1{{ if ne $i 0 }},mirror,{{ $p }}{{ end }}{{ end }}{{ end }}
-{{ if eq .mode "single" }}{{ range .Monitors }}
-monitor={{ .Name }},{{ if eq .Name $.single_target }}preferred,0x0,1{{ else }}disable{{ end }}{{ end }}{{ end }}
-"""
+# `anchor` is the primary screen (pinned to 0x0 / mirror source), `arrange` says which
+# side the other screens are appended to (Hyprland auto-<dir>), and `scale_<output>`
+# holds each screen's zoom factor.
+{{ $dir := "right" }}{{ if .arrange }}{{ $dir = .arrange }}{{ end }}
+{{ if eq .mode "extend" }}{{ range .Monitors }}""" + SCALE_VAR + """{{ if eq .Name $.anchor }}
+monitor={{ .Name }},preferred,0x0,{{ $s }}{{ end }}{{ end }}{{ range .Monitors }}""" + SCALE_VAR + """{{ if ne .Name $.anchor }}
+monitor={{ .Name }},preferred,auto-{{ $dir }},{{ $s }}{{ end }}{{ end }}{{ end }}
+{{ if eq .mode "mirror" }}{{ $p := (index .Monitors 0).Name }}{{ range .Monitors }}{{ if eq .Name $.anchor }}{{ $p = .Name }}{{ end }}{{ end }}{{ range .Monitors }}""" + SCALE_VAR + """
+monitor={{ .Name }},preferred,auto,{{ $s }}{{ if ne .Name $p }},mirror,{{ $p }}{{ end }}{{ end }}{{ end }}
+{{ if eq .mode "single" }}{{ range .Monitors }}""" + SCALE_VAR + """
+monitor={{ .Name }},{{ if eq .Name $.single_target }}preferred,0x0,{{ $s }}{{ else }}disable{{ end }}{{ end }}{{ end }}
+""")
 
 
 def ensure_quick_template(cfg):
@@ -394,13 +412,17 @@ def ensure_quick_template(cfg):
     return path
 
 
-def build_quick_region(cfg, monitors, mode, target):
+def build_quick_region(cfg, monitors, mode, target, arrange, anchor, scales):
     tp = quick_tmpl_path(cfg)
     L = [BEGIN, f"[profiles.{QUICK}]", f"config_file = {tstr(tp)}",
          'config_file_type = "template"', "",
          f"[profiles.{QUICK}.static_template_values]",
-         f"mode = {tstr(mode)}", f"single_target = {tstr(target)}", "",
-         f"[profiles.{QUICK}.conditions]"]
+         f"mode = {tstr(mode)}", f"single_target = {tstr(target)}",
+         f"arrange = {tstr(arrange)}", f"anchor = {tstr(anchor)}"]
+    # Quoted keys: output names are bare-key safe today, but needn't be.
+    for name in sorted(scales):
+        L.append(f"{tstr('scale_' + name)} = {tstr(scales[name])}")
+    L += ["", f"[profiles.{QUICK}.conditions]"]
     for i, m in enumerate(monitors):
         desc = (m.get("description") or "").strip()
         L.append(f"[[profiles.{QUICK}.conditions.required_monitors]]")
@@ -422,20 +444,82 @@ def strip_quick_region(text):
     return head.rstrip("\n") + ("\n" if head.strip() else "") + tail.lstrip("\n")
 
 
+def quick_static_values(cfg):
+    """static_template_values of the managed quick profile ({} when absent)."""
+    if not os.path.exists(cfg):
+        return {}
+    lines = read_text(cfg).splitlines(keepends=True)
+    sp = find_span(lines, QUICK)
+    if not sp:
+        return {}
+    return parse_block(lines, sp).get("static_template_values") or {}
+
+
+def scales_of(stv):
+    """{output: scale} from the flat scale_<output> static values."""
+    return {k[len("scale_"):]: v for k, v in stv.items()
+            if k.startswith("scale_") and k[len("scale_"):]}
+
+
+def norm_scale(v):
+    """Canonical scale string ("1", "1.5", …), or None when out of range."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if not 0.5 <= f <= 3.0:
+        return None
+    return f"{f:.4f}".rstrip("0").rstrip(".") or "1"
+
+
+def write_quick(cfg, no_apply, mons, mode, target, arrange, anchor, scales):
+    ensure_quick_template(cfg)
+    region = build_quick_region(cfg, mons, mode, target, arrange, anchor, scales)
+    text = strip_quick_region(read_text(cfg)).rstrip("\n") + "\n\n" + region
+    write_text(cfg, text)
+    return apply(cfg, no_apply)
+
+
 def cmd_quick(args):
     if args.mode not in MODES:
         return fail(f"mode must be one of {MODES}")
     mons = hypr_monitors()
     if not mons:
         return fail("no monitors reported by hyprctl")
-    target = args.target or mons[0].get("name")
-    ensure_quick_template(cfg=args.config)
-    region = build_quick_region(args.config, mons, args.mode, target)
-    text = strip_quick_region(read_text(args.config))
-    text = text.rstrip("\n") + "\n\n" + region
-    write_text(args.config, text)
-    return ok(f"quick {args.mode} ({len(mons)} monitor(s))",
-              applied=apply(args.config, args.no_apply), mode=args.mode, single_target=target)
+    # Unspecified bits keep whatever the last quick layout used, so switching mode
+    # doesn't silently reset the arrangement or the per-screen zoom (and vice versa).
+    prev = quick_static_values(args.config)
+    target = args.target or prev.get("single_target") or mons[0].get("name")
+    arrange = args.arrange or prev.get("arrange") or "right"
+    anchor = args.anchor if args.anchor is not None else (prev.get("anchor") or "")
+    applied = write_quick(args.config, args.no_apply, mons, args.mode, target,
+                          arrange, anchor, scales_of(prev))
+    return ok(f"quick {args.mode} ({len(mons)} monitor(s))", applied=applied,
+              mode=args.mode, single_target=target, arrange=arrange, anchor=anchor)
+
+
+def cmd_scale(args):
+    """Set one output's zoom factor in the managed quick profile."""
+    val = norm_scale(args.value)
+    if val is None:
+        return fail(f"scale must be a number between 0.5 and 3 (got {args.value!r})")
+    mons = hypr_monitors()
+    if not mons:
+        return fail("no monitors reported by hyprctl")
+    prev = quick_static_values(args.config)
+    scales = scales_of(prev)
+    if val == "1":
+        scales.pop(args.monitor, None)  # 1x is the template default; keep it out
+    else:
+        scales[args.monitor] = val
+    # Zoom only lives in the quick profile, so it implies a quick layout; keep the
+    # current one when there is one, otherwise extend.
+    mode = prev.get("mode") if prev.get("mode") in MODES else "extend"
+    target = prev.get("single_target") or mons[0].get("name")
+    applied = write_quick(args.config, args.no_apply, mons, mode, target,
+                          prev.get("arrange") or "right", prev.get("anchor") or "",
+                          scales)
+    return ok(f"zoom {args.monitor} {val}x", applied=applied, mode=mode, scales=scales)
 
 
 def cmd_clear(args):
@@ -699,6 +783,8 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("state")
     q = sub.add_parser("quick"); q.add_argument("mode"); q.add_argument("target", nargs="?")
+    q.add_argument("--arrange", choices=ARRANGES); q.add_argument("--anchor")
+    sc = sub.add_parser("scale"); sc.add_argument("monitor"); sc.add_argument("value")
     sub.add_parser("clear")
     sp = sub.add_parser("save-profile"); sp.add_argument("spec")
     ac = sub.add_parser("apply-current"); ac.add_argument("name")
@@ -715,7 +801,7 @@ def main():
     args.config = args.config or default_config()
 
     table = {
-        "state": cmd_state, "quick": cmd_quick, "clear": cmd_clear,
+        "state": cmd_state, "quick": cmd_quick, "scale": cmd_scale, "clear": cmd_clear,
         "save-profile": cmd_save_profile, "apply-current": cmd_apply_current,
         "set-enabled": cmd_set_enabled, "remove": cmd_remove, "move": cmd_move,
         "set-scoring": cmd_set_scoring, "set-notifications": cmd_set_notifications,

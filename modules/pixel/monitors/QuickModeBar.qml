@@ -11,6 +11,10 @@ import qs.modules.pixel.widgets
  * Single, plus "Auto" to hand control back to the user's own hyprdynamicmonitors
  * profiles. When Single is active a chip row picks which output stays on.
  *
+ * With more than one screen, Extend also exposes where the secondary screens are
+ * placed (ArrangePicker) and which screen is primary; Mirror exposes the primary
+ * (= mirror source). Any quick layout exposes per-screen zoom (ZoomPicker).
+ *
  * Reads/writes purely through the Monitors service; never touches the user's
  * profiles or monitors.conf directly.
  */
@@ -64,30 +68,66 @@ ColumnLayout {
     }
 
     // Single-display target picker — visible only in single mode.
-    Flow {
+    MonitorChips {
         Layout.fillWidth: true
-        spacing: 6
         visible: root.current === "single"
+        selected: Monitors.quickTarget
+        onPicked: name => Monitors.setQuick("single", name)
+    }
 
-        Repeater {
-            model: Monitors.monitors
-            delegate: PixButton {
-                id: chip
-                required property var modelData
-                implicitHeight: 30
-                implicitWidth: chipText.implicitWidth + 20
-                enabled: !Monitors.busy
-                filled: Monitors.quickTarget === modelData.name
-                onClicked: Monitors.setQuick("single", modelData.name)
-                PixText {
-                    id: chipText
-                    anchors.centerIn: parent
-                    text: chip.modelData.name
-                    font.pixelSize: PixTheme.font.pixelSize.smaller
-                    color: chip.contentColor
-                }
-            }
+    // Alignment of the extended desktop.
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: 2
+        spacing: 5
+        visible: root.current === "extend" && Monitors.monitors.length > 1
+
+        PixText {
+            text: "OTHER SCREENS GO"
+            font.bold: true
+            color: PixTheme.colors.grey
+            font.pixelSize: PixTheme.font.pixelSize.smaller
         }
+        ArrangePicker { Layout.fillWidth: true }
+    }
+
+    // Which screen everything else is arranged around: pinned to 0x0 when
+    // extending, the mirror source when mirroring.
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: 2
+        spacing: 5
+        visible: (root.current === "extend" || root.current === "mirror") && Monitors.monitors.length > 1
+
+        PixText {
+            text: "PRIMARY SCREEN"
+            font.bold: true
+            color: PixTheme.colors.grey
+            font.pixelSize: PixTheme.font.pixelSize.smaller
+        }
+        MonitorChips {
+            Layout.fillWidth: true
+            selected: Monitors.quickAnchor
+            implicitFirst: true
+            onPicked: name => Monitors.setAnchor(name)
+        }
+    }
+
+    // Per-screen zoom. Only offered for quick layouts — that's where the shell owns
+    // the monitor lines; under "Auto" the active profile decides the scale.
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: 2
+        spacing: 5
+        visible: root.current !== "auto" && Monitors.monitors.length > 0
+
+        PixText {
+            text: "ZOOM"
+            font.bold: true
+            color: PixTheme.colors.grey
+            font.pixelSize: PixTheme.font.pixelSize.smaller
+        }
+        ZoomPicker { Layout.fillWidth: true }
     }
 
     // Return to the user's auto-selected profiles.

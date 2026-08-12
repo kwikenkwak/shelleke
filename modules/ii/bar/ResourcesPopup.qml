@@ -118,6 +118,13 @@ StyledPopup {
                     label: Translation.tr("Opus (week):")
                     value: `${Math.round(ClaudeUsage.opusPercent)}%`
                 }
+                StyledPopupValueRow {
+                    visible: ClaudeUsage.lastUpdatedAgo !== ""
+                    icon: "update"
+                    label: Translation.tr("Updated:")
+                    // lastError while data is shown means the latest poll failed -> data is stale.
+                    value: ClaudeUsage.lastUpdatedAgo + (ClaudeUsage.lastError !== "" ? Translation.tr(" (stale)") : "")
+                }
             }
         }
     }

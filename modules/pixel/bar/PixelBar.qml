@@ -135,8 +135,8 @@ Scope {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 0
-
-                        PixActiveWindow {
+                        PixTray {
+                            id: trayCluster
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         PixBarDivider {
@@ -186,20 +186,6 @@ Scope {
                             }
                             PixControlButton {
                                 anchors.verticalCenter: parent.verticalCenter
-                                icon: "fullscreen"
-                                active: true
-                                tooltipText: "Fullscreen"
-                                onTriggered: Hyprland.dispatch("fullscreen")
-                            }
-                            PixControlButton {
-                                anchors.verticalCenter: parent.verticalCenter
-                                icon: "keyboard"
-                                active: GlobalStates.oskOpen
-                                tooltipText: "On-screen keyboard"
-                                onTriggered: GlobalStates.oskOpen = !GlobalStates.oskOpen
-                            }
-                            PixControlButton {
-                                anchors.verticalCenter: parent.verticalCenter
                                 icon: "sun"
                                 active: !PixTheme.dark   // sun "on" in light mode
                                 tooltipText: "Toggle dark mode"
@@ -208,49 +194,9 @@ Scope {
                                     Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode ${mode} --noswitch`);
                                 }
                             }
-                            // Displays / monitors (hyprdynamicmonitors GUI).
-                            // Open-only, like quick settings, to avoid racing the
-                            // focus grab's outside-click close.
-                            PixControlButton {
-                                anchors.verticalCenter: parent.verticalCenter
-                                icon: "nodes"
-                                active: GlobalStates.monitorsOpen
-                                tooltipText: "Displays"
-                                onTriggered: GlobalStates.monitorsOpen = true
-                            }
-                            // Dedicated, obvious quick-settings entry point.
-                            // Open-only: closing is handled by the panel's focus
-                            // grab (outside-click) and Escape. A toggle here would
-                            // race the grab's onCleared (which closes on the same
-                            // outside click) and immediately re-open the panel.
-                            PixControlButton {
-                                anchors.verticalCenter: parent.verticalCenter
-                                icon: "sliders"
-                                active: GlobalStates.sidebarRightOpen
-                                tooltipText: "Quick settings"
-                                onTriggered: GlobalStates.sidebarRightOpen = true
-                            }
                             PixBatteryChip {
                                 anchors.verticalCenter: parent.verticalCenter
                                 onActivated: GlobalStates.sidebarRightOpen = true
-                            }
-                        }
-
-                        PixBarDivider {
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        // Tray cluster (also opens quick settings on click of empty area)
-                        MouseArea {
-                            anchors.verticalCenter: parent.verticalCenter
-                            implicitWidth: trayCluster.implicitWidth
-                            implicitHeight: trayCluster.implicitHeight
-                            acceptedButtons: Qt.RightButton
-                            onClicked: GlobalStates.sidebarRightOpen = true
-
-                            PixTray {
-                                id: trayCluster
-                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                     }

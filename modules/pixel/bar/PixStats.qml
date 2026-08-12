@@ -27,7 +27,6 @@ MouseArea {
     Row {
         id: row
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 14
 
         // System stats — hovering this group shows the system-monitor popup.
         MouseArea {
@@ -53,6 +52,7 @@ MouseArea {
 
             PixelBarPopup {
                 hoverTarget: statsArea
+                alignLeft: true
                 contentMargin: 16
                 PixSystemMonitorPopup {}
             }
@@ -73,13 +73,11 @@ MouseArea {
 
             Row {
                 id: mediaRow
+                visible: true
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
-                PixIcon {
+                PixBarDivider {
                     anchors.verticalCenter: parent.verticalCenter
-                    name: "note"
-                    size: 14
-                    color: PixTheme.colors.grey
                 }
                 PixText {
                     anchors.verticalCenter: parent.verticalCenter

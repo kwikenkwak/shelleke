@@ -56,5 +56,12 @@ Row {
             label: "Opus:"
             value: `${Math.round(ClaudeUsage.opusPercent)}%`
         }
+        PixSysIconRow {
+            visible: ClaudeUsage.lastUpdatedAgo !== ""
+            icon: "refresh"
+            label: "Updated:"
+            // lastError while data is shown means the latest poll failed -> data is stale.
+            value: ClaudeUsage.lastUpdatedAgo + (ClaudeUsage.lastError !== "" ? " (stale)" : "")
+        }
     }
 }

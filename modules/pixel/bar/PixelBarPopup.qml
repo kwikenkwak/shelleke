@@ -18,6 +18,7 @@ LazyLoader {
     id: root
 
     property Item hoverTarget
+    property bool alignLeft: false
     default property Item contentItem
     property int contentMargin: 14
 
@@ -42,9 +43,9 @@ LazyLoader {
         margins {
             left: root.QsWindow?.mapFromItem(
                 root.hoverTarget,
-                (root.hoverTarget.width - panel.implicitWidth) / 2, 0
+                root.alignLeft ? 0 : ((root.hoverTarget.width - panel.implicitWidth) / 2), 0
             ).x ?? 0
-            top: PixTheme.barHeight
+            top: PixTheme.barHeight + 6
         }
         WlrLayershell.namespace: "quickshell:pixelBarPopup"
         WlrLayershell.layer: WlrLayer.Overlay

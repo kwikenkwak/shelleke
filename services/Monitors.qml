@@ -28,6 +28,18 @@ Singleton {
     property bool quickActive: false
     property string quickMode: ""
     property string quickTarget: ""
+    // Extend/mirror layout shape: where the secondary screens sit relative to the
+    // primary one ("right"|"left"|"up"|"down"), and which output is that primary
+    // (empty = whichever Hyprland lists first).
+    property string quickArrange: "right"
+    property string quickAnchor: ""
+    // Per-output zoom in the quick layout: { "eDP-1": "1.5", … }, 1x omitted.
+    property var quickScales: ({})
+    property string quickProfileName: ""
+    // The managed profile can exist without being the one HDM picked (e.g. its
+    // required monitors no longer match). Only then is quick state what's on screen.
+    readonly property bool quickApplied: quickActive && quickProfileName.length > 0
+        && activeProfile === quickProfileName
     property string destination: ""
     property var scoring: ({})
     property var notifications: ({})
@@ -84,6 +96,10 @@ Singleton {
             root.quickActive = s.quick ? (s.quick.active ?? false) : false;
             root.quickMode = s.quick ? (s.quick.mode ?? "") : "";
             root.quickTarget = s.quick ? (s.quick.single_target ?? "") : "";
+            root.quickArrange = (s.quick && s.quick.arrange) ? s.quick.arrange : "right";
+            root.quickAnchor = (s.quick && s.quick.anchor) ? s.quick.anchor : "";
+            root.quickScales = (s.quick && s.quick.scales) ? s.quick.scales : ({});
+            root.quickProfileName = s.quick_profile ?? "";
             root.destination = s.destination ?? "";
             root.scoring = s.scoring ?? {};
             root.notifications = s.notifications ?? {};
@@ -132,6 +148,21 @@ Singleton {
     }
     function clearQuick() {
         _run(["clear"], "Back to auto");
+    }
+    // Alignment of the extend layout: "right" | "left" | "up" | "down". Only extend
+    // can be arranged, so picking a direction also switches to it.
+    function setArrange(dir) {
+        _run(["quick", "extend", "--arrange", dir], "Arrange " + dir);
+    }
+    // Primary screen: pinned to 0x0 in extend, the mirror source in mirror.
+    function setAnchor(name) {
+        const mode = (quickActive && quickMode === "mirror") ? "mirror" : "extend";
+        _run(["quick", mode, "--anchor", name], "Primary " + name);
+    }
+    // Zoom (Hyprland scale) for one output, e.g. "1.5". Kept per output in the quick
+    // profile, so it survives mode/arrangement changes and replugging.
+    function setScale(name, value) {
+        _run(["scale", name, String(value)], "Zoom " + name + " " + value + "x");
     }
     function freeze(name) {
         _run(["freeze", name], "Save profile");

@@ -58,9 +58,9 @@ Scope {
             left: true
         }
         margins {
-            top: PixTheme.barHeight
+            top: PixTheme.barHeight + 6
             bottom: PixTheme.barHeight
-            left: (mediaRoot.screen.width / 2) - (Appearance.sizes.osdWidth / 2) - root.widgetWidth
+            left: 0
         }
 
         // Only the visible card is interactive; the (transparent) area below it

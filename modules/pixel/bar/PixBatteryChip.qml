@@ -23,46 +23,29 @@ MouseArea {
     readonly property bool charging: Battery.isCharging
 
     visible: Battery.available
-    implicitWidth: visible ? chip.implicitWidth : 0
+    implicitWidth: visible ? chipRow.implicitWidth : 0
     implicitHeight: 30
 
-    PixButton {
-        id: chip
+    Row {
+        id: chipRow
         anchors.centerIn: parent
-        interactive: false
-        fillOnHover: false
-        borderWidth: PixTheme.borderWidth
-        implicitWidth: chipRow.implicitWidth + 14
-        implicitHeight: 30
-
-        Row {
-            id: chipRow
-            anchors.centerIn: parent
-            spacing: 6
+        spacing: 6
 
             PixBatteryGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 percent: root.percent
                 charging: root.charging
-                color: chip.contentColor
+                color: PixTheme.colors.fg
                 u: 1
             }
             PixText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Math.round(root.percent)
-                color: chip.contentColor
+                color: PixTheme.colors.fg
                 font.bold: true
                 font.pixelSize: PixTheme.font.pixelSize.large
             }
         }
-    }
-
-    PixTooltip {
-        text: root.charging
-            ? Math.round(root.percent) + "% · Charging"
-            : Math.round(root.percent) + "%"
-        visibleCondition: root.containsMouse
-    }
 
     PixelBarPopup {
         hoverTarget: root

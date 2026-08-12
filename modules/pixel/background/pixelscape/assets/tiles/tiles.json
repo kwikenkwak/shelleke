@@ -1,0 +1,5 @@
+{
+  "legend": { "G": "grass", "R": "road", "C": "city", "W": "water/river" },
+  "order": "NESW",
+  "note": "Filenames carry the NESW edge code (e.g. 09-city-cap-n.CGGG.png). The Rust tile layouter derives edges directly from the filename; this manifest is a human-readable reference."
+}
