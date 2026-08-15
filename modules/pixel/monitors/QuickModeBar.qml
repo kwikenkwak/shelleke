@@ -17,13 +17,27 @@ import qs.modules.pixel.widgets
  *
  * Reads/writes purely through the Monitors service; never touches the user's
  * profiles or monitors.conf directly.
+ *
+ * A MODE change (Extend/Mirror/Single/Auto) is not applied from here: it leaves
+ * as `modeRequested`, so the host can snapshot the current layout and hold the
+ * change for confirmation (QuickConfirm). Arrangement, primary screen and zoom
+ * are applied directly — they cannot take a screen away.
  */
 ColumnLayout {
     id: root
     spacing: 8
 
+    // Emitted for a mode change. mode: "extend"|"mirror"|"single"|"auto";
+    // target is the output "single" keeps on, "" otherwise.
+    signal modeRequested(string mode, string target)
+
     // "auto" when no quick override is active, else the active quick mode.
     readonly property string current: Monitors.quickActive ? Monitors.quickMode : "auto"
+
+    // Which output "Single" would keep on. Empty when nothing is connected — the
+    // one case where Single has no safe meaning, so the button is disabled rather
+    // than left to be refused by hdm-control.py.
+    readonly property string singleTarget: Monitors.singleTargetCandidate
 
     readonly property var modes: [
         { id: "extend", icon: "nodes", label: "Extend" },
@@ -40,12 +54,14 @@ ColumnLayout {
             delegate: PixButton {
                 id: modeBtn
                 required property var modelData
+                readonly property bool possible: modelData.id !== "single" || root.singleTarget !== ""
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: 54
-                enabled: !Monitors.busy
+                enabled: !Monitors.busy && modeBtn.possible
+                opacity: modeBtn.possible ? 1 : 0.4
                 filled: root.current === modelData.id
-                onClicked: Monitors.setQuick(modelData.id,
-                    modelData.id === "single" ? (Monitors.quickTarget || (Monitors.monitors[0]?.name ?? "")) : "")
+                onClicked: root.modeRequested(modelData.id, modelData.id === "single" ? root.singleTarget : "")
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -67,12 +83,28 @@ ColumnLayout {
         }
     }
 
-    // Single-display target picker — visible only in single mode.
+    // Why Single is dead. A disabled control with no explanation reads as a bug;
+    // this is the one case where the layout has no safe meaning at all.
+    PixText {
+        Layout.fillWidth: true
+        visible: root.singleTarget === ""
+        text: "Single needs a connected screen to keep on."
+        font.pixelSize: PixTheme.font.pixelSize.smaller
+        color: PixTheme.colors.grey
+        wrapMode: Text.WordWrap
+    }
+
+    // Single-display target picker — visible only in single mode. Every chip is a
+    // CONNECTED output, so picking one can never black the machine out; the
+    // target that would be dangerous (an absent one) is not offered, and
+    // hdm-control.py refuses it anyway.
     MonitorChips {
         Layout.fillWidth: true
         visible: root.current === "single"
         selected: Monitors.quickTarget
-        onPicked: name => Monitors.setQuick("single", name)
+        // Switching the target moves the desktop to another screen and turns the
+        // current one off, so it is confirmed exactly like a mode change.
+        onPicked: name => root.modeRequested("single", name)
     }
 
     // Alignment of the extended desktop.
@@ -137,7 +169,10 @@ ColumnLayout {
         Layout.preferredHeight: 38
         enabled: !Monitors.busy
         filled: root.current === "auto"
-        onClicked: Monitors.clearQuick()
+        // Auto is a mode change too — handing the layout back to the user's own
+        // profiles can move or drop screens just as Single can, so it is held for
+        // confirmation like the other three.
+        onClicked: root.modeRequested("auto", "")
         RowLayout {
             anchors.centerIn: parent
             spacing: 7

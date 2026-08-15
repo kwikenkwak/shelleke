@@ -1,0 +1,335 @@
+<!-- @dsCard group="Paper C: Broadsheet" name="Worktrees" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper C &mdash; Broadsheet: worktrees dialog</title>
+<style>
+:root{
+  /* ---- paper (light) ---------------------------------------------- */
+  --paper:#F6F2E9; --paper-2:#EFEADD; --paper-3:#E6DFCE; --paper-4:#DCD3BE;
+  --desk:#DFD8C8;
+  --ink:#241F1A; --ink-2:#57503F; --ink-3:#7E7565; --ink-4:#B0A794;
+  --rule:#CFC6B2; --rule-2:#B3A991; --rule-ink:#241F1A;
+  --accent:#7B2A24;        /* oxblood  — primary editorial accent */
+  --accent-w:#F0E4DF;      /* oxblood wash */
+  --blue:#27456E;          /* ink blue — secondary accent          */
+  --blue-w:#E2E6EE;        /* ink blue wash */
+  --seal:#8A6A3B;          /* sepia    — seals, stamps, ornament   */
+  --seal-w:#EFE7D6;
+  --sel:#DED6C2;
+  --shade:0 1px 1px rgba(36,31,26,.05), 0 10px 26px rgba(36,31,26,.09);
+  --shade-sm:0 1px 2px rgba(36,31,26,.07);
+  --grain:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27140%27%20height%3D%27140%27%3E%3Cfilter%20id%3D%27g%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.8%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27%2F%3E%3CfeColorMatrix%20type%3D%27saturate%27%20values%3D%270%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27140%27%20height%3D%27140%27%20filter%3D%27url%28%23g%29%27%20opacity%3D%270.055%27%2F%3E%3C%2Fsvg%3E");
+  /* ---- type ------------------------------------------------------- */
+  --f-disp:"TeX Gyre Pagella","Palatino Linotype","URW Palladio L","Libertinus Serif","Bitstream Charter","Noto Serif",Georgia,serif;
+  --f-text:"Lato","Adwaita Sans","Cantarell","Helvetica Neue",Arial,sans-serif;
+  --f-micro:"Source Code Pro","Adwaita Mono","JetBrains Mono",ui-monospace,monospace;
+  --fs-micro:10px; --fs-agate:11px; --fs-small:12px; --fs-body:13px;
+  --fs-lede:15px; --fs-title:17px; --fs-display:21px; --fs-banner:26px; --fs-folio:46px;
+  --lh:1.32;
+  /* ---- metrics ---------------------------------------------------- */
+  --sp1:2px; --sp2:4px; --sp3:6px; --sp4:8px; --sp5:10px; --sp6:12px;
+  --sp7:16px; --sp8:20px; --sp9:24px; --sp10:32px;
+  --hair:1px; --r-ctl:2px;
+  --dur1:90ms; --dur2:160ms; --dur3:280ms; --ease:cubic-bezier(.2,.7,.3,1);
+}
+.dusk{
+  color:var(--ink);
+  --paper:#17140F; --paper-2:#1E1A14; --paper-3:#26211A; --paper-4:#302A21;
+  --desk:#0E0C09;
+  --ink:#EDE6D8; --ink-2:#C3BAA8; --ink-3:#938A79; --ink-4:#6A6252;
+  --rule:#39322A; --rule-2:#564E42; --rule-ink:#EDE6D8;
+  --accent:#C9736A; --accent-w:#2E211E;
+  --blue:#93B0D4;  --blue-w:#1B2029;
+  --seal:#C6A470;  --seal-w:#26201A;
+  --sel:#2C261E;
+  --shade:0 1px 1px rgba(0,0,0,.35), 0 12px 28px rgba(0,0,0,.45);
+  --shade-sm:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--desk);color:var(--ink);font-family:var(--f-text);
+     font-size:var(--fs-body);line-height:var(--lh);
+     -webkit-font-smoothing:antialiased;padding:34px 28px 90px}
+.wrap{max-width:1740px;margin:0 auto}
+svg{display:block}
+.i{fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;
+   vector-effect:non-scaling-stroke;overflow:visible}
+.i-lg{stroke-width:1.4}
+.i.fill{fill:currentColor;stroke:none}
+
+/* ---- document chrome (not part of the shell) ------------------------ */
+h1.doch{font-family:var(--f-disp);font-size:30px;font-weight:400;margin:0 0 2px;letter-spacing:.01em}
+.dochr{border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2);height:3px;margin:10px 0 14px}
+p.doc{color:var(--ink-2);font-size:13.5px;max-width:960px;margin:0 0 8px;line-height:1.55}
+p.doc b{color:var(--ink);font-weight:700}
+p.doc code,code{font-family:var(--f-micro);font-size:11.5px;background:var(--paper-2);
+   border:1px solid var(--rule);padding:0 3px;border-radius:2px}
+.sec{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;
+     font-weight:700;color:var(--ink-3);margin:38px 0 12px;display:flex;align-items:center;gap:10px}
+.sec::after{content:"";flex:1 1 auto;height:0;border-top:1px solid var(--rule)}
+.cap{color:var(--ink-3);font-size:11.5px;margin:9px 0 0;line-height:1.5;font-style:italic;
+     font-family:var(--f-disp)}
+.note{color:var(--ink-3);font-size:12px;margin:8px 0 0;line-height:1.55;max-width:960px}
+.stage{overflow-x:auto;padding:2px 0 4px}
+.fontnote{font-family:var(--f-disp);font-style:italic;font-size:12.5px;color:var(--ink-2);
+  border-left:2px solid var(--seal);padding:2px 0 2px 10px;margin:12px 0 0;max-width:960px;line-height:1.5}
+
+/* ---- primitives ----------------------------------------------------- */
+.sheet{background-color:var(--paper);background-image:var(--grain);background-blend-mode:multiply;
+       border:1px solid var(--rule-2);box-shadow:var(--shade);position:relative}
+.sheet.flat{box-shadow:none}
+.tint{background-color:var(--paper-2);background-image:var(--grain);background-blend-mode:multiply}
+.card{background-color:var(--paper-2);background-image:var(--grain);background-blend-mode:multiply;
+      border:1px solid var(--rule);position:relative}
+.card.q{background-color:var(--paper);}
+.tk{position:absolute;width:6px;height:6px;pointer-events:none}
+.tk.tl{left:4px;top:4px;border-left:1px solid var(--rule-2);border-top:1px solid var(--rule-2)}
+.tk.tr{right:4px;top:4px;border-right:1px solid var(--rule-2);border-top:1px solid var(--rule-2)}
+.tk.bl{left:4px;bottom:4px;border-left:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+.tk.br{right:4px;bottom:4px;border-right:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+
+.hr{height:0;border-top:1px solid var(--rule);width:100%}
+.hr2{height:0;border-top:1px solid var(--rule-2);width:100%}
+.hrd{height:1px;border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2);width:100%}
+.hro{height:1px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2);width:100%}
+.vr{width:0;border-left:1px solid var(--rule);align-self:stretch}
+.vr2{width:0;border-left:1px solid var(--rule-2)}
+
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.grow{flex:1 1 auto;min-width:0}
+.elide{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.clamp3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---- type roles ----------------------------------------------------- */
+.disp{font-family:var(--f-disp)}
+.title{font-family:var(--f-disp);font-size:var(--fs-title);line-height:1.2;color:var(--ink)}
+.lede{font-family:var(--f-disp);font-size:var(--fs-lede);line-height:1.25;color:var(--ink)}
+.serif-body{font-family:var(--f-disp);font-size:var(--fs-body);line-height:1.42;color:var(--ink-2)}
+.kicker{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.15em;
+        font-size:var(--fs-micro);font-weight:700;color:var(--ink-3);line-height:1.1}
+.kicker.acc{color:var(--accent)}
+.kicker.blu{color:var(--blue)}
+.smallcaps{font-family:var(--f-disp);font-feature-settings:"smcp","c2sc";
+           text-transform:lowercase;letter-spacing:.1em}
+.meta{font-size:var(--fs-agate);color:var(--ink-3);letter-spacing:.01em}
+.agate{font-size:var(--fs-agate);color:var(--ink-2)}
+.foot{font-family:var(--f-disp);font-style:italic;font-size:var(--fs-micro);color:var(--ink-4)}
+.num{font-family:var(--f-disp);font-feature-settings:"onum","tnum";font-variant-numeric:oldstyle-nums tabular-nums}
+.lnum{font-family:var(--f-disp);font-feature-settings:"lnum","tnum";font-variant-numeric:lining-nums tabular-nums}
+.mono{font-family:var(--f-micro);font-size:var(--fs-agate);letter-spacing:-.01em}
+.muted{color:var(--ink-3)}
+.faint{color:var(--ink-4)}
+.acc{color:var(--accent)}
+.blu{color:var(--blue)}
+.sealc{color:var(--seal)}
+.b{font-weight:700}
+.sb{font-weight:600}
+.it{font-style:italic}
+
+/* section head: kicker + hairline that runs to the edge */
+.shead{display:flex;align-items:center;gap:9px;width:100%}
+.shead::after{content:"";flex:1 1 auto;height:0;border-top:1px solid var(--rule)}
+.shead.dbl::after{height:3px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+
+/* ---- controls -------------------------------------------------------- */
+.btn{font-family:var(--f-text);font-size:var(--fs-small);color:var(--ink-2);
+     background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--r-ctl);
+     display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;
+     position:relative;transition:background var(--dur1) var(--ease),border-color var(--dur2) var(--ease),color var(--dur1) var(--ease)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.hover{background:var(--paper-3);border-color:var(--rule-2);color:var(--ink)}
+.btn.press{background:var(--paper-4);border-color:var(--ink-3);color:var(--ink)}
+.btn.on{background:var(--accent-w);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn.on.blu{background:var(--blue-w);border-color:var(--blue);color:var(--blue)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.solid.acc{background:var(--accent);border-color:var(--accent);color:#F6F2E9}
+.btn.dis{color:var(--ink-4);border-color:var(--rule);border-style:dotted;background:transparent}
+.btn .ul{position:absolute;left:6px;right:6px;bottom:3px;height:0;border-top:1px solid currentColor}
+.btn.sq{padding:0}
+
+/* underline-on-hover link-ish control */
+.lnk{color:var(--ink-2);border-bottom:1px solid transparent;cursor:default}
+.lnk.hover{color:var(--accent);border-bottom-color:var(--accent);font-style:italic}
+
+/* icon slots & medallions */
+.slot{border:1px solid var(--rule);border-radius:var(--r-ctl);display:flex;align-items:center;
+      justify-content:center;color:var(--ink-2);background:var(--paper);flex:0 0 auto}
+.slot.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.slot.on.blu{border-color:var(--blue);color:var(--blue);background:var(--blue-w)}
+.slot.solid{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.med{border:1px solid var(--rule-2);border-radius:999px;display:flex;align-items:center;
+     justify-content:center;color:var(--ink-2);background:var(--paper);flex:0 0 auto}
+.med.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.med.dbl{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--rule)}
+
+/* seal / stamp */
+.stamp{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--seal);color:var(--seal);
+  font-family:var(--f-text);text-transform:uppercase;letter-spacing:.14em;font-size:9.5px;font-weight:700;
+  padding:2px 6px;border-radius:2px;background:var(--seal-w);white-space:nowrap}
+.stamp.acc{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.stamp.blu{border-color:var(--blue);color:var(--blue);background:var(--blue-w)}
+.stamp.tilt{transform:rotate(-3.5deg)}
+.sealo{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;
+  border:1px solid var(--seal);color:var(--seal);background:var(--seal-w);
+  box-shadow:0 0 0 1.5px var(--paper),0 0 0 2.5px var(--seal);}
+
+/* chips */
+.chip{border:1px solid var(--rule);border-radius:var(--r-ctl);background:var(--paper);
+      font-size:var(--fs-agate);color:var(--ink-2);display:flex;align-items:center;
+      justify-content:center;padding:0 8px;white-space:nowrap}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.chip.oncc{border-color:var(--accent);background:var(--accent-w);color:var(--accent);font-weight:600}
+.chip.dis{color:var(--ink-4);border-style:dotted}
+
+/* fields */
+.field{border:1px solid var(--rule);border-bottom-color:var(--rule-2);border-radius:var(--r-ctl);
+  background:var(--paper);height:30px;display:flex;align-items:center;padding:0 9px;
+  font-size:var(--fs-body);color:var(--ink);font-family:var(--f-text)}
+.field.focus{border-color:var(--rule-2);border-bottom:2px solid var(--accent);padding-bottom:0}
+.field .ph{color:var(--ink-4)}
+.caret{display:inline-block;width:1px;height:15px;background:var(--accent);margin-left:1px;
+  vertical-align:-3px}
+
+/* meters — the "rule gauge" */
+.gauge{position:relative;height:9px;width:100%}
+.gauge .base{position:absolute;left:0;right:0;bottom:3px;height:0;border-top:1px solid var(--rule-2)}
+.gauge .fillr{position:absolute;left:0;bottom:1px;height:4px;background:var(--ink)}
+.gauge .fillr.acc{background:var(--accent)}
+.gauge .tick{position:absolute;bottom:3px;width:0;height:5px;border-left:1px solid var(--rule-2)}
+.gauge .tick.maj{height:8px;border-left-color:var(--ink-3)}
+
+/* progress (media) */
+.track{position:relative;height:7px;width:100%}
+.track .base{position:absolute;left:0;right:0;top:3px;height:0;border-top:1px solid var(--rule-2)}
+.track .done{position:absolute;left:0;top:2px;height:2px;background:var(--accent)}
+.track .knob{position:absolute;top:0;width:0;height:7px;border-left:1px solid var(--accent)}
+
+/* list rows */
+.lrow{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--r-ctl);
+  border:1px solid transparent;position:relative;transition:background var(--dur1) var(--ease)}
+.lrow.hover{background:var(--paper-2)}
+.lrow.hover::before{content:"";position:absolute;left:0;top:4px;bottom:4px;
+  border-left:2px solid var(--accent)}
+.lrow.sel{background:var(--sel)}
+.lrow.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid var(--accent)}
+
+/* tooltip */
+.tip{background:var(--paper);border:1px solid var(--rule-2);box-shadow:var(--shade-sm);
+  padding:4px 9px 5px;font-family:var(--f-disp);font-style:italic;font-size:12px;color:var(--ink-2);
+  white-space:nowrap;position:relative}
+
+/* app icon stand-in */
+.appslot{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border:1px solid var(--rule);border-radius:var(--r-ctl);background:var(--paper);
+  font-family:var(--f-disp);color:var(--ink-2);letter-spacing:.02em;
+  box-shadow:inset 0 0 0 1px var(--paper)}
+.appslot.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.appslot.plain{border-color:transparent;background:transparent;box-shadow:none}
+
+/* scrim */
+.scrim{background:rgba(28,24,19,.72)}
+.dusk .scrim{background:rgba(8,7,5,.78)}
+
+
+/* battery glyph */
+.batt{position:relative;display:inline-flex;align-items:center}
+.battb{width:24px;height:11px;border:1px solid var(--rule-2);border-radius:2px;position:relative;
+  background:var(--paper);display:block}
+.battf{position:absolute;left:1.5px;top:1.5px;bottom:1.5px;background:var(--ink);display:block}
+.battf.acc{background:var(--accent)}
+.battn{width:2px;height:5px;background:var(--rule-2);margin-left:1px;border-radius:0 1px 1px 0;display:block}
+.plate{display:inline-block;border:1px solid var(--rule-2);padding:3px;background:var(--paper);
+  box-shadow:var(--shade-sm)}
+.plate .img{position:relative;background:linear-gradient(152deg,#7A5140,#B07B52 40%,#8A6A6E 68%,#3F4A5A)}
+.plate .img::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(246,242,233,.35)}
+
+/* fake wallpaper band for the bar */
+.wall{background:
+   radial-gradient(120% 90% at 12% 0%,rgba(255,246,226,.55),rgba(255,246,226,0) 60%),
+   radial-gradient(90% 80% at 88% 110%,rgba(58,74,92,.55),rgba(58,74,92,0) 55%),
+   linear-gradient(160deg,#8E7F6A 0%,#6E6555 38%,#4C4A44 70%,#2F3134 100%);
+   position:relative}
+.wall::after{content:"";position:absolute;inset:0;background-image:var(--grain);
+   background-blend-mode:multiply;opacity:.5;pointer-events:none}
+
+.sbs{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.bar{height:42px;background-color:var(--paper);background-image:var(--grain);
+  background-blend-mode:multiply;position:relative;display:flex;align-items:center;padding:0 12px 4px}
+.bar .edge{position:absolute;left:0;right:0;bottom:0;height:1px;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2)}
+.clk{font-family:var(--f-disp);font-feature-settings:"onum","tnum";font-size:17px;color:var(--ink)}
+.divid{width:0;height:18px;border-left:1px solid var(--rule);margin:0 13px}
+
+/* ---- overview ---- */
+.srch{width:560px;height:48px;display:flex;align-items:center;gap:11px;padding:0 14px}
+.srch .q{font-family:var(--f-disp);font-size:21px;color:var(--ink)}
+.res{width:560px;border-top:none;padding:6px}
+.rrow{display:flex;align-items:center;gap:11px;padding:8px 10px;position:relative}
+.rrow.sel{background:var(--sel)}
+.rrow.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid var(--accent)}
+.verb{font-family:var(--f-disp);font-feature-settings:"smcp";text-transform:lowercase;
+  letter-spacing:.12em;font-size:12px;color:var(--accent)}
+.wsg{display:grid;grid-template-columns:repeat(5,346px);gap:6px}
+.wst{width:346px;height:186px;position:relative;border:1px solid var(--rule);background:var(--paper-2)}
+.wst .wsn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-disp);font-feature-settings:"onum";font-size:66px;color:var(--ink-4);opacity:.5}
+.wst.foc{border-color:var(--blue);box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--blue)}
+.wst.foc .tk{border-color:var(--blue)}
+.win{position:absolute;border:1px solid var(--rule-2);background:var(--paper);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shade-sm)}
+.win.hov{border-color:var(--accent);background:var(--paper-3)}
+.win.dim{opacity:.45}
+
+/* ---- media ---- */
+.mcard{width:460px}
+.lyr .ln{padding:3px 0;font-family:var(--f-disp);font-size:13px;color:var(--ink-3)}
+.lyr .ln.past{color:var(--ink-4)}
+.lyr .ln.cur{color:var(--ink);font-size:16px;padding-left:9px;border-left:2px solid var(--accent)}
+
+/* ---- monitors ---- */
+.mon{width:380px;background-color:var(--paper);background-image:var(--grain);
+  background-blend-mode:multiply;border-right:1px solid var(--rule-2);padding:14px;
+  display:flex;flex-direction:column;gap:10px;position:relative}
+.qmb{flex:1 1 0;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;border:1px solid var(--rule);border-radius:2px;background:var(--paper-2);color:var(--ink-2)}
+.qmb .l{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.13em;font-size:9px;font-weight:700}
+.qmb.on{border-color:var(--accent);background:var(--accent-w);color:var(--accent)}
+.arr{flex:1 1 0;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;border:1px solid var(--rule);border-radius:2px;background:var(--paper);color:var(--ink-3)}
+.arr.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.arr .l{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.11em;font-size:8.5px;font-weight:700}
+.sqd{display:flex;gap:2px}
+.sqd i{width:12px;height:8px;border:1px solid currentColor;display:block}
+.sqd i.f{background:currentColor}
+.sqd.v{flex-direction:column}
+
+/* ---- session ---- */
+.stile{width:128px;height:128px;position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:13px}
+.stile .acc{position:absolute;left:9px;top:7px;font-family:var(--f-disp);
+  font-feature-settings:"onum";font-size:12px;color:var(--ink-4)}
+.stile .l{font-family:var(--f-disp);font-feature-settings:"smcp";text-transform:lowercase;
+  letter-spacing:.13em;font-size:14px;color:var(--ink-2)}
+.stile.sel{border-color:var(--accent)}
+.stile.sel .l{color:var(--accent)}
+.stile.sel .acc{color:var(--accent)}
+
+/* ---- worktrees ---- */
+.wt{width:440px}
+.kvg{display:grid;grid-template-columns:74px 1fr;gap:3px 10px;align-items:baseline}
+.kvg .k{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.13em;font-size:9px;
+  font-weight:700;color:var(--ink-4);padding-top:2px}
+.kvg .v{font-family:var(--f-micro);font-size:11px;color:var(--ink-2);word-break:break-all}
+.logbox{max-height:120px;overflow:hidden;padding:8px 10px}
+.logbox .l{font-family:var(--f-micro);font-size:10.5px;color:var(--ink-3);line-height:1.55}
+</style></head>
+<body><div class="wrap">
+<h1 class="doch">Paper C &mdash; Broadsheet: worktrees dialog</h1>
+<div class="dochr"></div>
+<p class="doc">A centred, keyboard-exclusive modal, 440&nbsp;px wide and capped at 900&nbsp;px tall: task name, the repo list with per-repo server chips, the summary table, create / cancel, the reopen list and the script log.</p>
+<p class="fontnote"><b>Fonts.</b> Display / titles / numerals: <b>TeX Gyre Pagella</b> (Palatino lineage; real <code>smcp</code> small caps, <code>onum</code> oldstyle and <code>tnum</code> tabular figures) &mdash; installed here, so these previews show the actual face. Data / labels: <b>Lato</b>. Tabular micro-data, paths and logs: <b>Source Code Pro</b>. All three are libre and packaged on Fedora; the shell bundles them in <code>assets/fonts/</code> exactly as the pixel family bundles its bitmap faces.</p>
+<div class="sec">Worktrees &mdash; 440 wide, centred modal</div><div class="stage"><div class="wall" style="width:1180px;height:880px;padding:0;position:relative"><div class="scrim" style="position:absolute;inset:0"></div><div style="position:relative;display:flex;justify-content:center;padding-top:26px"><div class="sheet wt" style="padding:14px"><i class="tk tl"></i><i class="tk tr"></i><i class="tk bl"></i><i class="tk br"></i><div class="row" style="gap:9px"><span class="title smallcaps grow">New worktree</span><div class="btn" style="height:26px;padding:0 9px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Esc</div></div><div class="hro" style="margin:9px 0 11px"></div><div class="kicker" style="margin-bottom:5px">Task name</div><div class="field focus">reader-sync<span class="caret"></span></div><div class="foot" style="margin-top:3px">letters, digits, . _ - only</div><div class="shead" style="margin:12px 0 8px"><span class="kicker">Repos</span><span style="flex:1 1 auto;height:0;border-top:1px solid var(--rule)"></span><span class="foot" style="margin-left:9px">from main@origin</span></div><div class="card" style="padding:8px 9px;border-color:var(--accent);display:flex;flex-direction:column;gap:8px"><div class="row" style="gap:9px"><span class="slot on" style="width:19px;height:19px"><svg class="i" width="12" height="12" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10.4 4.2 4.2L16 5.4"/></svg></span><span class="grow" style="font-size:13px;font-weight:600;color:var(--accent)">vitulina</span><span class="meta">3 srv</span></div><div class="row" style="gap:6px"><div class="chip oncc" style="flex:1;height:24px">api</div><div class="chip oncc" style="flex:1;height:24px">web</div><div class="chip" style="flex:1;height:24px">worker</div></div></div><div class="card" style="padding:8px 9px;margin-top:6px;display:flex;gap:9px;align-items:center"><span class="slot" style="width:19px;height:19px"></span><span class="grow" style="font-size:13px">pleevi-www</span><span class="meta">1 srv</span></div><div class="card" style="padding:8px 9px;margin-top:6px;display:flex;gap:9px;align-items:center"><span class="slot" style="width:19px;height:19px"></span><div class="col grow"><span style="font-size:13px">reader</span><span class="foot">no vitulina servers &mdash; gets a shell tab</span></div></div><div class="foot" style="margin-top:6px">wiki, dotfiles need <span class="mono">jj git init --colocate</span> first</div><div class="hrd" style="margin:12px 0 9px"></div><div class="kicker" style="margin-bottom:7px">Summary</div><div class="kvg"><span class="k">Path</span><span class="v">~/pleevi/reader-sync</span><span class="k">Bookmark</span><span class="v">reader-sync</span><span class="k">Env</span><span class="v">vitulina up --env reader-sync</span><span class="k">Setup</span><span class="v">jj workspace, copy .env, direnv allow<br>pnpm i (vitulina, pleevi-www)</span><span class="k">Tabs</span><span class="v">5 &mdash; shell, claude, 2 vitulina, 1 repo</span></div><div class="row" style="gap:8px;margin-top:12px"><div class="btn solid" style="flex:1 1 auto;height:32px;letter-spacing:.1em;text-transform:uppercase;font-size:11px;font-weight:700">Create</div><div class="btn" style="width:88px;height:32px">Cancel</div></div><div class="shead" style="margin:12px 0 7px"><span class="kicker">Reopen</span><span style="flex:1 1 auto;height:0;border-top:1px solid var(--rule)"></span><span class="foot" style="margin-left:9px">4 tasks</span></div><div class="lrow hover" style="padding:6px 8px"><span class="grow" style="font-size:13px;font-weight:600;font-style:italic">display-gui</span><span class="meta elide" style="max-width:150px">vitulina, pleevi-www</span><span class="foot">5 tabs</span></div><div class="lrow " style="padding:6px 8px"><span class="grow" style="font-size:13px;font-weight:600;">lyrics-cache</span><span class="meta elide" style="max-width:150px">vitulina</span><span class="foot">3 tabs</span></div><div class="lrow " style="padding:6px 8px"><span class="grow" style="font-size:13px;font-weight:600;">paper-theme</span><span class="meta elide" style="max-width:150px">dotfiles</span><span class="foot">2 tabs</span></div><div class="card q logbox" style="margin-top:10px"><div class="l">jj workspace add ~/pleevi/reader-sync &hellip; ok</div><div class="l">copy .env (vitulina) &hellip; ok</div><div class="l">direnv allow &hellip; ok</div><div class="l">pnpm i &mdash; 1284 packages in 21.4s</div><div class="l">opening kitty tabs &hellip;</div></div></div></div></div></div><p class="cap">The densest surface in the shell, and the one that most wants editorial structure: a masthead over an Oxford rule, a field with its validation footnote, a repo list where the selected repo is the only card wearing an oxblood frame, a key/value summary set as a proper table (small-caps keys in the left column, monospace values in the right), the committing action as the one solid button on the sheet, a reopen list, and the script log in a quiet paper well.</p><div class="sec">States</div><div class="sbs"><div><div class="kicker" style="margin-bottom:8px">Create disabled &middot; name invalid</div><div class="sheet" style="width:440px;padding:14px"><div class="kicker" style="margin-bottom:5px">Task name</div><div class="field" style="border-bottom:2px solid var(--accent)">reader sync!</div><div class="foot acc" style="margin-top:3px;font-style:italic">letters, digits, . _ - only</div><div class="row" style="gap:8px;margin-top:12px"><div class="btn dis" style="flex:1;height:32px;letter-spacing:.1em;text-transform:uppercase;font-size:11px;font-weight:700">Create</div><div class="btn" style="width:88px;height:32px">Cancel</div></div></div></div><div><div class="kicker" style="margin-bottom:8px">Working</div><div class="sheet" style="width:440px;padding:14px"><div class="row" style="gap:8px"><div class="btn solid" style="flex:1;height:32px;letter-spacing:.1em;text-transform:uppercase;font-size:11px;font-weight:700;font-style:italic">Working&hellip;</div><div class="btn" style="width:88px;height:32px">Cancel</div></div><div class="card q logbox" style="margin-top:10px"><div class="l">jj workspace add &hellip; ok</div><div class="l">pnpm i &mdash; resolving&hellip;</div></div></div></div><div><div class="kicker" style="margin-bottom:8px">Failure</div><div class="sheet" style="width:440px;padding:14px"><div class="card q logbox" style="border-color:var(--accent)"><div class="l">jj workspace add &hellip; ok</div><div class="l acc">copy .env (vitulina) &mdash; no such file</div><div class="l acc">aborted after 2 steps</div></div><div class="foot acc" style="margin-top:6px;font-style:italic">The well and its text turn oxblood; the sheet itself never changes colour.</div></div></div><div><div class="kicker" style="margin-bottom:8px">Empty states</div><div class="sheet" style="width:300px;padding:14px"><div class="disp it" style="font-size:13px;color:var(--ink-3)">No git repos found in ~/pleevi</div><div class="hr" style="margin:8px 0"></div><div class="disp it" style="font-size:13px;color:var(--ink-3)">No task folders in ~/pleevi yet</div></div></div></div>
+</div></body></html>

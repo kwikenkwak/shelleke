@@ -1,0 +1,93 @@
+<!-- @dsCard group="Current: Pixels" name="Media Controls" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Media controls &amp; lyrics</title>
+<style>
+:root{
+  --bg:#0b0b0b; --fg:#f4f4f4; --grey:#9b9b9b; --grey2:#555555; --line:#f4f4f4;
+  --bd:2px; --popbd:3px; --barbd:3px;
+  --fmain:"Tiny5","Silkscreen","Press Start 2P","Departure Mono",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --ftitle:"Silkscreen","Press Start 2P","Tiny5",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:#000;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:8px 8px;
+  color:var(--fg);
+  font-family:var(--fmain);
+  font-size:14px;
+  font-weight:500;
+  line-height:1.15;
+  -webkit-font-smoothing:none;
+  font-smooth:never;
+  padding:28px 24px 80px;
+}
+.wrap{max-width:1720px;margin:0 auto}
+h1.doch{font-family:var(--ftitle);letter-spacing:1px;font-size:20px;font-weight:700;margin:0 0 6px}
+p.doc{color:var(--grey);font-size:13px;max-width:900px;margin:0 0 4px;line-height:1.5}
+p.doc b{color:var(--fg);font-weight:700}
+.sec{font-family:var(--ftitle);letter-spacing:1px;font-size:12px;font-weight:700;
+     color:var(--grey);margin:34px 0 10px;text-transform:uppercase}
+.note{color:var(--grey2);font-size:12px;margin:6px 0 0;line-height:1.5}
+.stage{overflow-x:auto;padding:0 0 2px}
+.svgi,.ico{display:block;shape-rendering:crispEdges}
+.appico{display:block;image-rendering:pixelated;shape-rendering:crispEdges}
+
+/* --- pixel primitives ------------------------------------------------- */
+.panel{background:var(--bg);border:var(--popbd) solid var(--line)}
+.panel2{background:var(--bg);border:var(--bd) solid var(--line)}
+.btn{border:var(--bd) solid var(--line);background:transparent;color:var(--fg);
+     display:flex;align-items:center;justify-content:center;position:relative}
+.btn.b3{border-width:var(--popbd)}
+.btn.filled{background:var(--line);color:var(--bg)}
+.btn.press{background:var(--grey);color:var(--fg)}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.grow{flex:1 1 auto;min-width:0}
+.t{font-family:var(--ftitle);font-weight:700;letter-spacing:1px}
+.g{color:var(--grey)}
+.g2{color:var(--grey2)}
+.b{font-weight:700}
+.rule{background:var(--line);height:2px;width:100%}
+.elide{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq{border:var(--bd) solid var(--line);display:flex;align-items:center;justify-content:center}
+.sq.on{background:var(--fg);color:var(--bg)}
+.cap{color:var(--grey2);font-size:12px;margin:8px 0 0}
+.scrim{background:rgba(11,11,11,.82)}
+
+.card{width:460px;background:var(--bg);border:var(--popbd) solid var(--line);position:relative;overflow:hidden}
+.pcell{width:7px;height:12px;border:var(--bd) solid var(--line)}
+.pcell.on{background:var(--fg);border:0}
+.art{width:142px;height:142px;flex:0 0 auto;border:var(--bd) solid var(--line);display:flex;align-items:center;
+  justify-content:center;position:relative;overflow:hidden}
+.searchfield{width:560px;height:48px;background:var(--bg);border:var(--popbd) solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:0 12px}
+.results{width:560px;background:var(--bg);border:var(--popbd) solid var(--line);margin-top:-3px;padding:6px}
+.sres{display:flex;align-items:center;gap:10px;padding:6px 12px}
+.sres.sel{background:var(--line);color:var(--bg)}
+.wstile{width:346px;height:186px;border:2px solid var(--grey2);position:relative;flex:0 0 auto}
+.wstile .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ftitle);font-weight:700;letter-spacing:1px;color:var(--grey2);font-size:74px}
+.wstile.focus{border:5px solid var(--fg)}
+.win{position:absolute;border:1px solid var(--line);background:#191919;display:flex;
+  align-items:center;justify-content:center;overflow:hidden}
+</style></head>
+<body><div class="wrap">
+<h1 class="doch">Media controls &amp; lyrics</h1>
+<p class="doc">Anchored to the <b>top-left</b>, <code>barHeight + 6</code> = 52&nbsp;px down,
+flush with the left screen edge. Card is <b>460&nbsp;px</b> wide with a 3&nbsp;px border; the layer
+surface keeps a fixed height (170 player + 210 lyrics) while only the card animates between 170&nbsp;px
+and 380&nbsp;px over 300&nbsp;ms <code>OutCubic</code>, revealing the lyrics. Closes on click-out or
+Escape.</p>
+<p class="doc">Player row: a 142&times;142 album-art frame (2&nbsp;px border) &mdash; <b>the single
+sanctioned color in the whole shell</b>, drawn unsmoothed &mdash; then title (Silkscreen 16) with a
+lyrics-toggle button, artist in grey, elapsed/total time, a discrete <b>7&times;12&nbsp;px</b> progress
+cell row (3&nbsp;px gaps, click to seek), and prev / play-pause / next. Lyrics auto-scroll to keep the
+active line centred; the current line is bold 16&nbsp;px <code>fg</code>, past lines
+<code>grey2</code>, upcoming lines <code>grey</code>.</p><p class="note">Font note: the shell renders body text in <b>Tiny5</b> (bitmap, <code>PixTheme.fontMainChoice = "tiny5"</code>) and titles in <b>Silkscreen</b>, both bundled in <code>assets/fonts/</code>. These pages use a system monospace fallback stack, so glyph shapes differ — metrics, sizes, weights, spacing and colors are the real values.</p>
+<div class="row" style="gap:26px;align-items:flex-start;flex-wrap:wrap"><div class="card"><div class="row" style="gap:14px;padding:14px 16px;height:170px;align-items:stretch"><div class="art"><div style="position:absolute;inset:2px;background:repeating-conic-gradient(#6b4a2f 0% 25%,#c98b53 0% 50%) 0/16px 16px;"></div><div style="position:relative;font-family:var(--ftitle);font-size:11px;color:#1a1008;background:#e8c9a0;padding:3px 5px">COVER ART</div></div><div class="col grow" style="gap:8px"><div class="col" style="gap:0"><div class="row" style="gap:8px"><span class="t grow elide" style="font-size:16px">Cola</span><div class="btn filled" style="width:30px;height:26px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM1 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM2 5h1v1h-1zM1 6h1v1h-1z" fill="currentColor"/></svg></div></div><div class="g elide" style="font-size:14px;margin-top:2px">Arlo Parks</div></div><div class="grow"></div><div class="g" style="font-size:12px">1:42 / 3:31</div><div class="row" style="gap:3px;height:12px"><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div></div><div class="row" style="gap:10px"><div class="btn" style="width:44px;height:32px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M4 0h1v1h-1zM3 1h1v1h-1zM2 2h1v1h-1zM1 3h1v1h-1zM2 4h1v1h-1zM3 5h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg></div><div class="btn grow" style="height:32px"><span class="row" style="gap:4px"><span style="width:4px;height:14px;background:currentColor;display:block"></span><span style="width:4px;height:14px;background:currentColor;display:block"></span></span></div><div class="btn" style="width:44px;height:32px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M2 0h1v1h-1zM3 1h1v1h-1zM4 2h1v1h-1zM5 3h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1zM2 6h1v1h-1z" fill="currentColor"/></svg></div></div></div></div><div class="rule"></div><div style="padding:6px 16px 0;height:191px;overflow:hidden"><div style="font-size:14px;color:var(--grey2);padding:3px 0">It was reckless</div><div style="font-size:14px;color:var(--grey2);padding:3px 0">Cornflower blue in the sun</div><div style="font-size:16px;font-weight:700;color:var(--fg);padding:3px 0">You made me feel like the smallest</div><div style="font-size:14px;color:var(--grey);padding:3px 0">Version of myself, I</div><div style="font-size:14px;color:var(--grey);padding:3px 0">Never wanna feel that way again</div><div style="font-size:14px;color:var(--grey);padding:3px 0">Cola on your breath</div></div></div><div class="col" style="gap:22px"><div class="card" style="height:170px"><div class="row" style="gap:14px;padding:14px 16px;height:170px;align-items:stretch"><div class="art"><div style="position:absolute;inset:2px;background:repeating-conic-gradient(#6b4a2f 0% 25%,#c98b53 0% 50%) 0/16px 16px;"></div><div style="position:relative;font-family:var(--ftitle);font-size:11px;color:#1a1008;background:#e8c9a0;padding:3px 5px">COVER ART</div></div><div class="col grow" style="gap:8px"><div class="col" style="gap:0"><div class="row" style="gap:8px"><span class="t grow elide" style="font-size:16px">Cola</span><div class="btn filled" style="width:30px;height:26px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM1 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM2 5h1v1h-1zM1 6h1v1h-1z" fill="currentColor"/></svg></div></div><div class="g elide" style="font-size:14px;margin-top:2px">Arlo Parks</div></div><div class="grow"></div><div class="g" style="font-size:12px">1:42 / 3:31</div><div class="row" style="gap:3px;height:12px"><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell on"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div><div class="pcell"></div></div><div class="row" style="gap:10px"><div class="btn" style="width:44px;height:32px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M4 0h1v1h-1zM3 1h1v1h-1zM2 2h1v1h-1zM1 3h1v1h-1zM2 4h1v1h-1zM3 5h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg></div><div class="btn grow" style="height:32px"><span class="row" style="gap:4px"><span style="width:4px;height:14px;background:currentColor;display:block"></span><span style="width:4px;height:14px;background:currentColor;display:block"></span></span></div><div class="btn" style="width:44px;height:32px;flex:0 0 auto"><svg class="ico" width="14" height="14" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M2 0h1v1h-1zM3 1h1v1h-1zM4 2h1v1h-1zM5 3h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1zM2 6h1v1h-1z" fill="currentColor"/></svg></div></div></div></div></div><div class="card" style="height:170px;display:flex;align-items:center;justify-content:center"><span class="g" style="font-size:16px">No active player</span></div></div></div><p class="cap">Left: expanded with synced lyrics. Right: collapsed (lyrics toggle off) and the no-player placeholder.</p>
+</div></body></html>

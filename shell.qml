@@ -50,6 +50,18 @@ import qs.modules.pixel.background
 import qs.modules.pixel.monitors
 import qs.modules.pixel.worktrees
 
+import qs.modules.paper.common
+import qs.modules.paper.background
+import qs.modules.paper.bar
+import qs.modules.paper.quickSettings
+import qs.modules.paper.notificationPopup
+import qs.modules.paper.onScreenDisplay
+import qs.modules.paper.overview
+import qs.modules.paper.mediaControls
+import qs.modules.paper.monitors
+import qs.modules.paper.sessionScreen
+import qs.modules.paper.worktrees
+
 import QtQuick
 import QtQuick.Window
 import Quickshell
@@ -119,6 +131,17 @@ ShellRoot {
     PanelLoader { identifier: "pixelBackground"; component: PixelBackground {} }
     PanelLoader { identifier: "pixelMonitors"; component: PixelMonitors {} }
     PanelLoader { identifier: "pixelWorktrees"; component: PixelWorktrees {} }
+
+    PanelLoader { identifier: "paperBar"; component: PaperBar {} }
+    PanelLoader { identifier: "paperQuickSettings"; component: PaperQuickSettings {} }
+    PanelLoader { identifier: "paperNotificationPopup"; component: PaperNotificationPopup {} }
+    PanelLoader { identifier: "paperOnScreenDisplay"; component: PaperOnScreenDisplay {} }
+    PanelLoader { identifier: "paperSessionScreen"; component: PaperSessionScreen {} }
+    PanelLoader { identifier: "paperMediaControls"; component: PaperMediaControls {} }
+    PanelLoader { identifier: "paperOverview"; component: PaperOverview {} }
+    PanelLoader { identifier: "paperBackground"; component: PaperBackground {} }
+    PanelLoader { identifier: "paperMonitors"; component: PaperMonitors {} }
+    PanelLoader { identifier: "paperWorktrees"; component: PaperWorktrees {} }
     ReloadPopup {}
 
     component PanelLoader: LazyLoader {
@@ -128,11 +151,12 @@ ShellRoot {
     }
 
     // Panel families
-    property list<string> families: ["ii", "waffle", "pixel"]
+    property list<string> families: ["ii", "waffle", "pixel", "paper"]
     property var panelFamilies: ({
         "ii": ["iiBar", "iiBackground", "iiCheatsheet", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector"],
         "waffle": ["wActionCenter", "wBar", "wBackground", "wLock", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wTaskView", "wPolkit", "wScreenSnip", "wSessionScreen", "wStartMenu", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiWallpaperSelector"],
         "pixel": ["pixelBar", "pixelQuickSettings", "pixelNotificationPopup", "pixelOnScreenDisplay", "pixelSessionScreen", "pixelMediaControls", "pixelOverview", "pixelBackground", "pixelMonitors", "pixelWorktrees", "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector"],
+        "paper": ["paperBar", "paperQuickSettings", "paperNotificationPopup", "paperOnScreenDisplay", "paperSessionScreen", "paperMediaControls", "paperOverview", "paperBackground", "paperMonitors", "paperWorktrees", "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector"],
     })
     function cyclePanelFamily() {
         const currentIndex = families.indexOf(Config.options.panelFamily)
@@ -165,6 +189,25 @@ ShellRoot {
         }
     }
 
+    // Cycles the "paper" family's design variant (hairline → ledger →
+    // broadsheet). Live: every token is a binding, so nothing reloads.
+    //   qs -c ii ipc call paperVariant cycle
+    IpcHandler {
+        target: "paperVariant"
+
+        function cycle(): void {
+            PaperTheme.cycleVariant()
+        }
+
+        function set(variant: string): void {
+            PaperTheme.setVariant(variant)
+        }
+
+        function get(): string {
+            return PaperTheme.variant
+        }
+    }
+
     // Liveness sentinel used by the Hyprland "fallback" keybinds
     // (e.g. Ctrl+Alt+Delete: `qs -c ii ipc call TEST_ALIVE || wlogout`). When the
     // shell is running as the queried config, this call succeeds and the
@@ -181,6 +224,13 @@ ShellRoot {
         description: "Cycles panel family"
 
         onPressed: root.cyclePanelFamily()
+    }
+
+    GlobalShortcut {
+        name: "paperVariantCycle"
+        description: "Cycles the paper theme variant (hairline / ledger / broadsheet)"
+
+        onPressed: PaperTheme.cycleVariant()
     }
 }
 

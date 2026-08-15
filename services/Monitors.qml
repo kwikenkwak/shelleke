@@ -124,11 +124,19 @@ Singleton {
                     ok = r.ok ?? false;
                     msg = r.msg ?? r.error ?? msg;
                 } catch (e) {}
+                const wasRestore = root._restoreRunning;
+                root._restoreRunning = false;
                 root.busy = false;
                 root.lastOk = ok;
                 root.lastMessage = msg;
                 root.actionFinished(ok, msg);
                 root.refresh();
+                // A revert that the script refuses (e.g. the screen the previous
+                // layout singled out was unplugged during the countdown) would
+                // otherwise strand the user in the layout they never confirmed.
+                // Auto — the user's own profiles — is the known-good fallback.
+                if (wasRestore && !ok)
+                    root._run(["clear"], "Revert failed — back to auto");
             }
         }
     }
@@ -142,9 +150,88 @@ Singleton {
         actionProc.running = true;
     }
 
+    // The output "Single" would keep on: the remembered target while it is still
+    // plugged in, else the first connected one, else "" (nothing connected — and
+    // then Single must not be offered at all). Mirrors resolve_single_target() in
+    // hdm-control.py, which refuses a target that is not connected.
+    readonly property string singleTargetCandidate: {
+        const names = (monitors ?? []).map(m => m.name ?? "");
+        if (names.indexOf(quickTarget) >= 0)
+            return quickTarget;
+        return names.length > 0 ? names[0] : "";
+    }
+
     // mode: "extend" | "mirror" | "single". target only meaningful for "single".
     function setQuick(mode, target) {
         _run(target ? ["quick", mode, target] : ["quick", mode], "Set " + mode);
+    }
+
+    // ---- snapshot / restore (the revert half of the GUIs' "keep this?" prompt) ----
+
+    /**
+     * Everything the quick layout is made of, including the "no quick profile at
+     * all" case (`active: false`). Take one BEFORE a mode change; feed it to
+     * restoreQuick() to put the previous layout back.
+     */
+    function snapshotQuick() {
+        return {
+            active: root.quickActive,
+            mode: root.quickMode,
+            target: root.quickTarget,
+            arrange: root.quickArrange,
+            anchor: root.quickAnchor,
+            // Deep copy: quickScales is replaced wholesale on every refresh, but a
+            // snapshot must not alias whatever the service holds later.
+            scales: JSON.parse(JSON.stringify(root.quickScales ?? ({})))
+        };
+    }
+
+    /**
+     * Replay a snapshot through the same script commands the UI uses: `clear` when
+     * quick was inactive, otherwise one `quick <mode> [target] --arrange --anchor`.
+     * Per-output zoom needs no replay — hdm-control.py carries scale_<output> over
+     * from the existing managed profile, and `clear` drops it with the profile.
+     *
+     * A revert is a safety action, so unlike the other calls it is not silently
+     * dropped when an action is already in flight: it retries until _run takes it.
+     */
+    property var _restorePending: null
+    /// True while the in-flight action IS the revert (so a refusal can fall back).
+    property bool _restoreRunning: false
+    function restoreQuick(snapshot) {
+        if (!snapshot)
+            return;
+        root._restorePending = snapshot;
+        root._restoreNow();
+    }
+    function _restoreNow() {
+        const s = root._restorePending;
+        if (!s)
+            return;
+        if (root.busy) {
+            restoreRetryTimer.restart();
+            return;
+        }
+        root._restorePending = null;
+        if (!s.active) {
+            _run(["clear"], "Reverted to auto");
+            return;
+        }
+        root._restoreRunning = true;
+        const mode = s.mode ? s.mode : "extend";
+        let args = ["quick", mode];
+        // The positional target only means anything to "single"; passing it in the
+        // other modes would just re-store a possibly stale name.
+        if (mode === "single" && s.target)
+            args.push(s.target);
+        args = args.concat(["--arrange", s.arrange ? s.arrange : "right", "--anchor", s.anchor ?? ""]);
+        _run(args, "Reverted to " + mode);
+    }
+    Timer {
+        id: restoreRetryTimer
+        interval: 150
+        repeat: false
+        onTriggered: root._restoreNow()
     }
     function clearQuick() {
         _run(["clear"], "Back to auto");

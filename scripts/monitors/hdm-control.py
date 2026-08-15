@@ -15,7 +15,10 @@ ordering, formatting) is preserved. This mirrors how HDM's own freeze/TUI edit t
 Subcommands
   state                       JSON snapshot for the UI (read-only)
   quick <extend|mirror|single> [target] [--arrange right|left|up|down] [--anchor NAME]
-                              write managed quick profile + apply
+                              write managed quick profile + apply. Refuses a `single`
+                              target that is not connected, and refuses any layout
+                              that would render zero enabled outputs — see the
+                              "quick-layout guards" section.
   scale <output> <factor>     set one screen's zoom in the quick profile + apply
   clear                       remove managed quick profile + apply
   save-profile <json>         create or edit a user profile (metadata block)
@@ -394,14 +397,20 @@ QUICK_TEMPLATE = ("""# Managed by the pixel-shell Displays overlay. Safe to dele
 # `anchor` is the primary screen (pinned to 0x0 / mirror source), `arrange` says which
 # side the other screens are appended to (Hyprland auto-<dir>), and `scale_<output>`
 # holds each screen's zoom factor.
+#
+# SAFETY: `single` is the only mode that emits `disable`, and it does so ONLY for
+# screens other than a target that is actually present. If `single_target` matches
+# no connected monitor the mode degrades to "everything on" instead of disabling
+# every screen — a template that can render an all-disabled config is a template
+# that can black out the machine at boot. Do not "simplify" that check away.
 {{ $dir := "right" }}{{ if .arrange }}{{ $dir = .arrange }}{{ end }}
 {{ if eq .mode "extend" }}{{ range .Monitors }}""" + SCALE_VAR + """{{ if eq .Name $.anchor }}
 monitor={{ .Name }},preferred,0x0,{{ $s }}{{ end }}{{ end }}{{ range .Monitors }}""" + SCALE_VAR + """{{ if ne .Name $.anchor }}
 monitor={{ .Name }},preferred,auto-{{ $dir }},{{ $s }}{{ end }}{{ end }}{{ end }}
 {{ if eq .mode "mirror" }}{{ $p := (index .Monitors 0).Name }}{{ range .Monitors }}{{ if eq .Name $.anchor }}{{ $p = .Name }}{{ end }}{{ end }}{{ range .Monitors }}""" + SCALE_VAR + """
 monitor={{ .Name }},preferred,auto,{{ $s }}{{ if ne .Name $p }},mirror,{{ $p }}{{ end }}{{ end }}{{ end }}
-{{ if eq .mode "single" }}{{ range .Monitors }}""" + SCALE_VAR + """
-monitor={{ .Name }},{{ if eq .Name $.single_target }}preferred,0x0,{{ $s }}{{ else }}disable{{ end }}{{ end }}{{ end }}
+{{ if eq .mode "single" }}{{ $t := "" }}{{ range .Monitors }}{{ if eq .Name $.single_target }}{{ $t = .Name }}{{ end }}{{ end }}{{ range .Monitors }}""" + SCALE_VAR + """
+monitor={{ .Name }},{{ if not $t }}preferred,auto,{{ $s }}{{ else if eq .Name $t }}preferred,0x0,{{ $s }}{{ else }}disable{{ end }}{{ end }}{{ end }}
 """)
 
 
@@ -410,6 +419,72 @@ def ensure_quick_template(cfg):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     write_text(path, QUICK_TEMPLATE)
     return path
+
+
+# ---------- quick-layout guards ----------
+#
+# A quick layout is the one thing here that can render `monitor=…,disable`, i.e. the
+# one thing that can leave the machine with no usable screen. Three layers stop that:
+#   1. the managed profile REQUIRES its single target to be connected, so the daemon
+#      cannot select it when the target is gone (build_quick_region);
+#   2. the template degrades to "everything on" if the target is absent anyway
+#      (QUICK_TEMPLATE);
+#   3. no command may write a quick region whose render enables zero outputs
+#      (preflight_quick, enforced inside write_quick so no path can skip it).
+
+class GuardError(Exception):
+    """A refused quick layout: reported as a clean JSON error, nothing written."""
+
+
+def monitor_names(monitors):
+    return [(m.get("name") or "") for m in monitors if (m.get("name") or "")]
+
+
+def find_monitor(monitors, name):
+    return next((m for m in monitors if (m.get("name") or "") == name), None)
+
+
+def quick_enabled_outputs(monitors, mode, target):
+    """Which outputs QUICK_TEMPLATE leaves ENABLED — a mirror of the template.
+
+    Keep in lockstep with QUICK_TEMPLATE: this is what the pre-flight check reasons
+    about. extend/mirror never disable anything; single disables the others only
+    when its target is really connected (otherwise the template falls back to
+    enabling everything, so nothing is disabled).
+    """
+    names = monitor_names(monitors)
+    if mode == "single":
+        return [target] if target in names else list(names)
+    return list(names)
+
+
+def resolve_single_target(names, explicit, prev_target):
+    """The output `single` keeps on, or None when there is no safe choice.
+
+    An EXPLICIT target must be connected — refusing is the whole point, since the
+    incident that motivated these guards was a stale `DP-1` written while only the
+    laptop panel was attached. Without one, fall back through the remembered target
+    to the first connected output (backwards compatible with `quick single`), but
+    only ever to something that is actually there.
+    """
+    if explicit:
+        return explicit if explicit in names else None
+    if prev_target and prev_target in names:
+        return prev_target
+    return names[0] if names else None
+
+
+def preflight_quick(monitors, mode, target):
+    """Error string if this quick layout must not be written, else None."""
+    names = monitor_names(monitors)
+    if not names:
+        return "no monitors reported by hyprctl"
+    if mode == "single" and target not in names:
+        return (f"'{target}' is not connected — connected: {', '.join(names)}"
+                if target else "single needs a connected target")
+    if not quick_enabled_outputs(monitors, mode, target):
+        return "refusing: that layout would leave every screen disabled"
+    return None
 
 
 def build_quick_region(cfg, monitors, mode, target, arrange, anchor, scales):
@@ -423,7 +498,20 @@ def build_quick_region(cfg, monitors, mode, target, arrange, anchor, scales):
     for name in sorted(scales):
         L.append(f"{tstr('scale_' + name)} = {tstr(scales[name])}")
     L += ["", f"[profiles.{QUICK}.conditions]"]
-    for i, m in enumerate(monitors):
+    # Required monitors = every screen this layout was built for. In `single` the
+    # TARGET must be among them, or the daemon could select this profile with the
+    # target unplugged and render a config that disables every remaining screen —
+    # exactly the boot-to-black-screen incident these guards exist for. Every
+    # connected monitor is required anyway, so the target normally is already in
+    # the list; it is spelled out so the invariant survives a change to the list.
+    req = list(monitors)
+    if mode == "single":
+        tm = find_monitor(monitors, target)
+        if tm is None:
+            raise GuardError(f"single target '{target}' is not connected")
+        if tm not in req:
+            req.append(tm)
+    for i, m in enumerate(req):
         desc = (m.get("description") or "").strip()
         L.append(f"[[profiles.{QUICK}.conditions.required_monitors]]")
         if desc and desc.lower() != "unknown":
@@ -473,6 +561,11 @@ def norm_scale(v):
 
 
 def write_quick(cfg, no_apply, mons, mode, target, arrange, anchor, scales):
+    # The single choke point every quick write goes through, so the pre-flight
+    # check lives here rather than in each command.
+    err = preflight_quick(mons, mode, target)
+    if err:
+        raise GuardError(err)
     ensure_quick_template(cfg)
     region = build_quick_region(cfg, mons, mode, target, arrange, anchor, scales)
     text = strip_quick_region(read_text(cfg)).rstrip("\n") + "\n\n" + region
@@ -488,12 +581,27 @@ def cmd_quick(args):
         return fail("no monitors reported by hyprctl")
     # Unspecified bits keep whatever the last quick layout used, so switching mode
     # doesn't silently reset the arrangement or the per-screen zoom (and vice versa).
+    names = monitor_names(mons)
     prev = quick_static_values(args.config)
-    target = args.target or prev.get("single_target") or mons[0].get("name")
+    if args.mode == "single":
+        target = resolve_single_target(names, args.target, prev.get("single_target"))
+        if target is None:
+            return fail(f"'{args.target}' is not connected — connected: "
+                        f"{', '.join(names) or 'none'}",
+                        connected=names)
+    else:
+        # `single_target` is inert in extend/mirror, but it is what a later
+        # target-less `quick single` remembers — so never store one that is gone.
+        target = args.target or prev.get("single_target") or ""
+        if target not in names:
+            target = names[0] if names else ""
     arrange = args.arrange or prev.get("arrange") or "right"
     anchor = args.anchor if args.anchor is not None else (prev.get("anchor") or "")
-    applied = write_quick(args.config, args.no_apply, mons, args.mode, target,
-                          arrange, anchor, scales_of(prev))
+    try:
+        applied = write_quick(args.config, args.no_apply, mons, args.mode, target,
+                              arrange, anchor, scales_of(prev))
+    except GuardError as e:
+        return fail(str(e), connected=names)
     return ok(f"quick {args.mode} ({len(mons)} monitor(s))", applied=applied,
               mode=args.mode, single_target=target, arrange=arrange, anchor=anchor)
 
@@ -515,10 +623,17 @@ def cmd_scale(args):
     # Zoom only lives in the quick profile, so it implies a quick layout; keep the
     # current one when there is one, otherwise extend.
     mode = prev.get("mode") if prev.get("mode") in MODES else "extend"
-    target = prev.get("single_target") or mons[0].get("name")
-    applied = write_quick(args.config, args.no_apply, mons, mode, target,
-                          prev.get("arrange") or "right", prev.get("anchor") or "",
-                          scales)
+    # Zoom must never change WHICH screens are on: re-resolve the remembered target
+    # against what is plugged in now, so a stale one cannot ride along into a write.
+    target = resolve_single_target(monitor_names(mons), None, prev.get("single_target"))
+    if target is None:
+        return fail("no connected output to zoom")
+    try:
+        applied = write_quick(args.config, args.no_apply, mons, mode, target,
+                              prev.get("arrange") or "right", prev.get("anchor") or "",
+                              scales)
+    except GuardError as e:
+        return fail(str(e))
     return ok(f"zoom {args.monitor} {val}x", applied=applied, mode=mode, scales=scales)
 
 

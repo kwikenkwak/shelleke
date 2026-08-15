@@ -12,8 +12,12 @@ import qs.modules.pixel.widgets
  *   editor   — full profile create/edit (ProfileEditor), shown as an overlay
  *   settings — HDM global settings + daemon (SettingsScreen), shown as an overlay
  *
- * The quick-layout bar at the top of `main` is intentionally unchanged. All writes
- * go through the Monitors service -> hdm-control.py.
+ * All writes go through the Monitors service -> hdm-control.py.
+ *
+ * Quick MODE changes (Extend/Mirror/Single/Auto) are the one class of action that
+ * can leave the user unable to see the panel that would undo them, so they are
+ * routed through QuickConfirm: snapshot -> apply -> "Keep this setup?" with a
+ * 15 s countdown, and anything other than Keep puts the previous layout back.
  */
 PixPanel {
     id: root
@@ -34,6 +38,11 @@ PixPanel {
                 root.screen = "main";
                 root.editingProfile = null;
                 Monitors.refresh();
+            } else {
+                // Closing the overlay answers a pending "Keep this setup?" with
+                // no. (QuickConfirm also reverts from its own onDestruction, for
+                // whichever of the two fires first; revert() is idempotent.)
+                quickConfirm.revert();
             }
         }
     }
@@ -106,7 +115,17 @@ PixPanel {
                 // ---- QUICK LAYOUT (unchanged) ----
                 PixText { text: "QUICK LAYOUT"; font.bold: true; color: PixTheme.colors.grey
                     font.pixelSize: PixTheme.font.pixelSize.smaller }
-                QuickModeBar { Layout.fillWidth: true }
+                QuickModeBar {
+                    Layout.fillWidth: true
+                    // Snapshot BEFORE applying, always in this order.
+                    onModeRequested: (mode, target) => {
+                        quickConfirm.arm();
+                        if (mode === "auto")
+                            Monitors.clearQuick();
+                        else
+                            Monitors.setQuick(mode, target);
+                    }
+                }
 
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: PixTheme.borderWidth; color: PixTheme.colors.line }
 
@@ -200,5 +219,14 @@ PixPanel {
         SettingsScreen {
             onDone: root.screen = "main"
         }
+    }
+
+    // ============ QUICK-LAYOUT CONFIRMATION ============
+    // Last child, so it covers the editor/settings overlays too: a mode change is
+    // never left unanswered behind another screen.
+    QuickConfirm {
+        id: quickConfirm
+        anchors.fill: parent
+        anchors.margins: root.borderWidth
     }
 }

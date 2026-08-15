@@ -1,0 +1,95 @@
+<!-- @dsCard group="Current: Pixels" name="Worktrees" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New-worktree dialog</title>
+<style>
+:root{
+  --bg:#0b0b0b; --fg:#f4f4f4; --grey:#9b9b9b; --grey2:#555555; --line:#f4f4f4;
+  --bd:2px; --popbd:3px; --barbd:3px;
+  --fmain:"Tiny5","Silkscreen","Press Start 2P","Departure Mono",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --ftitle:"Silkscreen","Press Start 2P","Tiny5",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:#000;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:8px 8px;
+  color:var(--fg);
+  font-family:var(--fmain);
+  font-size:14px;
+  font-weight:500;
+  line-height:1.15;
+  -webkit-font-smoothing:none;
+  font-smooth:never;
+  padding:28px 24px 80px;
+}
+.wrap{max-width:1720px;margin:0 auto}
+h1.doch{font-family:var(--ftitle);letter-spacing:1px;font-size:20px;font-weight:700;margin:0 0 6px}
+p.doc{color:var(--grey);font-size:13px;max-width:900px;margin:0 0 4px;line-height:1.5}
+p.doc b{color:var(--fg);font-weight:700}
+.sec{font-family:var(--ftitle);letter-spacing:1px;font-size:12px;font-weight:700;
+     color:var(--grey);margin:34px 0 10px;text-transform:uppercase}
+.note{color:var(--grey2);font-size:12px;margin:6px 0 0;line-height:1.5}
+.stage{overflow-x:auto;padding:0 0 2px}
+.svgi,.ico{display:block;shape-rendering:crispEdges}
+.appico{display:block;image-rendering:pixelated;shape-rendering:crispEdges}
+
+/* --- pixel primitives ------------------------------------------------- */
+.panel{background:var(--bg);border:var(--popbd) solid var(--line)}
+.panel2{background:var(--bg);border:var(--bd) solid var(--line)}
+.btn{border:var(--bd) solid var(--line);background:transparent;color:var(--fg);
+     display:flex;align-items:center;justify-content:center;position:relative}
+.btn.b3{border-width:var(--popbd)}
+.btn.filled{background:var(--line);color:var(--bg)}
+.btn.press{background:var(--grey);color:var(--fg)}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.grow{flex:1 1 auto;min-width:0}
+.t{font-family:var(--ftitle);font-weight:700;letter-spacing:1px}
+.g{color:var(--grey)}
+.g2{color:var(--grey2)}
+.b{font-weight:700}
+.rule{background:var(--line);height:2px;width:100%}
+.elide{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq{border:var(--bd) solid var(--line);display:flex;align-items:center;justify-content:center}
+.sq.on{background:var(--fg);color:var(--bg)}
+.cap{color:var(--grey2);font-size:12px;margin:8px 0 0}
+.scrim{background:rgba(11,11,11,.82)}
+
+.mpanel{width:380px;background:var(--bg);border:var(--popbd) solid var(--line);padding:12px;
+  display:flex;flex-direction:column;gap:10px}
+.wpanel{width:440px;background:var(--bg);border:var(--popbd) solid var(--line);padding:14px;
+  display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:12px;font-weight:700;color:var(--grey)}
+.field{height:32px;border:var(--bd) solid var(--line);display:flex;align-items:center;padding:0 8px;font-size:14px}
+.card2{border:var(--bd) solid var(--line);padding:8px;display:flex;align-items:center;gap:9px;background:var(--bg)}
+.msq{width:30px;height:30px;border:var(--bd) solid var(--line);display:flex;align-items:center;justify-content:center}
+.msq.on{background:var(--fg);color:var(--bg)}
+.dot{width:14px;height:14px;border:var(--bd) solid var(--line)}
+.dot.on{background:var(--fg)}
+.mark{width:16px;height:16px;border:var(--bd) solid var(--line);flex:0 0 auto}
+.mark.on{background:var(--fg)}
+.stile{width:132px;height:132px;position:relative}
+.stile .accel{position:absolute;top:7px;left:8px;font-size:12px}
+.stile .in{display:flex;flex-direction:column;align-items:center;gap:14px}
+.arrsq{width:13px;height:9px;border:var(--bd) solid currentColor}
+.arrsq.on{background:currentColor}
+</style></head>
+<body><div class="wrap">
+<h1 class="doch">New-worktree dialog</h1>
+<p class="doc">A centred modal on the focused screen over the same <b>82%%</b> scrim as the
+session screen, keyboard-exclusive so the name field is typeable the moment it appears; Escape or a
+scrim click closes it. The dialog is <b>440&nbsp;px</b> wide with a 3&nbsp;px border, 14&nbsp;px padding and
+10&nbsp;px gaps, capped at 900&nbsp;px tall.</p>
+<p class="doc">Sections: NEW WORKTREE title + ESC button; TASK NAME field (validated against
+<code>[A-Za-z0-9._-]+</code>); REPOS &mdash; one bordered row per discovered repo with a filled/hollow
+22&times;22 checkbox, the repo name, a server count, and (when ticked) a 3-column grid of server chips;
+a heads-up listing repos that need <code>jj git init --colocate</code>; a SUMMARY key/value grid
+(PATH / BOOKMARK / ENV / SETUP / TABS) computed live from the selection; CREATE (fills the width, reads
+"WORKING…" while busy) + CANCEL; a REOPEN list of existing task folders as full-width fill-on-hover rows;
+and a scrolling log box whose border turns to plain <code>fg</code> on failure.</p><p class="note">Font note: the shell renders body text in <b>Tiny5</b> (bitmap, <code>PixTheme.fontMainChoice = "tiny5"</code>) and titles in <b>Silkscreen</b>, both bundled in <code>assets/fonts/</code>. These pages use a system monospace fallback stack, so glyph shapes differ — metrics, sizes, weights, spacing and colors are the real values.</p>
+<div class="stage" style="background:rgba(11,11,11,.82);padding:26px"><div class="wpanel"><div class="row" style="gap:8px"><span class="t grow" style="font-size:16px">NEW WORKTREE</span><div class="btn" style="width:34px;height:30px"><span style="font-size:12px">ESC</span></div></div><div class="rule"></div><div class="lbl">TASK NAME</div><div class="field">pixel-redesign<span style="width:2px;height:18px;background:var(--fg);display:inline-block;margin-left:2px"></span></div><div class="row"><span class="lbl grow">REPOS</span><span class="g2" style="font-size:12px">from main@origin</span></div><div style="border:var(--bd) solid var(--fg);padding:8px"><div class="row" style="gap:8px"><div class="btn filled" style="width:22px;height:22px;flex:0 0 auto"></div><span class="b grow elide" style="font-size:14px">vitulina</span><span class="g" style="font-size:12px">6 srv</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"><div class="btn filled" style="height:26px"><span style="font-size:12px">api</span></div><div class="btn" style="height:26px"><span style="font-size:12px">worker</span></div><div class="btn filled" style="height:26px"><span style="font-size:12px">web</span></div><div class="btn" style="height:26px"><span style="font-size:12px">docs</span></div><div class="btn" style="height:26px"><span style="font-size:12px">auth</span></div><div class="btn" style="height:26px"><span style="font-size:12px">cron</span></div></div></div><div style="border:var(--bd) solid var(--fg);padding:8px"><div class="row" style="gap:8px"><div class="btn filled" style="width:22px;height:22px;flex:0 0 auto"></div><span class="b grow elide" style="font-size:14px">controller</span><span class="g" style="font-size:12px">0 srv</span></div><div class="g2" style="font-size:12px;margin-top:8px">no vitulina servers &mdash; gets a shell tab</div></div><div style="border:var(--bd) solid var(--line);padding:8px"><div class="row" style="gap:8px"><div class="btn" style="width:22px;height:22px;flex:0 0 auto"></div><span class="b grow elide" style="font-size:14px">webapp</span><span class="g" style="font-size:12px">2 srv</span></div></div><div class="g" style="font-size:12px">jj git init --colocate first: webapp</div><div class="rule"></div><div style="display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:3px;align-items:center"><span class="g2" style="font-size:12px">PATH</span><span class="elide" style="font-size:12px">~/pleevi/pixel-redesign</span><span class="g2" style="font-size:12px">BOOKMARK</span><span class="elide" style="font-size:12px">pixel-redesign</span><span class="g2" style="font-size:12px">ENV</span><span class="elide" style="font-size:12px">vitulina up --env pixel-redesign</span><span class="g2" style="font-size:12px">SETUP</span><span class="elide" style="font-size:12px">jj workspace, copy .env, direnv allow, pnpm i (webapp)</span><span class="g2" style="font-size:12px">TABS</span><span class="elide" style="font-size:12px">5: shell, claude, 2 vitulina, 1 repo</span></div><div class="row" style="gap:8px"><div class="btn grow" style="height:34px"><span class="b" style="font-size:14px">CREATE</span></div><div class="btn" style="width:84px;height:34px"><span style="font-size:14px">CANCEL</span></div></div><div class="rule"></div><div class="row"><span class="lbl grow">REOPEN</span><span class="g2" style="font-size:12px">3 tasks</span></div><div class="col" style="gap:6px"><div class="btn" style="height:32px;justify-content:flex-start;padding:0 8px;gap:8px"><span class="b elide" style="font-size:14px;max-width:170px">pixel-redesign</span><span class="grow elide" style="font-size:12px">vitulina, webapp</span><span style="font-size:12px">5 tabs</span></div><div class="btn" style="height:32px;justify-content:flex-start;padding:0 8px;gap:8px"><span class="b elide" style="font-size:14px;max-width:170px">hdm-editor</span><span class="grow elide" style="font-size:12px">controller</span><span style="font-size:12px">3 tabs</span></div><div class="btn" style="height:32px;justify-content:flex-start;padding:0 8px;gap:8px"><span class="b elide" style="font-size:14px;max-width:170px">invoice-fix</span><span class="grow elide" style="font-size:12px">webapp</span><span style="font-size:12px">4 tabs</span></div></div><div style="border:var(--bd) solid var(--line);padding:6px"><div class="g" style="font-size:12px;line-height:1.45">&gt; discovering repos in ~/pleevi<br>&gt; jj workspace add ~/pleevi/pixel-redesign/vitulina<br>&gt; copying .env, direnv allow<br>&gt; pnpm i (webapp)</div></div></div></div>
+</div></body></html>

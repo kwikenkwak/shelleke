@@ -1,0 +1,93 @@
+<!-- @dsCard group="Current: Pixels" name="Session Screen" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session / power screen</title>
+<style>
+:root{
+  --bg:#0b0b0b; --fg:#f4f4f4; --grey:#9b9b9b; --grey2:#555555; --line:#f4f4f4;
+  --bd:2px; --popbd:3px; --barbd:3px;
+  --fmain:"Tiny5","Silkscreen","Press Start 2P","Departure Mono",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --ftitle:"Silkscreen","Press Start 2P","Tiny5",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:#000;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:8px 8px;
+  color:var(--fg);
+  font-family:var(--fmain);
+  font-size:14px;
+  font-weight:500;
+  line-height:1.15;
+  -webkit-font-smoothing:none;
+  font-smooth:never;
+  padding:28px 24px 80px;
+}
+.wrap{max-width:1720px;margin:0 auto}
+h1.doch{font-family:var(--ftitle);letter-spacing:1px;font-size:20px;font-weight:700;margin:0 0 6px}
+p.doc{color:var(--grey);font-size:13px;max-width:900px;margin:0 0 4px;line-height:1.5}
+p.doc b{color:var(--fg);font-weight:700}
+.sec{font-family:var(--ftitle);letter-spacing:1px;font-size:12px;font-weight:700;
+     color:var(--grey);margin:34px 0 10px;text-transform:uppercase}
+.note{color:var(--grey2);font-size:12px;margin:6px 0 0;line-height:1.5}
+.stage{overflow-x:auto;padding:0 0 2px}
+.svgi,.ico{display:block;shape-rendering:crispEdges}
+.appico{display:block;image-rendering:pixelated;shape-rendering:crispEdges}
+
+/* --- pixel primitives ------------------------------------------------- */
+.panel{background:var(--bg);border:var(--popbd) solid var(--line)}
+.panel2{background:var(--bg);border:var(--bd) solid var(--line)}
+.btn{border:var(--bd) solid var(--line);background:transparent;color:var(--fg);
+     display:flex;align-items:center;justify-content:center;position:relative}
+.btn.b3{border-width:var(--popbd)}
+.btn.filled{background:var(--line);color:var(--bg)}
+.btn.press{background:var(--grey);color:var(--fg)}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.grow{flex:1 1 auto;min-width:0}
+.t{font-family:var(--ftitle);font-weight:700;letter-spacing:1px}
+.g{color:var(--grey)}
+.g2{color:var(--grey2)}
+.b{font-weight:700}
+.rule{background:var(--line);height:2px;width:100%}
+.elide{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq{border:var(--bd) solid var(--line);display:flex;align-items:center;justify-content:center}
+.sq.on{background:var(--fg);color:var(--bg)}
+.cap{color:var(--grey2);font-size:12px;margin:8px 0 0}
+.scrim{background:rgba(11,11,11,.82)}
+
+.mpanel{width:380px;background:var(--bg);border:var(--popbd) solid var(--line);padding:12px;
+  display:flex;flex-direction:column;gap:10px}
+.wpanel{width:440px;background:var(--bg);border:var(--popbd) solid var(--line);padding:14px;
+  display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:12px;font-weight:700;color:var(--grey)}
+.field{height:32px;border:var(--bd) solid var(--line);display:flex;align-items:center;padding:0 8px;font-size:14px}
+.card2{border:var(--bd) solid var(--line);padding:8px;display:flex;align-items:center;gap:9px;background:var(--bg)}
+.msq{width:30px;height:30px;border:var(--bd) solid var(--line);display:flex;align-items:center;justify-content:center}
+.msq.on{background:var(--fg);color:var(--bg)}
+.dot{width:14px;height:14px;border:var(--bd) solid var(--line)}
+.dot.on{background:var(--fg)}
+.mark{width:16px;height:16px;border:var(--bd) solid var(--line);flex:0 0 auto}
+.mark.on{background:var(--fg)}
+.stile{width:132px;height:132px;position:relative}
+.stile .accel{position:absolute;top:7px;left:8px;font-size:12px}
+.stile .in{display:flex;flex-direction:column;align-items:center;gap:14px}
+.arrsq{width:13px;height:9px;border:var(--bd) solid currentColor}
+.arrsq.on{background:currentColor}
+</style></head>
+<body><div class="wrap">
+<h1 class="doch">Session / power screen</h1>
+<p class="doc">A full-screen, keyboard-exclusive overlay on the focused screen over a scrim
+of <code>bg</code> at <b>82%%</b> opacity (86%% in light mode). Centred column, 26&nbsp;px gaps: the word
+<b>SESSION</b> in Silkscreen 24, a row of six <b>132&times;132</b> tiles (3&nbsp;px borders, 18&nbsp;px apart),
+a hint line, then any session warnings as filled chips.</p>
+<p class="doc">Each tile is a number accelerator in the top-left corner (grey until selected), a
+42&nbsp;px pixel glyph and a Silkscreen label. The selected tile is fully inverted. Arrows/Tab move the
+selection, hover selects, Enter or Space runs it, 1&ndash;6 jump and run immediately, Escape or a scrim
+click cancels. Unselected tiles get an opaque <code>bg</code> backing so the scrim never bleeds
+through.</p><p class="note">Font note: the shell renders body text in <b>Tiny5</b> (bitmap, <code>PixTheme.fontMainChoice = "tiny5"</code>) and titles in <b>Silkscreen</b>, both bundled in <code>assets/fonts/</code>. These pages use a system monospace fallback stack, so glyph shapes differ — metrics, sizes, weights, spacing and colors are the real values.</p>
+<div class="stage"><div class="scrim" style="padding:60px 40px;display:flex;flex-direction:column;align-items:center;gap:26px"><div class="t" style="font-size:24px">SESSION</div><div class="row" style="gap:18px"><div class="btn b3 stile filled"><span class="accel">1</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M2 0h1v1h-1zM4 0h1v1h-1zM0 1h1v1h-1zM1 1h1v1h-1zM2 1h1v1h-1zM3 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM1 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Lock</span></div></div><div class="btn b3 stile"><span class="accel" style="color:var(--grey)">2</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M3 0h1v1h-1zM2 1h1v1h-1zM3 1h1v1h-1zM4 1h1v1h-1zM1 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM3 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM3 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Logout</span></div></div><div class="btn b3 stile"><span class="accel" style="color:var(--grey)">3</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM2 1h1v1h-1zM0 2h1v1h-1zM1 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM0 4h1v1h-1zM1 4h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Suspend</span></div></div><div class="btn b3 stile"><span class="accel" style="color:var(--grey)">4</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M0 0h1v1h-1zM3 0h1v1h-1zM6 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM3 6h1v1h-1zM6 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Hibernate</span></div></div><div class="btn b3 stile"><span class="accel" style="color:var(--grey)">5</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM0 4h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Reboot</span></div></div><div class="btn b3 stile"><span class="accel" style="color:var(--grey)">6</span><div class="in"><svg class="ico" width="42" height="42" viewBox="0 0 7 7" style="" aria-hidden="true"><path d="M3 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1z" fill="currentColor"/></svg><span class="t" style="font-size:14px">Shutdown</span></div></div></div><div class="g" style="font-size:14px">Arrows or 1-6 to choose, Enter to confirm &mdash; Esc or click anywhere to cancel</div><div class="col" style="gap:8px;align-items:center"><div class="btn filled" style="height:31px;padding:0 14px"><span style="font-size:12px">Your package manager is running</span></div></div></div></div><p class="cap">Icon picks are the least-misleading members of the 7&times;7 set: gear = Lock, swap = Logout, moon = Suspend, snow = Hibernate, refresh = Reboot, power = Shutdown.</p>
+</div></body></html>

@@ -1,0 +1,308 @@
+<!-- @dsCard group="Paper C: Broadsheet" name="Quick Settings" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper C &mdash; Broadsheet: quick settings</title>
+<style>
+:root{
+  /* ---- paper (light) ---------------------------------------------- */
+  --paper:#F6F2E9; --paper-2:#EFEADD; --paper-3:#E6DFCE; --paper-4:#DCD3BE;
+  --desk:#DFD8C8;
+  --ink:#241F1A; --ink-2:#57503F; --ink-3:#7E7565; --ink-4:#B0A794;
+  --rule:#CFC6B2; --rule-2:#B3A991; --rule-ink:#241F1A;
+  --accent:#7B2A24;        /* oxblood  — primary editorial accent */
+  --accent-w:#F0E4DF;      /* oxblood wash */
+  --blue:#27456E;          /* ink blue — secondary accent          */
+  --blue-w:#E2E6EE;        /* ink blue wash */
+  --seal:#8A6A3B;          /* sepia    — seals, stamps, ornament   */
+  --seal-w:#EFE7D6;
+  --sel:#DED6C2;
+  --shade:0 1px 1px rgba(36,31,26,.05), 0 10px 26px rgba(36,31,26,.09);
+  --shade-sm:0 1px 2px rgba(36,31,26,.07);
+  --grain:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27140%27%20height%3D%27140%27%3E%3Cfilter%20id%3D%27g%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.8%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27%2F%3E%3CfeColorMatrix%20type%3D%27saturate%27%20values%3D%270%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27140%27%20height%3D%27140%27%20filter%3D%27url%28%23g%29%27%20opacity%3D%270.055%27%2F%3E%3C%2Fsvg%3E");
+  /* ---- type ------------------------------------------------------- */
+  --f-disp:"TeX Gyre Pagella","Palatino Linotype","URW Palladio L","Libertinus Serif","Bitstream Charter","Noto Serif",Georgia,serif;
+  --f-text:"Lato","Adwaita Sans","Cantarell","Helvetica Neue",Arial,sans-serif;
+  --f-micro:"Source Code Pro","Adwaita Mono","JetBrains Mono",ui-monospace,monospace;
+  --fs-micro:10px; --fs-agate:11px; --fs-small:12px; --fs-body:13px;
+  --fs-lede:15px; --fs-title:17px; --fs-display:21px; --fs-banner:26px; --fs-folio:46px;
+  --lh:1.32;
+  /* ---- metrics ---------------------------------------------------- */
+  --sp1:2px; --sp2:4px; --sp3:6px; --sp4:8px; --sp5:10px; --sp6:12px;
+  --sp7:16px; --sp8:20px; --sp9:24px; --sp10:32px;
+  --hair:1px; --r-ctl:2px;
+  --dur1:90ms; --dur2:160ms; --dur3:280ms; --ease:cubic-bezier(.2,.7,.3,1);
+}
+.dusk{
+  color:var(--ink);
+  --paper:#17140F; --paper-2:#1E1A14; --paper-3:#26211A; --paper-4:#302A21;
+  --desk:#0E0C09;
+  --ink:#EDE6D8; --ink-2:#C3BAA8; --ink-3:#938A79; --ink-4:#6A6252;
+  --rule:#39322A; --rule-2:#564E42; --rule-ink:#EDE6D8;
+  --accent:#C9736A; --accent-w:#2E211E;
+  --blue:#93B0D4;  --blue-w:#1B2029;
+  --seal:#C6A470;  --seal-w:#26201A;
+  --sel:#2C261E;
+  --shade:0 1px 1px rgba(0,0,0,.35), 0 12px 28px rgba(0,0,0,.45);
+  --shade-sm:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--desk);color:var(--ink);font-family:var(--f-text);
+     font-size:var(--fs-body);line-height:var(--lh);
+     -webkit-font-smoothing:antialiased;padding:34px 28px 90px}
+.wrap{max-width:1740px;margin:0 auto}
+svg{display:block}
+.i{fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;
+   vector-effect:non-scaling-stroke;overflow:visible}
+.i-lg{stroke-width:1.4}
+.i.fill{fill:currentColor;stroke:none}
+
+/* ---- document chrome (not part of the shell) ------------------------ */
+h1.doch{font-family:var(--f-disp);font-size:30px;font-weight:400;margin:0 0 2px;letter-spacing:.01em}
+.dochr{border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2);height:3px;margin:10px 0 14px}
+p.doc{color:var(--ink-2);font-size:13.5px;max-width:960px;margin:0 0 8px;line-height:1.55}
+p.doc b{color:var(--ink);font-weight:700}
+p.doc code,code{font-family:var(--f-micro);font-size:11.5px;background:var(--paper-2);
+   border:1px solid var(--rule);padding:0 3px;border-radius:2px}
+.sec{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;
+     font-weight:700;color:var(--ink-3);margin:38px 0 12px;display:flex;align-items:center;gap:10px}
+.sec::after{content:"";flex:1 1 auto;height:0;border-top:1px solid var(--rule)}
+.cap{color:var(--ink-3);font-size:11.5px;margin:9px 0 0;line-height:1.5;font-style:italic;
+     font-family:var(--f-disp)}
+.note{color:var(--ink-3);font-size:12px;margin:8px 0 0;line-height:1.55;max-width:960px}
+.stage{overflow-x:auto;padding:2px 0 4px}
+.fontnote{font-family:var(--f-disp);font-style:italic;font-size:12.5px;color:var(--ink-2);
+  border-left:2px solid var(--seal);padding:2px 0 2px 10px;margin:12px 0 0;max-width:960px;line-height:1.5}
+
+/* ---- primitives ----------------------------------------------------- */
+.sheet{background-color:var(--paper);background-image:var(--grain);background-blend-mode:multiply;
+       border:1px solid var(--rule-2);box-shadow:var(--shade);position:relative}
+.sheet.flat{box-shadow:none}
+.tint{background-color:var(--paper-2);background-image:var(--grain);background-blend-mode:multiply}
+.card{background-color:var(--paper-2);background-image:var(--grain);background-blend-mode:multiply;
+      border:1px solid var(--rule);position:relative}
+.card.q{background-color:var(--paper);}
+.tk{position:absolute;width:6px;height:6px;pointer-events:none}
+.tk.tl{left:4px;top:4px;border-left:1px solid var(--rule-2);border-top:1px solid var(--rule-2)}
+.tk.tr{right:4px;top:4px;border-right:1px solid var(--rule-2);border-top:1px solid var(--rule-2)}
+.tk.bl{left:4px;bottom:4px;border-left:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+.tk.br{right:4px;bottom:4px;border-right:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+
+.hr{height:0;border-top:1px solid var(--rule);width:100%}
+.hr2{height:0;border-top:1px solid var(--rule-2);width:100%}
+.hrd{height:1px;border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2);width:100%}
+.hro{height:1px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2);width:100%}
+.vr{width:0;border-left:1px solid var(--rule);align-self:stretch}
+.vr2{width:0;border-left:1px solid var(--rule-2)}
+
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.grow{flex:1 1 auto;min-width:0}
+.elide{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.clamp3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---- type roles ----------------------------------------------------- */
+.disp{font-family:var(--f-disp)}
+.title{font-family:var(--f-disp);font-size:var(--fs-title);line-height:1.2;color:var(--ink)}
+.lede{font-family:var(--f-disp);font-size:var(--fs-lede);line-height:1.25;color:var(--ink)}
+.serif-body{font-family:var(--f-disp);font-size:var(--fs-body);line-height:1.42;color:var(--ink-2)}
+.kicker{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.15em;
+        font-size:var(--fs-micro);font-weight:700;color:var(--ink-3);line-height:1.1}
+.kicker.acc{color:var(--accent)}
+.kicker.blu{color:var(--blue)}
+.smallcaps{font-family:var(--f-disp);font-feature-settings:"smcp","c2sc";
+           text-transform:lowercase;letter-spacing:.1em}
+.meta{font-size:var(--fs-agate);color:var(--ink-3);letter-spacing:.01em}
+.agate{font-size:var(--fs-agate);color:var(--ink-2)}
+.foot{font-family:var(--f-disp);font-style:italic;font-size:var(--fs-micro);color:var(--ink-4)}
+.num{font-family:var(--f-disp);font-feature-settings:"onum","tnum";font-variant-numeric:oldstyle-nums tabular-nums}
+.lnum{font-family:var(--f-disp);font-feature-settings:"lnum","tnum";font-variant-numeric:lining-nums tabular-nums}
+.mono{font-family:var(--f-micro);font-size:var(--fs-agate);letter-spacing:-.01em}
+.muted{color:var(--ink-3)}
+.faint{color:var(--ink-4)}
+.acc{color:var(--accent)}
+.blu{color:var(--blue)}
+.sealc{color:var(--seal)}
+.b{font-weight:700}
+.sb{font-weight:600}
+.it{font-style:italic}
+
+/* section head: kicker + hairline that runs to the edge */
+.shead{display:flex;align-items:center;gap:9px;width:100%}
+.shead::after{content:"";flex:1 1 auto;height:0;border-top:1px solid var(--rule)}
+.shead.dbl::after{height:3px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+
+/* ---- controls -------------------------------------------------------- */
+.btn{font-family:var(--f-text);font-size:var(--fs-small);color:var(--ink-2);
+     background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--r-ctl);
+     display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;
+     position:relative;transition:background var(--dur1) var(--ease),border-color var(--dur2) var(--ease),color var(--dur1) var(--ease)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.hover{background:var(--paper-3);border-color:var(--rule-2);color:var(--ink)}
+.btn.press{background:var(--paper-4);border-color:var(--ink-3);color:var(--ink)}
+.btn.on{background:var(--accent-w);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn.on.blu{background:var(--blue-w);border-color:var(--blue);color:var(--blue)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.solid.acc{background:var(--accent);border-color:var(--accent);color:#F6F2E9}
+.btn.dis{color:var(--ink-4);border-color:var(--rule);border-style:dotted;background:transparent}
+.btn .ul{position:absolute;left:6px;right:6px;bottom:3px;height:0;border-top:1px solid currentColor}
+.btn.sq{padding:0}
+
+/* underline-on-hover link-ish control */
+.lnk{color:var(--ink-2);border-bottom:1px solid transparent;cursor:default}
+.lnk.hover{color:var(--accent);border-bottom-color:var(--accent);font-style:italic}
+
+/* icon slots & medallions */
+.slot{border:1px solid var(--rule);border-radius:var(--r-ctl);display:flex;align-items:center;
+      justify-content:center;color:var(--ink-2);background:var(--paper);flex:0 0 auto}
+.slot.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.slot.on.blu{border-color:var(--blue);color:var(--blue);background:var(--blue-w)}
+.slot.solid{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.med{border:1px solid var(--rule-2);border-radius:999px;display:flex;align-items:center;
+     justify-content:center;color:var(--ink-2);background:var(--paper);flex:0 0 auto}
+.med.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.med.dbl{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--rule)}
+
+/* seal / stamp */
+.stamp{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--seal);color:var(--seal);
+  font-family:var(--f-text);text-transform:uppercase;letter-spacing:.14em;font-size:9.5px;font-weight:700;
+  padding:2px 6px;border-radius:2px;background:var(--seal-w);white-space:nowrap}
+.stamp.acc{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.stamp.blu{border-color:var(--blue);color:var(--blue);background:var(--blue-w)}
+.stamp.tilt{transform:rotate(-3.5deg)}
+.sealo{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;
+  border:1px solid var(--seal);color:var(--seal);background:var(--seal-w);
+  box-shadow:0 0 0 1.5px var(--paper),0 0 0 2.5px var(--seal);}
+
+/* chips */
+.chip{border:1px solid var(--rule);border-radius:var(--r-ctl);background:var(--paper);
+      font-size:var(--fs-agate);color:var(--ink-2);display:flex;align-items:center;
+      justify-content:center;padding:0 8px;white-space:nowrap}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.chip.oncc{border-color:var(--accent);background:var(--accent-w);color:var(--accent);font-weight:600}
+.chip.dis{color:var(--ink-4);border-style:dotted}
+
+/* fields */
+.field{border:1px solid var(--rule);border-bottom-color:var(--rule-2);border-radius:var(--r-ctl);
+  background:var(--paper);height:30px;display:flex;align-items:center;padding:0 9px;
+  font-size:var(--fs-body);color:var(--ink);font-family:var(--f-text)}
+.field.focus{border-color:var(--rule-2);border-bottom:2px solid var(--accent);padding-bottom:0}
+.field .ph{color:var(--ink-4)}
+.caret{display:inline-block;width:1px;height:15px;background:var(--accent);margin-left:1px;
+  vertical-align:-3px}
+
+/* meters — the "rule gauge" */
+.gauge{position:relative;height:9px;width:100%}
+.gauge .base{position:absolute;left:0;right:0;bottom:3px;height:0;border-top:1px solid var(--rule-2)}
+.gauge .fillr{position:absolute;left:0;bottom:1px;height:4px;background:var(--ink)}
+.gauge .fillr.acc{background:var(--accent)}
+.gauge .tick{position:absolute;bottom:3px;width:0;height:5px;border-left:1px solid var(--rule-2)}
+.gauge .tick.maj{height:8px;border-left-color:var(--ink-3)}
+
+/* progress (media) */
+.track{position:relative;height:7px;width:100%}
+.track .base{position:absolute;left:0;right:0;top:3px;height:0;border-top:1px solid var(--rule-2)}
+.track .done{position:absolute;left:0;top:2px;height:2px;background:var(--accent)}
+.track .knob{position:absolute;top:0;width:0;height:7px;border-left:1px solid var(--accent)}
+
+/* list rows */
+.lrow{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--r-ctl);
+  border:1px solid transparent;position:relative;transition:background var(--dur1) var(--ease)}
+.lrow.hover{background:var(--paper-2)}
+.lrow.hover::before{content:"";position:absolute;left:0;top:4px;bottom:4px;
+  border-left:2px solid var(--accent)}
+.lrow.sel{background:var(--sel)}
+.lrow.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid var(--accent)}
+
+/* tooltip */
+.tip{background:var(--paper);border:1px solid var(--rule-2);box-shadow:var(--shade-sm);
+  padding:4px 9px 5px;font-family:var(--f-disp);font-style:italic;font-size:12px;color:var(--ink-2);
+  white-space:nowrap;position:relative}
+
+/* app icon stand-in */
+.appslot{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border:1px solid var(--rule);border-radius:var(--r-ctl);background:var(--paper);
+  font-family:var(--f-disp);color:var(--ink-2);letter-spacing:.02em;
+  box-shadow:inset 0 0 0 1px var(--paper)}
+.appslot.on{border-color:var(--accent);color:var(--accent);background:var(--accent-w)}
+.appslot.plain{border-color:transparent;background:transparent;box-shadow:none}
+
+/* scrim */
+.scrim{background:rgba(28,24,19,.72)}
+.dusk .scrim{background:rgba(8,7,5,.78)}
+
+
+/* battery glyph */
+.batt{position:relative;display:inline-flex;align-items:center}
+.battb{width:24px;height:11px;border:1px solid var(--rule-2);border-radius:2px;position:relative;
+  background:var(--paper);display:block}
+.battf{position:absolute;left:1.5px;top:1.5px;bottom:1.5px;background:var(--ink);display:block}
+.battf.acc{background:var(--accent)}
+.battn{width:2px;height:5px;background:var(--rule-2);margin-left:1px;border-radius:0 1px 1px 0;display:block}
+.plate{display:inline-block;border:1px solid var(--rule-2);padding:3px;background:var(--paper);
+  box-shadow:var(--shade-sm)}
+.plate .img{position:relative;background:linear-gradient(152deg,#7A5140,#B07B52 40%,#8A6A6E 68%,#3F4A5A)}
+.plate .img::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(246,242,233,.35)}
+
+/* fake wallpaper band for the bar */
+.wall{background:
+   radial-gradient(120% 90% at 12% 0%,rgba(255,246,226,.55),rgba(255,246,226,0) 60%),
+   radial-gradient(90% 80% at 88% 110%,rgba(58,74,92,.55),rgba(58,74,92,0) 55%),
+   linear-gradient(160deg,#8E7F6A 0%,#6E6555 38%,#4C4A44 70%,#2F3134 100%);
+   position:relative}
+.wall::after{content:"";position:absolute;inset:0;background-image:var(--grain);
+   background-blend-mode:multiply;opacity:.5;pointer-events:none}
+
+.bar{height:42px;background-color:var(--paper);background-image:var(--grain);
+  background-blend-mode:multiply;position:relative;display:flex;align-items:center;
+  padding:0 12px 4px}
+.bar .edge{position:absolute;left:0;right:0;bottom:0;height:1px;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-2)}
+.divid{width:0;height:18px;border-left:1px solid var(--rule);margin:0 13px}
+.stat{display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+.stat .k{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.14em;font-size:9px;
+  font-weight:700;color:var(--ink-4)}
+.stat .v{font-family:var(--f-disp);font-feature-settings:"onum","tnum";font-size:15px;color:var(--ink)}
+.wsrow{display:flex;gap:5px;border-bottom:1px solid var(--rule);padding-bottom:3px}
+.cell{width:26px;height:24px;display:flex;align-items:center;justify-content:center;position:relative}
+.cell .n{font-family:var(--f-disp);font-feature-settings:"onum";font-size:12px;color:var(--ink-4)}
+.cell.foc{border:1px solid var(--blue);background:var(--blue-w)}
+.cell .tk{width:4px;height:4px}
+.cell .tk.tl{left:-1px;top:-1px}.cell .tk.tr{right:-1px;top:-1px}
+.cell .tk.bl{left:-1px;bottom:-1px}.cell .tk.br{right:-1px;bottom:-1px}
+.cell .tk{border-color:var(--blue)!important}
+.clk{font-family:var(--f-disp);font-feature-settings:"onum","tnum";font-size:17px;color:var(--ink)}
+.pop{padding:14px}
+.qs{width:360px;background-color:var(--paper);background-image:var(--grain);
+  background-blend-mode:multiply;border-left:1px solid var(--rule-2);padding:14px;
+  display:flex;flex-direction:column;gap:12px;position:relative}
+.mono2{font-family:var(--f-micro);font-size:10.5px;color:var(--ink-3)}
+.caldays{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.caldays .d{height:23px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-disp);font-feature-settings:"onum";font-size:13px;color:var(--ink-2)}
+.caldays .d.out{color:var(--ink-4)}
+.caldays .d.today{color:var(--accent);border:1px solid var(--accent);background:var(--accent-w)}
+.caldays .hd{height:18px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-text);text-transform:uppercase;letter-spacing:.12em;font-size:9px;
+  font-weight:700;color:var(--ink-3)}
+.minib{width:58px;height:50px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;border:1px solid var(--rule);border-radius:2px;
+  background:var(--paper-2);color:var(--ink-2)}
+.minib .l{font-family:var(--f-text);text-transform:uppercase;letter-spacing:.14em;font-size:9px;font-weight:700}
+.minib.on{border-color:var(--accent);background:var(--accent-w);color:var(--accent)}
+.toast{width:356px;padding:12px 13px}
+.osdp{padding:12px 16px;display:inline-block}
+.sbs{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.cover{position:absolute;inset:0;background-color:var(--paper);background-image:var(--grain);
+  background-blend-mode:multiply;padding:14px;display:flex;flex-direction:column;gap:10px}
+</style></head>
+<body><div class="wrap">
+<h1 class="doch">Paper C &mdash; Broadsheet: quick settings</h1>
+<div class="dochr"></div>
+<p class="doc">360&nbsp;px docked to the right edge, full screen height. Uptime and the four header actions, two rows of connectivity tiles, five utility toggles, the notification list with its footer, and the calendar / to-do / timer block. The Wi-Fi and Bluetooth managers cover the whole panel with their own masthead.</p>
+<p class="fontnote"><b>Fonts.</b> Display / titles / numerals: <b>TeX Gyre Pagella</b> (Palatino lineage; real <code>smcp</code> small caps, <code>onum</code> oldstyle and <code>tnum</code> tabular figures) &mdash; installed here, so these previews show the actual face. Data / labels: <b>Lato</b>. Tabular micro-data, paths and logs: <b>Source Code Pro</b>. All three are libre and packaged on Fedora; the shell bundles them in <code>assets/fonts/</code> exactly as the pixel family bundles its bitmap faces.</p>
+<div class="sec">Quick settings &mdash; 360 &times; screen height, docked right</div><div class="stage"><div class="sbs" style="align-items:flex-start"><div><div class="qs" style="height:880px"><div class="row" style="gap:10px"><div class="col grow"><span class="kicker">Uptime</span><span class="num" style="font-size:15px;line-height:1.15">4d 02:11</span></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="m3.4 16.6 1-3.4 8.2-8.2 2.4 2.4-8.2 8.2z"/><path d="m11.8 3.8 2.4 2.4"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.6 10a6.6 6.6 0 1 1-2-4.7"/><path d="M16.9 2.8v3.7h-3.7"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6"/><circle cx="10" cy="10" r="6.1"/><path d="M10 1.9v2M10 16.1v2M1.9 10h2M16.1 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M15.8 4.2l-1.4 1.4M5.6 14.4l-1.4 1.4"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8v6.6"/><path d="M6 5.4a6.5 6.5 0 1 0 8 0"/></svg></div></div><div class="hro"></div><div class="row" style="gap:8px"><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;border-color:var(--accent)"><span class="slot on" style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--accent)">Internet</span><span class="elide meta">pleevi-5g</span></div></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;border-color:var(--blue)"><span class="slot on blu" style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="m7.4 6.2 5.8 7.6-3.2 2.6V3.6l3.2 2.6-5.8 7.6"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--blue)">Bluetooth</span><span class="elide meta">WH-1000XM4</span></div></div><div class="btn sq on" style="width:44px;height:48px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.8 7.4h9.8v4.4a4 4 0 0 1-4 4H7.8a4 4 0 0 1-4-4z"/><path d="M13.6 8.6h1.6a2 2 0 0 1 0 4h-1.6"/><path d="M6.4 3v2.2M9.4 3v2.2M12.4 3v2.2"/></svg></div></div><div class="row" style="gap:8px"><div class="btn sq" style="width:44px;height:48px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="7.8" y="2.6" width="4.4" height="9" rx="2.2"/><path d="M5 9.8a5 5 0 0 0 10 0"/><path d="M10 14.8v2.6M7.4 17.4h5.2"/></svg></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;"><span class="slot " style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="M13.2 7.6a4 4 0 0 1 0 4.8"/><path d="M15.4 5.4a7.2 7.2 0 0 1 0 9.2"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--ink)">Audio out</span><span class="elide meta">Unmuted</span></div></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;"><span class="slot " style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.6 12.4A6.6 6.6 0 0 1 7.4 4.2a6.7 6.7 0 1 0 8.2 8.2Z"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--ink)">Night light</span><span class="elide meta">Inactive</span></div></div></div><div class="row" style="gap:6px"><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="4.4" r="1.9"/><circle cx="4.6" cy="15" r="1.9"/><circle cx="15.4" cy="15" r="1.9"/><path d="M9.2 6.2 5.5 13.2M10.8 6.2l3.7 7M6.5 15h7"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.4V3h4.4M17 7.4V3h-4.4M3 12.6V17h4.4M17 12.6V17h-4.4"/></svg></div><div class="btn sq on" style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.4h7.4M14.8 6.4H17M3 13.6h2.6M10 13.6h7"/><circle cx="12.6" cy="6.4" r="2.1"/><circle cx="7.8" cy="13.6" r="2.1"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="m13.4 8 4.2 4M17.6 8l-4.2 4"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.4 16.6h2.4l7.4-7.4"/><path d="m11.2 6.4 2.4 2.4"/><path d="M12.6 5a2.5 2.5 0 0 1 3.4 3.6l-1.2 1.2-3.4-3.4z"/><path d="M3.4 16.6v-2.4"/></svg></div></div><div class="foot" style="margin-top:-4px">WARP &middot; Game mode &middot; Easy Effects &middot; Anti-flashbang &middot; Colour picker</div><div class="hrd"></div><div class="row" style="gap:8px"><span class="kicker grow">Notifications</span><span class="foot">3 unread</span></div><div class="col" style="gap:0"><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">S</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">Signal</span><span class="meta">4m</span><span class="chip" style="height:17px;font-size:10px;gap:4px;padding:0 5px">3 <svg class="i" width="10" height="10" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.4 8 10 12.6 14.6 8"/></svg></span></div><div class="lede elide">Marta &mdash; &ldquo;landing 18:40, gate C&rdquo;</div><div class="serif-body elide" style="font-size:12px">Tap to reply in Signal</div></div></div><div class="hr" style="margin:2px 0"></div><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">F</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">Firefox</span><span class="meta">22m</span></div><div class="lede elide">Download finished</div><div class="serif-body elide" style="font-size:12px">libertinus-7.040.tar.gz</div></div></div><div class="hr" style="margin:2px 0"></div><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">K</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">KDE Connect</span><span class="meta">1h</span></div><div class="lede elide">Pixel 8 &mdash; battery low</div><div class="serif-body elide" style="font-size:12px">14% remaining</div></div></div></div><span class="grow"></span><div class="row" style="gap:8px"><div class="btn sq " style="width:40px;height:30px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 8.6a4 4 0 0 1 8 0c0 3.2.8 4.5 1.7 5.5H4.3C5.2 13.1 6 11.8 6 8.6Z"/><path d="M8.5 16.4a1.7 1.7 0 0 0 3 0"/><path d="M10 4.6V3"/></svg></div><div class="btn" style="flex:1 1 auto;height:30px;background:transparent;border-style:dotted;color:var(--ink-3)"><span class="kicker">3 notifications</span></div><div class="btn sq " style="width:40px;height:30px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div></div><div class="hrd"></div><div class="row" style="gap:10px;align-items:flex-start"><div class="col" style="gap:6px"><div class="minib on"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.8" width="14" height="12.2"/><path d="M3 8.6h14M6.8 3v3.2M13.2 3v3.2"/></svg><span class="l">Cal</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.6 5.6h8M8.6 10h8M8.6 14.4h8"/><path d="m2.6 5.4 1.4 1.4 2.4-2.6M2.6 9.8l1.4 1.4 2.4-2.6M2.6 14.2l1.4 1.4 2.4-2.6"/></svg><span class="l">To do</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="11.3" r="6"/><path d="M10 8.3v3.2M8 2.8h4M10 2.8v2.5"/></svg><span class="l">Time</span></div></div><div class="col grow" style="min-width:0;gap:6px"><div class="row" style="gap:8px"><span class="title grow num">August 2026</span><div class="btn sq " style="width:26px;height:24px"><svg class="i" width="13" height="13" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.4 5 7.4 10l5 5"/></svg></div><div class="btn sq " style="width:26px;height:24px"><svg class="i" width="13" height="13" viewBox="0 0 20 20" aria-hidden="true"><path d="M7.6 5l5 5-5 5"/></svg></div></div><div class="hr"></div><div class="caldays"><div class="hd">Mo</div><div class="hd">Tu</div><div class="hd">We</div><div class="hd">Th</div><div class="hd">Fr</div><div class="hd">Sa</div><div class="hd">Su</div><div class="d out">28</div><div class="d out">29</div><div class="d out">30</div><div class="d out">31</div><div class="d ">1</div><div class="d ">2</div><div class="d ">3</div><div class="d ">4</div><div class="d ">5</div><div class="d ">6</div><div class="d ">7</div><div class="d ">8</div><div class="d ">9</div><div class="d ">10</div><div class="d ">11</div><div class="d today">12</div><div class="d ">13</div><div class="d ">14</div><div class="d ">15</div><div class="d ">16</div><div class="d ">17</div><div class="d ">18</div><div class="d ">19</div><div class="d ">20</div><div class="d ">21</div><div class="d ">22</div><div class="d ">23</div><div class="d ">24</div><div class="d ">25</div><div class="d ">26</div><div class="d ">27</div><div class="d ">28</div><div class="d ">29</div><div class="d ">30</div><div class="d ">31</div><div class="d out">1</div><div class="d out">2</div><div class="d out">3</div><div class="d out">4</div><div class="d out">5</div><div class="d out">6</div><div class="d out">7</div></div></div></div></div><p class="cap" style="max-width:360px">A single column of ruled blocks. Every section is announced by a letterspaced kicker and closed by a hairline; the masthead gets the Oxford rule. Nothing is boxed unless it is interactive.</p></div><div class="col" style="gap:20px"><div><div class="kicker" style="margin-bottom:8px">Internet overlay</div><div class="qs" style="height:610px;padding:0"><div class="cover"><div class="row" style="gap:10px"><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.4 5 7.4 10l5 5"/></svg></div><span class="title smallcaps grow">Internet</span><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.6 10a6.6 6.6 0 1 1-2-4.7"/><path d="M16.9 2.8v3.7h-3.7"/></svg></div><div class="btn sq on" style="width:44px;height:28px"><span class="kicker acc">On</span></div></div><div class="hro"></div><div class="lrow on" style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--blue)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;font-weight:600;color:var(--blue)">pleevi-5g</span><span class="meta">Connected &middot; 92%</span></div><span class="stamp blu">On</span></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">pleevi-2g</span><span class="meta">88%</span></div><svg class="i" width="12" height="12" viewBox="0 0 20 20" style="color:var(--ink-3)" aria-hidden="true"><rect x="4.4" y="8.8" width="11.2" height="8.2"/><path d="M6.8 8.8V6.6a3.2 3.2 0 0 1 6.4 0v2.2"/><path d="M10 12v2.4"/></svg></div><div class="hr"></div><div class="lrow hover" style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;font-style:italic">kpn-B4A2</span><span class="meta">Secured &middot; 74%</span></div><svg class="i" width="12" height="12" viewBox="0 0 20 20" style="color:var(--ink-3)" aria-hidden="true"><rect x="4.4" y="8.8" width="11.2" height="8.2"/><path d="M6.8 8.8V6.6a3.2 3.2 0 0 1 6.4 0v2.2"/><path d="M10 12v2.4"/></svg></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">Vitulina-Guest</span><span class="meta">61%</span></div></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">HUAWEI-9F21</span><span class="meta">43%</span></div><svg class="i" width="12" height="12" viewBox="0 0 20 20" style="color:var(--ink-3)" aria-hidden="true"><rect x="4.4" y="8.8" width="11.2" height="8.2"/><path d="M6.8 8.8V6.6a3.2 3.2 0 0 1 6.4 0v2.2"/><path d="M10 12v2.4"/></svg></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">eduroam</span><span class="meta">Secured &middot; 28%</span></div><svg class="i" width="12" height="12" viewBox="0 0 20 20" style="color:var(--ink-3)" aria-hidden="true"><rect x="4.4" y="8.8" width="11.2" height="8.2"/><path d="M6.8 8.8V6.6a3.2 3.2 0 0 1 6.4 0v2.2"/><path d="M10 12v2.4"/></svg></div><div class="hr"></div><div class="row" style="gap:7px;margin-top:2px"><span class="foot grow">Scanning&hellip;</span></div></div></div></div><div><div class="kicker" style="margin-bottom:8px">Bluetooth overlay</div><div class="qs" style="height:560px;padding:0"><div class="cover"><div class="row" style="gap:10px"><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.4 5 7.4 10l5 5"/></svg></div><span class="title smallcaps grow">Devices</span><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.6 10a6.6 6.6 0 1 1-2-4.7"/><path d="M16.9 2.8v3.7h-3.7"/></svg></div><div class="btn sq on" style="width:44px;height:28px"><span class="kicker acc">On</span></div></div><div class="hro"></div><div class="lrow on" style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--blue)" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="M13.2 7.6a4 4 0 0 1 0 4.8"/><path d="M15.4 5.4a7.2 7.2 0 0 1 0 9.2"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;font-weight:600;color:var(--blue)">WH-1000XM4</span><span class="meta">Connected &middot; 82%</span></div><span class="stamp blu">Linked</span></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="3" width="6" height="6"/><rect x="3" y="11" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">Logitech MX Master</span><span class="meta">Paired</span></div></div><div class="hr"></div><div class="lrow hover" style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><rect x="6" y="2.4" width="8" height="15.2" rx="1.4"/><path d="M8.8 4.6h2.4M10 15.4h.01"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;font-style:italic">Pixel 8</span><span class="meta">Tap to connect</span></div></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><rect x="2.4" y="5.6" width="15.2" height="9"/><path d="M5.2 8.4h.01M7.8 8.4h.01M10.4 8.4h.01M13 8.4h.01M15.6 8.4h.01"/><path d="M5.2 11.2h.01M7.8 11.2h.01M10.4 11.2h.01M13 11.2h.01M15.6 11.2h.01"/><path d="M7 13.4h6"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">Keychron K3</span><span class="meta">Paired</span></div></div><div class="hr"></div><div class="lrow " style="padding:8px 6px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" style="color:var(--ink-2)" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="M13.2 7.6a4 4 0 0 1 0 4.8"/><path d="M15.4 5.4a7.2 7.2 0 0 1 0 9.2"/></svg><div class="col grow" style="min-width:0"><span style="font-size:13px;">Marta&rsquo;s AirPods</span><span class="meta">Tap to connect</span></div></div><div class="hr"></div><div class="foot" style="margin-top:2px">Searching&hellip;</div></div></div></div></div><div class="col" style="gap:20px"><div><div class="kicker" style="margin-bottom:8px">Calendar &rarr; To do</div><div class="qs" style="height:250px;padding:14px"><div class="row" style="gap:10px;align-items:flex-start"><div class="col" style="gap:6px"><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.8" width="14" height="12.2"/><path d="M3 8.6h14M6.8 3v3.2M13.2 3v3.2"/></svg><span class="l">Cal</span></div><div class="minib on"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.6 5.6h8M8.6 10h8M8.6 14.4h8"/><path d="m2.6 5.4 1.4 1.4 2.4-2.6M2.6 9.8l1.4 1.4 2.4-2.6M2.6 14.2l1.4 1.4 2.4-2.6"/></svg><span class="l">To do</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="11.3" r="6"/><path d="M10 8.3v3.2M8 2.8h4M10 2.8v2.5"/></svg><span class="l">Time</span></div></div><div class="col grow" style="min-width:0;gap:5px"><div class="row" style="gap:8px;align-items:flex-start;padding:2px 0"><span class="slot " style="width:18px;height:18px;margin-top:1px"></span><span class="serif-body grow" style="font-size:12.5px;">Reply to the Vitulina thread</span><svg class="i" width="13" height="13" viewBox="0 0 20 20" style="color:var(--ink-4)" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div><div class="row" style="gap:8px;align-items:flex-start;padding:2px 0"><span class="slot " style="width:18px;height:18px;margin-top:1px"></span><span class="serif-body grow" style="font-size:12.5px;">Draft the Q3 display config note</span><svg class="i" width="13" height="13" viewBox="0 0 20 20" style="color:var(--ink-4)" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div><div class="row" style="gap:8px;align-items:flex-start;padding:2px 0"><span class="slot " style="width:18px;height:18px;margin-top:1px"></span><span class="serif-body grow" style="font-size:12.5px;">Renew the domain before the 20th</span><svg class="i" width="13" height="13" viewBox="0 0 20 20" style="color:var(--ink-4)" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div><div class="row" style="gap:8px;align-items:flex-start;padding:2px 0"><span class="slot on" style="width:18px;height:18px;margin-top:1px"><svg class="i" width="11" height="11" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10.4 4.2 4.2L16 5.4"/></svg></span><span class="serif-body grow" style="font-size:12.5px;color:var(--ink-4);text-decoration:line-through">Order Charter specimen book</span><svg class="i" width="13" height="13" viewBox="0 0 20 20" style="color:var(--ink-4)" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div><div class="row" style="gap:6px;margin-top:4px"><div class="field grow" style="height:26px"><span class="ph it disp">Add task&hellip;</span></div><div class="btn sq " style="width:26px;height:26px"><svg class="i" width="13" height="13" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.4v11.2M4.4 10h11.2"/></svg></div></div></div></div></div></div><div><div class="kicker" style="margin-bottom:8px">Calendar &rarr; Timer</div><div class="qs" style="height:250px;padding:14px"><div class="row" style="gap:10px;align-items:flex-start"><div class="col" style="gap:6px"><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.8" width="14" height="12.2"/><path d="M3 8.6h14M6.8 3v3.2M13.2 3v3.2"/></svg><span class="l">Cal</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.6 5.6h8M8.6 10h8M8.6 14.4h8"/><path d="m2.6 5.4 1.4 1.4 2.4-2.6M2.6 9.8l1.4 1.4 2.4-2.6M2.6 14.2l1.4 1.4 2.4-2.6"/></svg><span class="l">To do</span></div><div class="minib on"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="11.3" r="6"/><path d="M10 8.3v3.2M8 2.8h4M10 2.8v2.5"/></svg><span class="l">Time</span></div></div><div class="col grow" style="min-width:0;align-items:center;gap:4px"><div class="row" style="gap:9px;align-self:stretch"><span class="kicker acc grow">Focus</span><span class="foot">cycle 3 of 4</span></div><div class="lnum" style="font-size:46px;line-height:1.05;letter-spacing:.01em">18:24</div><div class="gauge" style="width:100%;margin:2px 0 8px"><div class="base"></div><div class="fillr acc" style="width:26%"></div></div><div class="row" style="gap:8px;align-self:stretch"><div class="btn on" style="flex:1;height:30px">Pause</div><div class="btn" style="flex:1;height:30px">Reset</div></div></div></div></div></div><div class="sheet flat" style="padding:12px 14px;width:360px"><div class="kicker" style="margin-bottom:6px">Notes</div><div class="serif-body" style="font-size:12.5px">The management overlays cover the whole panel on an opaque paper ground and slide in over 280&nbsp;ms. Their back bar is a chevron, a Pagella small-caps title and the radio state as a stamp-button, over an Oxford rule &mdash; the same masthead grammar as the panel itself, one level down.</div></div></div></div></div><div class="sec">Dusk paper</div><div class="stage dusk" style="background:var(--desk);padding:18px"><div class="sbs"><div class="qs" style="height:880px"><div class="row" style="gap:10px"><div class="col grow"><span class="kicker">Uptime</span><span class="num" style="font-size:15px;line-height:1.15">4d 02:11</span></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="m3.4 16.6 1-3.4 8.2-8.2 2.4 2.4-8.2 8.2z"/><path d="m11.8 3.8 2.4 2.4"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.6 10a6.6 6.6 0 1 1-2-4.7"/><path d="M16.9 2.8v3.7h-3.7"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6"/><circle cx="10" cy="10" r="6.1"/><path d="M10 1.9v2M10 16.1v2M1.9 10h2M16.1 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M15.8 4.2l-1.4 1.4M5.6 14.4l-1.4 1.4"/></svg></div><div class="btn sq " style="width:30px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8v6.6"/><path d="M6 5.4a6.5 6.5 0 1 0 8 0"/></svg></div></div><div class="hro"></div><div class="row" style="gap:8px"><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;border-color:var(--accent)"><span class="slot on" style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.6 7.6a13 13 0 0 1 14.8 0"/><path d="M5.4 10.8a8.6 8.6 0 0 1 9.2 0"/><path d="M8.2 13.9a4 4 0 0 1 3.6 0"/><circle cx="10" cy="16.5" r=".95" fill="currentColor" stroke="none"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--accent)">Internet</span><span class="elide meta">pleevi-5g</span></div></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;border-color:var(--blue)"><span class="slot on blu" style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="m7.4 6.2 5.8 7.6-3.2 2.6V3.6l3.2 2.6-5.8 7.6"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--blue)">Bluetooth</span><span class="elide meta">WH-1000XM4</span></div></div><div class="btn sq on" style="width:44px;height:48px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.8 7.4h9.8v4.4a4 4 0 0 1-4 4H7.8a4 4 0 0 1-4-4z"/><path d="M13.6 8.6h1.6a2 2 0 0 1 0 4h-1.6"/><path d="M6.4 3v2.2M9.4 3v2.2M12.4 3v2.2"/></svg></div></div><div class="row" style="gap:8px"><div class="btn sq" style="width:44px;height:48px"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="7.8" y="2.6" width="4.4" height="9" rx="2.2"/><path d="M5 9.8a5 5 0 0 0 10 0"/><path d="M10 14.8v2.6M7.4 17.4h5.2"/></svg></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;"><span class="slot " style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="M13.2 7.6a4 4 0 0 1 0 4.8"/><path d="M15.4 5.4a7.2 7.2 0 0 1 0 9.2"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--ink)">Audio out</span><span class="elide meta">Unmuted</span></div></div><div class="card" style="flex:1 1 0;min-width:0;height:48px;display:flex;align-items:center;gap:9px;padding:0 9px;"><span class="slot " style="width:28px;height:28px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.6 12.4A6.6 6.6 0 0 1 7.4 4.2a6.7 6.7 0 1 0 8.2 8.2Z"/></svg></span><div class="col grow" style="min-width:0"><span class="elide" style="font-size:12.5px;font-weight:600;color:var(--ink)">Night light</span><span class="elide meta">Inactive</span></div></div></div><div class="row" style="gap:6px"><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="4.4" r="1.9"/><circle cx="4.6" cy="15" r="1.9"/><circle cx="15.4" cy="15" r="1.9"/><path d="M9.2 6.2 5.5 13.2M10.8 6.2l3.7 7M6.5 15h7"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.4V3h4.4M17 7.4V3h-4.4M3 12.6V17h4.4M17 12.6V17h-4.4"/></svg></div><div class="btn sq on" style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.4h7.4M14.8 6.4H17M3 13.6h2.6M10 13.6h7"/><circle cx="12.6" cy="6.4" r="2.1"/><circle cx="7.8" cy="13.6" r="2.1"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.2 7.8h3l4.2-3.4v11.2L6.2 12.2h-3z"/><path d="m13.4 8 4.2 4M17.6 8l-4.2 4"/></svg></div><div class="btn sq " style="flex:1 1 0;height:34px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.4 16.6h2.4l7.4-7.4"/><path d="m11.2 6.4 2.4 2.4"/><path d="M12.6 5a2.5 2.5 0 0 1 3.4 3.6l-1.2 1.2-3.4-3.4z"/><path d="M3.4 16.6v-2.4"/></svg></div></div><div class="foot" style="margin-top:-4px">WARP &middot; Game mode &middot; Easy Effects &middot; Anti-flashbang &middot; Colour picker</div><div class="hrd"></div><div class="row" style="gap:8px"><span class="kicker grow">Notifications</span><span class="foot">3 unread</span></div><div class="col" style="gap:0"><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">S</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">Signal</span><span class="meta">4m</span><span class="chip" style="height:17px;font-size:10px;gap:4px;padding:0 5px">3 <svg class="i" width="10" height="10" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.4 8 10 12.6 14.6 8"/></svg></span></div><div class="lede elide">Marta &mdash; &ldquo;landing 18:40, gate C&rdquo;</div><div class="serif-body elide" style="font-size:12px">Tap to reply in Signal</div></div></div><div class="hr" style="margin:2px 0"></div><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">F</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">Firefox</span><span class="meta">22m</span></div><div class="lede elide">Download finished</div><div class="serif-body elide" style="font-size:12px">libertinus-7.040.tar.gz</div></div></div><div class="hr" style="margin:2px 0"></div><div class="lrow" style="align-items:flex-start;padding:8px 2px"><span class="appslot " style="width:30px;height:30px;font-size:13px">K</span><div class="col grow" style="min-width:0;gap:1px"><div class="row" style="gap:7px"><span class="kicker grow">KDE Connect</span><span class="meta">1h</span></div><div class="lede elide">Pixel 8 &mdash; battery low</div><div class="serif-body elide" style="font-size:12px">14% remaining</div></div></div></div><span class="grow"></span><div class="row" style="gap:8px"><div class="btn sq " style="width:40px;height:30px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 8.6a4 4 0 0 1 8 0c0 3.2.8 4.5 1.7 5.5H4.3C5.2 13.1 6 11.8 6 8.6Z"/><path d="M8.5 16.4a1.7 1.7 0 0 0 3 0"/><path d="M10 4.6V3"/></svg></div><div class="btn" style="flex:1 1 auto;height:30px;background:transparent;border-style:dotted;color:var(--ink-3)"><span class="kicker">3 notifications</span></div><div class="btn sq " style="width:40px;height:30px"><svg class="i" width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.2 5.6h11.6"/><path d="M6.8 5.6V4a1.2 1.2 0 0 1 1.2-1.2h4A1.2 1.2 0 0 1 13.2 4v1.6"/><path d="M5.6 5.6 6.5 17.2h7l.9-11.6"/><path d="M8.6 8.4v6M11.4 8.4v6"/></svg></div></div><div class="hrd"></div><div class="row" style="gap:10px;align-items:flex-start"><div class="col" style="gap:6px"><div class="minib on"><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.8" width="14" height="12.2"/><path d="M3 8.6h14M6.8 3v3.2M13.2 3v3.2"/></svg><span class="l">Cal</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.6 5.6h8M8.6 10h8M8.6 14.4h8"/><path d="m2.6 5.4 1.4 1.4 2.4-2.6M2.6 9.8l1.4 1.4 2.4-2.6M2.6 14.2l1.4 1.4 2.4-2.6"/></svg><span class="l">To do</span></div><div class="minib "><svg class="i" width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="11.3" r="6"/><path d="M10 8.3v3.2M8 2.8h4M10 2.8v2.5"/></svg><span class="l">Time</span></div></div><div class="col grow" style="min-width:0;gap:6px"><div class="row" style="gap:8px"><span class="title grow num">August 2026</span><div class="btn sq " style="width:26px;height:24px"><svg class="i" width="13" height="13" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.4 5 7.4 10l5 5"/></svg></div><div class="btn sq " style="width:26px;height:24px"><svg class="i" width="13" height="13" viewBox="0 0 20 20" aria-hidden="true"><path d="M7.6 5l5 5-5 5"/></svg></div></div><div class="hr"></div><div class="caldays"><div class="hd">Mo</div><div class="hd">Tu</div><div class="hd">We</div><div class="hd">Th</div><div class="hd">Fr</div><div class="hd">Sa</div><div class="hd">Su</div><div class="d out">28</div><div class="d out">29</div><div class="d out">30</div><div class="d out">31</div><div class="d ">1</div><div class="d ">2</div><div class="d ">3</div><div class="d ">4</div><div class="d ">5</div><div class="d ">6</div><div class="d ">7</div><div class="d ">8</div><div class="d ">9</div><div class="d ">10</div><div class="d ">11</div><div class="d today">12</div><div class="d ">13</div><div class="d ">14</div><div class="d ">15</div><div class="d ">16</div><div class="d ">17</div><div class="d ">18</div><div class="d ">19</div><div class="d ">20</div><div class="d ">21</div><div class="d ">22</div><div class="d ">23</div><div class="d ">24</div><div class="d ">25</div><div class="d ">26</div><div class="d ">27</div><div class="d ">28</div><div class="d ">29</div><div class="d ">30</div><div class="d ">31</div><div class="d out">1</div><div class="d out">2</div><div class="d out">3</div><div class="d out">4</div><div class="d out">5</div><div class="d out">6</div><div class="d out">7</div></div></div></div></div></div></div>
+</div></body></html>
