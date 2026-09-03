@@ -15,7 +15,8 @@ import Quickshell.Services.Mpris
 Item { // Player instance
     id: root
     required property MprisPlayer player
-    property var artUrl: player?.trackArtUrl
+    // The active player goes through the controller's art policy (fallback lookup, stale-art detection)
+    property var artUrl: (player === MprisController.activePlayer) ? MprisController.coverArtUrl : (player?.trackArtUrl ?? "")
     property string artDownloadLocation: Directories.coverArt
     property string artFileName: Qt.md5(artUrl)
     property string artFilePath: `${artDownloadLocation}/${artFileName}`

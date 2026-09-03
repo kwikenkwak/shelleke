@@ -38,7 +38,11 @@ Item {
         id: img
         anchors.fill: parent
         visible: false
-        asynchronous: true
+        // Synchronous: image://icon loads must never run on the async
+        // pixmap-reader thread — the first QIcon::fromTheme there binds Qt's
+        // icon loader to a thread that dies on live reload, blanking every
+        // later theme-icon lookup until a full restart.
+        asynchronous: false
         cache: true
         smooth: false
         mipmap: false

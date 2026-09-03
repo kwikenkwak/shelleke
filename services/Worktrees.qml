@@ -14,6 +14,11 @@ import Quickshell.Io
  * `create()` makes one folder per task with a jj workspace per selected repo and opens kitty
  * with the requested tabs; the script's stderr streams into `log` so the overlay can show
  * progress while it runs.
+ *
+ * `create()` on the name of a task that already exists is how a repo is *added* to it: the
+ * script keeps everything already in the folder and only sets up what is new. `tasks` gives
+ * each task the repos it holds and the servers its saved tabs run, which is what lets the
+ * overlay show that selection before adding to it.
  */
 Singleton {
     id: root
@@ -56,6 +61,9 @@ Singleton {
 
     /**
      * selection: [{ name: "dashboard", servers: ["ems"] }, ...]
+     *
+     * An existing task name adds to it rather than failing — the repos already in the folder
+     * are kept and left alone whether or not the selection names them.
      */
     function create(name, selection) {
         root._run(["create", JSON.stringify({
@@ -132,6 +140,11 @@ Singleton {
         root.lastWarnings = result.warnings ?? [];
         for (const warning of root.lastWarnings)
             root.log += (root.log.length > 0 ? "\n" : "") + warning;
+        // A run changes both lists — a new task folder, a repo now colocated with jj, a task
+        // that grew a repo — and the dialog stays open whenever there is a warning to read,
+        // so it must not be left showing the state from before the run.
+        if (root.lastOk)
+            root.refresh();
         root.finished(root.lastOk, root.lastOk ? (result.path ?? "") : root.lastError);
     }
 }

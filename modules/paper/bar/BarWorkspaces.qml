@@ -29,7 +29,17 @@ import qs.modules.paper.widgets
 Item {
     id: root
 
-    readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.QsWindow.window?.screen)
+    /// The screen this bar sits on. Passed IN by PaperBar rather than resolved
+    /// through `root.QsWindow.window?.screen`: that attached property
+    /// re-resolves on every `windowChanged` in the item tree, including the one
+    /// Qt emits while it is tearing the bar down on a config reload — and
+    /// reading it then dereferences a half-destroyed item and segfaults inside
+    /// QQuickItem::window(). PaperBar already has the ShellScreen in hand, so
+    /// there is nothing to resolve. See modules/paper/widgets/PaperTooltip.qml
+    /// for the long version of the note.
+    required property ShellScreen screen
+
+    readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.screen)
     readonly property int workspacesShown: 10
     readonly property int activeId: root.monitor?.activeWorkspace?.id ?? 1
     readonly property int workspaceGroup: Math.floor((root.activeId - 1) / root.workspacesShown)

@@ -7,7 +7,9 @@ import qs.modules.paper.widgets
 /**
  * One existing task in the reopen list. Click it to get that task's kitty window
  * back with the tabs it was created with — no fetch, no install, no touching the
- * working copies (see worktree-setup.py's `open`).
+ * working copies (see worktree-setup.py's `open`). Its trailing `plus` is the
+ * second verb: load the task into the entry above to add a repo to it, which is
+ * why the button stays lit (`loaded`) while that is what the sheet is doing.
  *
  * The manuscript change-bar idiom: hover takes the 4 % wash in all three
  * variants, plus a 2 px accent bar in the left margin and an italic title in
@@ -19,10 +21,16 @@ Item {
     property string task: ""
     property var repos: []
     property int tabCount: 0
+    /// This is the task currently loaded into the entry above.
+    property bool loaded: false
 
     signal activated
+    signal extendRequested
 
-    readonly property bool hovered: mouse.containsMouse && root.enabled
+    // The `plus` counts as hovering the row: it takes hover from the MouseArea
+    // beneath it, and without this the button would fade out from under the
+    // pointer the moment it was reached.
+    readonly property bool hovered: (mouse.containsMouse || plusBtn.hovered) && root.enabled
 
     implicitHeight: PaperTheme.pick(38, 32, 34)
 
@@ -94,11 +102,28 @@ Item {
             footnote: PaperTheme.isBroadsheet
             tone: "ink4"
         }
+        PaperButton {
+            id: plusBtn
+            shape: "icon"
+            icon: "plus"
+            // Lit while its task is the one being amended above. Always drawn
+            // rather than revealed on hover: a glyph that is invisible but still
+            // takes clicks is how you reopen a task by accident.
+            checked: root.loaded
+            enabled: root.enabled
+            onClicked: root.extendRequested()
+
+            PaperTooltip {
+                text: "Add repos to " + root.task
+            }
+        }
     }
 
+    // Below the row's own content, so the `plus` gets its clicks first.
     MouseArea {
         id: mouse
         anchors.fill: parent
+        z: -1
         enabled: root.enabled
         hoverEnabled: true
         cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor

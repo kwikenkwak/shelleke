@@ -44,16 +44,18 @@ modules/paper/
   HANDOFF.md                        ← this file
   common/
     PaperTheme.qml                  singleton: variant, palettes, type, metrics, motion
+    PaperPlates.qml                 singleton: the desktop plate of the day
     paper_icons_data.js             87 glyphs × 3 variants (generated)
+    paper_plates_data.js            backdrop plate catalog (generated)
   widgets/                          26 shared widgets — see §3
-  background/PaperBackground.qml
+  background/PaperBackground.qml    paper ground + the plate of the day
   bar/                  PaperBar.qml + BarBatteryChip BarBatteryPopup BarClock
                         BarClockPopup BarColumnHead BarControlButton BarDivider
                         BarPopup BarStats BarSystemMonitorPopup BarTray
                         BarTrayItem BarValueRow BarWorkspaces
   quickSettings/        PaperQuickSettings.qml + PaperQuickSettingsContent
-                        QsBluetoothManager QsCalendarArea QsTimerView QsTodoView
-                        QsToggleTile QsWifiManager
+                        QsAudioManager QsBluetoothManager QsCalendarArea
+                        QsTimerView QsTodoView QsToggleTile QsWifiManager
   notificationPopup/    PaperNotificationPopup.qml + NotifToast
   onScreenDisplay/      PaperOnScreenDisplay.qml + OsdPanel
   overview/             PaperOverview.qml + OvExpose OvSearchRow OvSearchWidget
@@ -69,7 +71,9 @@ modules/paper/
 
 assets/fonts/  Inter-{Light,Regular,Medium}.ttf, XCharter-{Roman,Bold,Italic}.otf
 assets/images/paper-grain.png       140 px noise tile, shared by every surface
+assets/images/paper-plates/*.png    the backdrop collection — see §11
 scripts/paper/extract_icons.py      regenerates paper_icons_data.js from the previews
+scripts/paper/fetch_plates.py       regenerates the plates + paper_plates_data.js
 modules/common/Config.qml           + Config.options.paper.variant
 shell.qml                           + paper family, IpcHandler "paperVariant",
                                       GlobalShortcut "paperVariantCycle"
@@ -199,6 +203,13 @@ question is "does this variant do X":
 | `tintedFills` | – | ✓ | ✓ | a tinted fill may say "on" |
 
 `PaperTheme.shadow.{color,radius,verticalOffset}` if you build your own shadow.
+
+`PaperTheme.backdrop.*` styles the desktop picture (§11): `plateOpacity`
+0.34/0.38/0.42 light, 0.58/0.62/0.66 dusk (dusk costs more: ink on a near-black
+ground can never exceed `opacity × ink`) · `plateInk` = `ink`, except broadsheet
+which inks its plate in `seal` sepia like the rest of its ornament ·
+`deskRuling` / `deskRulingPitch` (22) — broadsheet's desk ruling, which
+`PaperBackground` drops while a plate hangs.
 
 ### 2.5 Spacing and sizes
 
@@ -732,7 +743,8 @@ keybinds point at them. Keep them, and add a comment saying so. Nothing in the
 bar, the notification popup or the background declares IPC or shortcuts.
 
 Already declared in `shell.qml` — do **not** redeclare: `panelFamily`,
-`TEST_ALIVE`, `paperVariant` (`cycle` / `set` / `get`), and the
+`TEST_ALIVE`, `paperVariant` (`cycle` / `set` / `get`), `paperPlate`
+(`next` / `previous` / `pin` / `daily` / `get`, see §11), and the
 `panelFamilyCycle` / `paperVariantCycle` shortcuts. `zoom` and `workspaceNumber`
 live in `GlobalStates.qml`.
 
@@ -1062,5 +1074,80 @@ Worth internalising, because it is what makes the family coherent:
   is sepia or `alertSoft`, failure is `alert`.
 * No opacity as a disabled treatment in broadsheet — a dotted rule instead.
 * No decorative ornament. Every tick, double rule and seal marks something.
-* No scrolling pixelscape background.
+* No scrolling pixelscape background. The desktop plate (§11) is not a breach of
+  that: it is a still picture drawn in one theme ink, not an image with colours
+  of its own.
 * **Album art is the only place third-party colour reaches the screen.**
+
+---
+
+## 11. The desktop plate
+
+The paper desktop hangs a picture: one public-domain engraving, chart, map or
+woodblock, held as **ink density only** — the PNGs in
+`assets/images/paper-plates/` are black pixels plus an alpha channel and carry no
+paper of their own. `PaperBackground` lays the plate on the variant's `paper` and
+tints it through a `ColorOverlay` with `PaperTheme.backdrop.plateInk`, so **one
+asset serves all three variants in both modes** and a live variant switch
+re-inks the picture with no reload. That is the whole reason the assets are
+alpha-only; do not "simplify" them into finished wallpapers.
+
+**One plate per day, and the pick is a pure function of the local date**
+(`PaperPlates.day` → `paper_plates_data.js:forDay()`). Not random per launch:
+every screen must agree without sharing state, and the picture must survive a
+reload — a wallpaper that changes on every reload reads as a bug. The catalog
+steps by 7 rather than hashing, so consecutive days land far apart in the list
+(no two Haeckel plates back to back) while every plate still comes up once per
+cycle. `PaperPlates` holds an hourly `SystemClock`, which is what rolls the date
+over at local midnight.
+
+Two layouts, carried per plate in the catalog:
+
+| layout | what it is | how it is drawn |
+|---|---|---|
+| `bleed` | a landscape scene, map or chart | slot sized to COVER the screen at the plate's aspect; the overhang falls outside the window |
+| `motif` | a portrait print laid on the sheet | `scale` of screen height, `align`ed left/center/right with a 6 % inset, never wider than 88 % of the screen |
+
+The slot always carries the plate's own aspect and the `Image` merely fills it —
+**do not reach for a `fillMode`**. `ColorOverlay` samples the image's texture
+directly, which bypasses `fillMode` entirely and would silently stretch a bleed
+plate to the screen's aspect (39 % too wide on a 3440 × 1440 panel). Matched
+geometry is what keeps the picture undistorted.
+
+Opacity is `PaperTheme.backdrop.plateOpacity` × the plate's own `weight` ×
+`Config.options.paper.backdrop.strength`.
+
+Every plate is normalised to the same ink coverage so a delicate Ortelius map and
+a black Piranesi aquatint hang at the same weight — **by gamma, never by a linear
+scale**. `a ** g` pins 1 → 1, so the deepest bite of the engraving stays solid
+and only the mid-tones thin out. This matters more than it sounds: the first cut
+of this feature scaled alpha linearly, which left every plate peaking around 50 %
+alpha, and at that ceiling the desktop showed a flat grey wash with no picture in
+it however far the opacity was pushed. A plate with genuinely solid blacks cannot
+be curved down to the target without losing them, so whatever coverage gamma
+cannot take off is taken off the plate's catalog `weight` instead (the generator
+computes that automatically; the `weight` in the PLATES list is only a hand
+nudge on top).
+
+If the wall is too strong or too faint for your screen, dial it live rather than
+editing tokens: `qs -c ii ipc call paperPlate heavier` / `lighter` step
+`strength` by 0.1, and `strength 1.4` sets it outright.
+
+Config (`Config.options.paper.backdrop`): `enable` (false leaves the bare paper
+ground), `plate` (a catalog file name pins it; empty rotates daily), `strength`.
+To look through the collection now instead of one a day:
+
+```
+qs -c ii ipc call paperPlate next          # steps and pins
+qs -c ii ipc call paperPlate pin hokusai-great-wave.png
+qs -c ii ipc call paperPlate get           # file + credit line
+qs -c ii ipc call paperPlate daily         # back to the plate of the day
+```
+
+To change the collection, edit the `PLATES` list in
+`scripts/paper/fetch_plates.py` and re-run it — it fetches from Wikimedia
+Commons (refusing anything it cannot confirm as public domain or CC0), caches the
+scans under `~/.cache/quickshell/paper-plates-src`, rebuilds the PNGs and
+rewrites `paper_plates_data.js` with each plate's provenance. `--sheet` renders a
+contact sheet of the whole collection on light and dusk paper, which is how you
+review a change without launching the shell (§8).

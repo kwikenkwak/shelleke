@@ -258,7 +258,7 @@ Scope {
                             id: art
                             anchors.fill: parent
                             visible: art.status === Image.Ready
-                            source: card.player?.trackArtUrl ?? ""
+                            source: MprisController.coverArtUrl
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: true

@@ -44,6 +44,9 @@ PaperPanel {
     property string tooltip: ""
 
     signal activated
+    /// The secondary action. Used by the audio tile, whose primary click opens
+    /// the output-device screen — mute has to stay one gesture away.
+    signal rightActivated
 
     readonly property bool hovered: mouse.containsMouse
     readonly property color accentInk: root.connected ? PaperTheme.link : PaperTheme.accent
@@ -123,7 +126,13 @@ PaperPanel {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.activated()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: mouseEvent => {
+            if (mouseEvent.button === Qt.RightButton)
+                root.rightActivated();
+            else
+                root.activated();
+        }
 
         PaperTooltip {
             text: root.tooltip

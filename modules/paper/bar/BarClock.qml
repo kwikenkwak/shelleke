@@ -1,5 +1,6 @@
 import QtQuick
 import qs.services
+import qs.modules.common
 import qs.modules.paper.common
 import qs.modules.paper.widgets
 
@@ -31,7 +32,11 @@ MouseArea {
         anchors.verticalCenter: parent.verticalCenter
         spacing: PaperTheme.pick(10, 7, 9)
 
+        // The time (and the hairline that sets it off) drop out when
+        // `paper.bar.showTime` is off; the date always stays. Config.json
+        // only — there is no GUI toggle, on purpose.
         PaperText {
+            visible: Config.options.paper.bar.showTime
             anchors.verticalCenter: parent.verticalCenter
             text: root.timeText
             figure: true
@@ -41,7 +46,7 @@ MouseArea {
 
         // Broadsheet sets the time off from the date with a hairline.
         BarDivider {
-            visible: PaperTheme.isBroadsheet
+            visible: PaperTheme.isBroadsheet && Config.options.paper.bar.showTime
             anchors.verticalCenter: parent.verticalCenter
             length: 14
         }

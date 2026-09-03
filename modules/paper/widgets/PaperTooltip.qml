@@ -21,6 +21,10 @@ import qs.modules.paper.common
  * delay, 120 ms hide debounce. The popup uses an EMPTY input region, so it can
  * never steal hover from the control underneath — without that the tooltip
  * flickers on and off as it maps.
+ *
+ * The popup's anchor is CAPTURED once at creation and is never a live binding.
+ * See the note on `anchorWindow` — that detail is the difference between a
+ * tooltip and a shell that segfaults under the cursor.
  */
 Item {
     id: root
@@ -65,10 +69,36 @@ Item {
         active: false
         sourceComponent: PopupWindow {
             id: popup
-            visible: true
+
+            /// The anchor, SNAPSHOT at creation. Never bind these to
+            /// `QsWindow.window` or to `parent` directly.
+            ///
+            /// `QsWindow.window` re-resolves on every `windowChanged` in the
+            /// item tree it is attached to — including the ones Qt emits while
+            /// it is TEARING THAT TREE DOWN: a config reload, or a ListView
+            /// releasing the delegate this tooltip is parented to. Evaluating
+            /// it then dereferences an item Qt has already begun destroying and
+            /// segfaults inside QQuickItem::window(), taking the whole shell
+            /// with it. It reproduced on the Bluetooth device list, whose rows
+            /// re-sort the instant a device pairs, connects or is forgotten —
+            /// exactly when a tooltip is open over the row being moved.
+            ///
+            /// A tooltip lives for a few seconds and never migrates between
+            /// windows, so a snapshot is not a compromise; it is the correct
+            /// lifetime. `var` rather than a typed `Item` on purpose: a typed
+            /// reference would be nulled-and-notified mid-teardown, which is
+            /// the binding churn this is here to avoid.
+            property var anchorWindow: null
+            property var anchorItem: null
+            Component.onCompleted: {
+                popup.anchorWindow = root.QsWindow.window;
+                popup.anchorItem = root.parent;
+            }
+
+            visible: popup.anchorWindow !== null && popup.anchorItem !== null
             anchor {
-                window: root.QsWindow.window
-                item: root.parent
+                window: popup.anchorWindow
+                item: popup.anchorItem
                 edges: root.anchorEdges
                 gravity: root.anchorGravity
                 margins {

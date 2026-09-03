@@ -87,6 +87,25 @@ Singleton {
             // three designs in design/paper-*; switching is live (no reload).
             property JsonObject paper: JsonObject {
                 property string variant: "hairline" // "hairline", "ledger", "broadsheet"
+
+                // The desktop's picture: one public-domain plate from
+                // assets/images/paper-plates, changed at local midnight.
+                property JsonObject backdrop: JsonObject {
+                    property bool enable: true
+                    // A catalog file name ("hokusai-great-wave.png") pins that
+                    // plate; empty rotates a new one in every day.
+                    property string plate: ""
+                    // Multiplier on the variant's base opacity, to hang the
+                    // picture heavier or fainter without touching the theme.
+                    property real strength: 1.0
+                }
+
+                property JsonObject bar: JsonObject {
+                    // The time in the bar clock (the date always stays).
+                    // Deliberately has no toggle in any GUI: flip it here, in
+                    // ~/.config/illogical-impulse/config.json, under paper.bar.
+                    property bool showTime: true
+                }
             }
 
             property JsonObject policies: JsonObject {
@@ -213,6 +232,10 @@ Singleton {
                 property string wallpaperPath: ""
                 property string thumbnailPath: ""
                 property bool hideWhenFullscreen: true
+                // Let switchwall.sh nag "Upscale?" when the wallpaper is smaller
+                // than the largest monitor. Off: on a mixed-resolution setup
+                // nearly every wallpaper trips it on every switch.
+                property bool promptUpscale: false
                 property JsonObject parallax: JsonObject {
                     property bool vertical: false
                     property bool autoVertical: false
@@ -487,6 +510,13 @@ Singleton {
 
             property JsonObject search: JsonObject {
                 property int nonAppResultDelay: 30 // This prevents lagging when typing
+                // Result caps. fuzzysort defaults to limit: INFINITY, so without these
+                // a one-character query scores and instantiates a result object for a
+                // large fraction of every list, on every keystroke.
+                property int maxAppResults: 30
+                property int maxRecentFileResults: 15
+                property int maxClipboardResults: 50
+                property int maxEmojiResults: 50
                 property string engineBaseUrl: "https://www.google.com/search?q="
                 property list<string> excludedSites: ["quora.com", "facebook.com"]
                 property bool sloppy: false // Uses levenshtein distance based scoring instead of fuzzy sort. Very weird.

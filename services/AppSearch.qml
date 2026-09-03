@@ -12,6 +12,7 @@ Singleton {
     id: root
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
+    property int maxResults: Config.options?.search.maxAppResults ?? 30
     property var substitutions: ({
         "code-url-handler": "visual-studio-code",
         "Code": "visual-studio-code",
@@ -66,12 +67,14 @@ Singleton {
             })).filter(item => item.score > root.scoreThreshold)
                 .sort((a, b) => b.score - a.score)
             return results
+                .slice(0, root.maxResults)
                 .map(item => item.entry)
         }
 
         return Fuzzy.go(search, preppedNames, {
             all: true,
-            key: "name"
+            key: "name",
+            limit: root.maxResults
         }).map(r => {
             return r.obj.entry
         });
@@ -139,7 +142,8 @@ Singleton {
         // Search in desktop entries
         const iconSearchResults = Fuzzy.go(str, preppedIcons, {
             all: true,
-            key: "name"
+            key: "name",
+            limit: 1 // only [0] is ever read below
         }).map(r => {
             return r.obj.entry
         });

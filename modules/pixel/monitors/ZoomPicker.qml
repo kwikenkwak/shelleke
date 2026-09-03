@@ -18,7 +18,7 @@ ColumnLayout {
     id: root
     spacing: 5
 
-    readonly property var steps: ["1", "1.25", "1.5", "1.75", "2"]
+    readonly property var steps: ["0.75", "0.8", "1", "1.25", "1.5", "1.75", "2"]
 
     // In single mode only the screen that stays on is worth showing.
     readonly property var screens: Monitors.quickMode === "single"

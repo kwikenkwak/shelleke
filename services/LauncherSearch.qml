@@ -32,6 +32,7 @@ Singleton {
             // XBEL stores them as <bookmark href="file:///path/to/file" ...>
             const regex = /<bookmark href="file:\/\/([^"]+)"/g;
             const files = [];
+            const byName = new Map();
             let match;
             
             while ((match = regex.exec(content)) !== null) {
@@ -41,17 +42,20 @@ Singleton {
                 // Note: QML has no synchronous file-existence primitive here, so we
                 // trust the XBEL recent-files list as the source of truth. Stale entries
                 // (deleted files) are harmless: opening them is a no-op.
-                // Avoid duplicates
-                if (files.some(f => f.name === fileName)) {
-                    const file = files.find(f => f.name === fileName);
-                    file.name = fileName;
-                    file.path = fullPath;
+                // Avoid duplicates. Keyed through a Map rather than some()+find() per
+                // bookmark, which made this O(n^2) over a few hundred entries; the
+                // semantics are unchanged (dedupe by basename, keep the last-seen path
+                // at the first-seen position).
+                const existing = byName.get(fileName);
+                if (existing) {
+                    existing.path = fullPath;
                 } else {
-                    files.push({
+                    const file = {
                         name: fileName,
                         path: fullPath
-                    });
-
+                    };
+                    byName.set(fileName, file);
+                    files.push(file);
                 }
             }
             return files.reverse()
@@ -60,6 +64,17 @@ Singleton {
             return [];
         }
     }
+
+    /**
+     * Recent-file names run through `Fuzzy.prepare` once per XBEL change, the way
+     * AppSearch, Cliphist and Emojis already do it. Previously `results` handed
+     * fuzzysort the raw objects, so it re-prepared every target on every keystroke
+     * — the single largest per-keystroke cost in the launcher.
+     */
+    readonly property var preppedRecentFiles: root.recentFiles.map(f => ({
+        name: Fuzzy.prepare(f.name),
+        file: f
+    }))
 
     function ensurePrefix(prefix) {
         if ([Config.options.search.prefix.action, Config.options.search.prefix.app, Config.options.search.prefix.clipboard, Config.options.search.prefix.emojis, Config.options.search.prefix.math, Config.options.search.prefix.shellCommand, Config.options.search.prefix.webSearch,].some(i => root.query.startsWith(i))) {
@@ -371,12 +386,13 @@ Singleton {
         }).filter(Boolean);
         ////////////////// Recent Files ///////////////////
         const recentFileObjects = 
-            Fuzzy.go(root.query, root.recentFiles, {
+            Fuzzy.go(root.query, root.preppedRecentFiles, {
                 all: true,
-                key: "name"
+                key: "name",
+                limit: Config.options.search.maxRecentFileResults
             })
             .map(r => {
-                const file = r.obj;
+                const file = r.obj.file;
                 return resultComp.createObject(null, {
                     type: Translation.tr("Recent File"),
                     name: file.name,

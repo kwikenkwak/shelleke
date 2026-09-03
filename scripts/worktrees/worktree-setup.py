@@ -19,7 +19,10 @@ you need: a plain shell, claude, and one `vitulina up` tab per selected server.
 
 A workspace that already exists is left exactly as it is — no fetch, no bookmark, no
 install — and the run just reopens the kitty window and re-runs the commands. So running
-this twice with the same task name is the way to get your tabs back.
+this twice with the same task name is the way to get your tabs back, and running it with
+an *extra* repo ticked is the way to add a repo to a task you already have: only the new
+one is fetched, checked out and installed, and the repos already in the folder keep their
+tabs (see keep_existing_repos, which puts them back into a selection that omits them).
 
 Every git checkout in ~/pleevi is a candidate, whether or not it has a .vitulina.yaml —
 that file only decides which servers it can offer. `controller` has none, so it gets a
@@ -59,9 +62,11 @@ that redirects all of them to one shared directory, see its docstring.
 
 Subcommands
   repos            JSON list of git checkouts in ~/pleevi that can get a worktree
-  tasks            JSON list of task folders that already exist, newest first
+  tasks            JSON list of task folders that already exist, newest first,
+                   each with the servers its saved tabs run per repo
   create <json>    create the worktrees and open kitty; JSON result on stdout,
-                   human-readable progress on stderr
+                   human-readable progress on stderr. An existing task name is
+                   not an error: its repos are kept and the new ones added.
                    (--no-open writes the kitty session file but opens nothing; testing)
   open <name>      reopen an existing task's kitty window from its saved session file
 
@@ -280,6 +285,24 @@ def session_tab_titles(session):
     return [line[len("new_tab "):].strip() for line in lines if line.startswith("new_tab ")]
 
 
+def session_selection(name):
+    """{repo: [server, …]} as recorded in a task's saved tabs.
+
+    The inverse of the tab list `create` writes: a task's server picks live nowhere else,
+    so this is how both the overlay (to show a task's repos already ticked before adding
+    one) and keep_existing_repos recover them. A repo with a plain tab maps to [].
+    """
+    selection = {}
+    for title in session_tab_titles(session_path(name)):
+        if title in ("shell", "claude"):
+            continue
+        repo_name, _, server = title.partition(" ")
+        servers = selection.setdefault(repo_name, [])
+        if server and server not in servers:
+            servers.append(server)
+    return selection
+
+
 def is_checkout(path):
     """Whether path is a working copy of something: a git worktree or a jj workspace.
 
@@ -313,6 +336,9 @@ def discover_tasks():
             "name": path.name,
             "path": str(path),
             "repos": repos,
+            # Which servers each of those repos runs, so adding a repo to this task can
+            # show — and keep — the picks it was created with.
+            "servers": session_selection(path.name),
             "tabs": session_tab_titles(session),
             "hasSession": session.is_file(),
             "mtime": max(stamps),
@@ -711,6 +737,47 @@ def open_task(name, open_kitty=True):
     }
 
 
+def keep_existing_repos(task, root, selected, known, warnings):
+    """Every repo already checked out in the task folder, then `selected`.
+
+    Adding a repo to an existing task is `create` with the extra repo ticked — but a run's
+    tabs are built from its selection alone, so a selection naming only the new repo would
+    reopen the task with everything else missing from the window. Their server picks come
+    from session_selection(), the only record of them.
+
+    Kept first, and in the order the saved session lists them, so a task that grows a repo
+    keeps its tabs where they were and the new one lands at the end.
+
+    A repo whose main ~/pleevi checkout has since disappeared is reported and skipped: the
+    working copy is still fine, but with nothing to look its servers or node-ness up in,
+    there is no honest tab to write for it.
+    """
+    picked = {entry["name"] for entry in selected}
+    saved = session_selection(task)
+    kept, lost = [], []
+    for path in sorted(root.iterdir()):
+        if not path.is_dir() or not is_checkout(path) or path.name in picked:
+            continue
+        if path.name not in known:
+            lost.append(path.name)
+            continue
+        kept.append({"name": path.name, "servers": saved.get(path.name, [])})
+    if kept:
+        log(f"{task} already exists: keeping " + ", ".join(e["name"] for e in kept))
+    for name in lost:
+        warnings.append(f"{name}: no longer a repo in ~/pleevi — left out of the tabs")
+
+    # Whatever order the caller listed them in, the tabs come out in the order they are
+    # already open in — a repo joining a task should appear at the end of the window, not
+    # shuffle the tabs someone has been reaching for all week. A repo the session does not
+    # know (the new one, or a folder put there by hand) keeps its relative place at the end,
+    # since sort() is stable.
+    position = {name: index for index, name in enumerate(saved)}
+    merged = kept + selected
+    merged.sort(key=lambda entry: position.get(entry["name"], len(position)))
+    return merged
+
+
 def create(spec, open_kitty=True):
     name = str(spec.get("name", "")).strip()
     if not NAME_RE.fullmatch(name):
@@ -726,9 +793,14 @@ def create(spec, open_kitty=True):
         return {"ok": False, "error": "Unknown repo(s): " + ", ".join(unknown)}
 
     root = PLEEVI_ROOT / name
+    done, warnings = [], []
+
+    # An existing folder means this is a task getting another repo rather than a new task.
+    existed = root.is_dir()
+    if existed:
+        selected = keep_existing_repos(name, root, selected, known, warnings)
     root.mkdir(parents=True, exist_ok=True)
 
-    done, warnings = [], []
     # The claude tab opens here, on the task folder rather than on any one repo.
     apply_claude_settings(root, name, warnings)
     if not JJ:
@@ -814,6 +886,9 @@ def create(spec, open_kitty=True):
         "path": str(root),
         "branch": name,
         "env": name,
+        # True when repos were added to a task that was already there, so the caller can
+        # say "added" rather than "created".
+        "existed": existed,
         "repos": [r["name"] for r, _, _, _ in done],
         "created": [r["name"] for r, _, _, fresh in done if fresh],
         "reopened": [r["name"] for r, _, _, fresh in done if not fresh],

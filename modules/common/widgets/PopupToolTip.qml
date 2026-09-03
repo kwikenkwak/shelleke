@@ -39,10 +39,27 @@ Item {
         anchors.fill: parent
         active: root.internalVisibleCondition
         sourceComponent: PopupWindow {
-            visible: true
+            id: popup
+
+            // The anchor, SNAPSHOT at creation — never a live binding.
+            // `QsWindow.window` re-resolves on every `windowChanged` in the
+            // tree it is attached to, including the ones Qt emits while it is
+            // tearing that tree down (a reload, or a ListView releasing the
+            // delegate this tooltip sits in). Reading it then dereferences a
+            // half-destroyed item and segfaults inside QQuickItem::window().
+            // Same fix as modules/paper/widgets/PaperTooltip.qml, which has the
+            // long version of the note.
+            property var anchorWindow: null
+            property var anchorItem: null
+            Component.onCompleted: {
+                popup.anchorWindow = root.QsWindow.window;
+                popup.anchorItem = root.parent;
+            }
+
+            visible: popup.anchorWindow !== null && popup.anchorItem !== null
             anchor {
-                window: root.QsWindow.window
-                item: root.parent
+                window: popup.anchorWindow
+                item: popup.anchorItem
                 edges: root.anchorEdges
                 gravity: root.anchorGravity
             }

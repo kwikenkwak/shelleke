@@ -180,6 +180,7 @@ Scope {
                     // cell); ledger and broadsheet sit the cells on a baseline
                     // near the bottom edge, so they anchor down instead.
                     BarWorkspaces {
+                        screen: barRoot.modelData
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: PaperTheme.isHairline ? parent.verticalCenter : undefined
                         anchors.bottom: PaperTheme.isHairline ? undefined : parent.bottom
@@ -250,6 +251,21 @@ Scope {
                             visible: PaperTheme.isBroadsheet
                             anchors.verticalCenter: parent.verticalCenter
                             implicitWidth: PaperTheme.pick(0, 0, 13)
+                            implicitHeight: 1
+                        }
+
+                        // Headphones / earbuds, when something audio reports a
+                        // battery. Hidden — and taking no width — otherwise, so
+                        // the battery chip keeps the corner to itself.
+                        BarPeripheralChip {
+                            id: peripheralChip
+                            anchors.verticalCenter: parent.verticalCenter
+                            onActivated: GlobalStates.sidebarRightOpen = true
+                        }
+                        Item {
+                            visible: peripheralChip.visible
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitWidth: PaperTheme.pick(14, 10, 12)
                             implicitHeight: 1
                         }
 

@@ -59,8 +59,15 @@ post_process() {
     "$SCRIPT_DIR/code/material-code-set-color.sh" &
 }
 
+# Nags "Upscale?" whenever the wallpaper is smaller than the biggest monitor.
+# OFF unless `.background.promptUpscale` is true in the shell config: on a mixed
+# 1080p + 1440p setup practically every wallpaper trips it, so the notification
+# fires on nearly every switch.
 check_and_prompt_upscale() {
     local img="$1"
+    if [[ "$(jq -r '.background.promptUpscale // false' "$SHELL_CONFIG_FILE" 2>/dev/null)" != "true" ]]; then
+        return 0
+    fi
     min_width_desired="$(hyprctl monitors -j | jq '([.[].width] | max)' | xargs)" # max monitor width
     min_height_desired="$(hyprctl monitors -j | jq '([.[].height] | max)' | xargs)" # max monitor height
 

@@ -142,6 +142,68 @@ CANON = {
 }
 
 
+# ---- hand-drawn additions ---------------------------------------------------
+# Glyphs no design preview ever drew, added by hand in each variant's pen and
+# merged below with `setdefault` — if a preview ever gains a drawing of one of
+# these, the preview wins and the entry here becomes dead weight.
+#
+# `headphones` and `earbuds` exist for the bar's peripheral-battery chip, which
+# reports a connected headset the way a phone does (glyph + percentage).
+#
+# The earbud pair is the fussy one at 15-17 px, and it took a rendering rig to
+# settle: scripts/paper/preview_glyph.py draws a candidate exactly as PaperIcon
+# does (grid scaled to the chip size, 1.25 px apparent stroke, round caps) so
+# candidates can be compared at true size instead of guessed at.
+#
+# Rejected there: heads with centred stems (a pair of lollipops), pill bodies
+# (they read as "00" beside the percentage), a single bud at full grid size
+# (a letter 9, tilted or not), a bud with a nozzle (a magnifying glass).
+#
+# What works is a PAIR of closed silhouettes after Mynaui's `airpods`: each bud
+# is a head loop that opens into a stem whose cap radius is half the stem width,
+# and the two are MIRRORED with the stems on the outside. The mirroring is what
+# carries it — an object at this size is read by its symmetry, not its detail.
+
+MANUAL = {
+    "hairline": {
+        "earbuds": {"vb": 16, "p": [
+            {"d": "M1.7 3.9A2.5 2.5 0 1 1 3.9 6.38L3.9 13.1A1.1 1.1 0 0 1 1.7 13.1Z"},
+            {"d": "M14.3 3.9A2.5 2.5 0 1 0 12.1 6.38L12.1 13.1A1.1 1.1 0 0 0 14.3 13.1Z"},
+        ]},
+        # A 16-grid band over two square cups — hairline draws no radii.
+        "headphones": {"vb": 16, "p": [
+            {"d": "M3.2 10.4V8.6a4.8 4.8 0 0 1 9.6 0v1.8"},
+            {"d": "M1.9 10.2H4.5V13.8H1.9Z"},
+            {"d": "M11.5 10.2H14.1V13.8H11.5Z"},
+        ]},
+    },
+    "ledger": {
+        "earbuds": {"vb": 16, "p": [
+            {"d": "M1.8 4A2.4 2.4 0 1 1 3.8 6.37L3.8 12.8A1 1 0 0 1 1.8 12.8Z"},
+            {"d": "M14.2 4A2.4 2.4 0 1 0 12.2 6.37L12.2 12.8A1 1 0 0 0 14.2 12.8Z"},
+        ]},
+        # Same construction, but ledger rounds every corner it draws.
+        "headphones": {"vb": 16, "p": [
+            {"d": "M3.2 10.1V8.7a4.8 4.8 0 0 1 9.6 0v1.4"},
+            {"d": "M2.9 9.9H3.5A1.1 1.1 0 0 1 4.6 11V12.8A1.1 1.1 0 0 1 3.5 13.9H2.9A1.1 1.1 0 0 1 1.8 12.8V11A1.1 1.1 0 0 1 2.9 9.9Z"},
+            {"d": "M12.5 9.9H13.1A1.1 1.1 0 0 1 14.2 11V12.8A1.1 1.1 0 0 1 13.1 13.9H12.5A1.1 1.1 0 0 1 11.4 12.8V11A1.1 1.1 0 0 1 12.5 9.9Z"},
+        ]},
+    },
+    "broadsheet": {
+        "earbuds": {"vb": 20, "p": [
+            {"d": "M2.5 5.1A2.9 2.9 0 1 1 4.9 7.96L4.9 14.2A1.2 1.2 0 0 1 2.5 14.2Z"},
+            {"d": "M17.5 5.1A2.9 2.9 0 1 0 15.1 7.96L15.1 14.2A1.2 1.2 0 0 0 17.5 14.2Z"},
+        ]},
+        # The 20-grid drawing: a wider band, radius-1.2 cups.
+        "headphones": {"vb": 20, "p": [
+            {"d": "M4 12.6V10a6 6 0 0 1 12 0v2.6"},
+            {"d": "M3.6 12.2H4.4A1.2 1.2 0 0 1 5.6 13.4V15.8A1.2 1.2 0 0 1 4.4 17H3.6A1.2 1.2 0 0 1 2.4 15.8V13.4A1.2 1.2 0 0 1 3.6 12.2Z"},
+            {"d": "M15.6 12.2H16.4A1.2 1.2 0 0 1 17.6 13.4V15.8A1.2 1.2 0 0 1 16.4 17H15.6A1.2 1.2 0 0 1 14.4 15.8V13.4A1.2 1.2 0 0 1 15.6 12.2Z"},
+        ]},
+    },
+}
+
+
 def canon(n):
     return CANON.get(n, n)
 
@@ -164,6 +226,10 @@ def main():
                 "p": [{"d": d, "f": 1} if f else {"d": d} for d, f in parts],
             }
 
+    for variant, glyphs in MANUAL.items():
+        for name, g in glyphs.items():
+            canonical[variant].setdefault(name, g)
+
     allnames = sorted({n for v in canonical.values() for n in v})
     # coverage report
     print("total canonical glyphs:", len(allnames))
@@ -181,6 +247,7 @@ def main():
         "bt": "bluetooth", "chevDown": "chevD", "chevUp": "chevU",
         "chevLeft": "chevL", "chevRight": "chevR", "fullscr": "fullscreen",
         "monitor": "display", "expand": "fullscreen",
+        "headphone": "headphones", "headset": "headphones",
     })
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

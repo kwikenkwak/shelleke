@@ -30,7 +30,25 @@ LazyLoader {
     default property Item contentItem
     property int contentMargin: PaperTheme.pad.sheet
 
-    active: root.hoverTarget && root.hoverTarget.containsMouse
+    /// The bar window this popup hangs from, CAPTURED when the hover starts and
+    /// never left as a live binding on `QsWindow.window`. That attached property
+    /// re-resolves on every `windowChanged` in the tree it is attached to,
+    /// including the ones Qt emits while it is tearing the bar down on a config
+    /// reload — and reading it then dereferences a half-destroyed item and
+    /// segfaults inside QQuickItem::window(). See
+    /// modules/paper/widgets/PaperTooltip.qml for the long version of the note.
+    ///
+    /// It has to be captured BEFORE `active` flips, or the PanelWindow would
+    /// map on the default screen for a frame before finding its own.
+    property var barWindow: null
+    readonly property bool wantOpen: root.hoverTarget && root.hoverTarget.containsMouse
+    onWantOpenChanged: {
+        if (root.wantOpen)
+            root.barWindow = root.QsWindow?.window ?? null;
+        root.active = root.wantOpen;
+    }
+
+    active: false
 
     component: PanelWindow {
         id: popupWindow
@@ -38,7 +56,7 @@ LazyLoader {
 
         // Follow the bar that owns the hover target, so the margins below are
         // measured against the same output the sheet lands on.
-        screen: root.QsWindow?.window?.screen ?? null
+        screen: root.barWindow?.screen ?? null
 
         anchors.top: true
         anchors.left: true
@@ -61,7 +79,7 @@ LazyLoader {
         /// The bar's own content inset, reused as the screen-edge keep-out so a
         /// clamped sheet lines up with the cluster it hangs from.
         readonly property real edgeGap: PaperTheme.pad.bar
-        readonly property real screenWidth: root.QsWindow?.window?.width ?? 0
+        readonly property real screenWidth: root.barWindow?.width ?? 0
 
         margins {
             // Clamp: the right-hand clusters (battery, clock) would otherwise

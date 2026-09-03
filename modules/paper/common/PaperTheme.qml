@@ -566,6 +566,30 @@ Singleton {
         readonly property bool tintedFills: !root.isHairline
     }
 
+    // ---------------------------------------------------------------- backdrop
+    //
+    // The desktop's picture. PaperPlates decides WHICH plate hangs today; these
+    // tokens say how it is inked. See background/PaperBackground.qml.
+
+    readonly property QtObject backdrop: QtObject {
+        /// Base opacity of the plate on the desktop ground, before the plate's
+        /// own weight and the user's `strength`.
+        ///
+        /// Dusk takes far more than light, and not by taste: ink composited onto
+        /// a near-black ground can never be brighter than `opacity × ink`, so a
+        /// figure that costs 0.38 on paper costs 0.62 on dusk paper to read the
+        /// same. Hairline stays the quietest of the three — its desktop is
+        /// meant to be bleached.
+        readonly property real plateOpacity: root.dark ? root.pick(0.58, 0.62, 0.66) : root.pick(0.34, 0.38, 0.42)
+        /// The pen the picture is drawn with. Broadsheet inks its ornament in
+        /// sepia, so its plate is a sepia engraving; the other two use plain ink.
+        readonly property color plateInk: root.isBroadsheet ? root.seal : root.ink
+        /// The desk ruling under the sheet. Broadsheet only, and only when no
+        /// plate hangs — two textures under one sheet is one too many.
+        readonly property bool deskRuling: root.isBroadsheet
+        readonly property int deskRulingPitch: 22
+    }
+
     readonly property QtObject shadow: QtObject {
         readonly property color color: root.dark ? "#66000000" : (root.isLedger ? "#1a22201c" : "#17241f1a")
         readonly property real radius: root.isBroadsheet ? 26 : 14

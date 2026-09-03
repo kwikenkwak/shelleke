@@ -37,7 +37,8 @@ Singleton {
 
         return Fuzzy.go(search, preparedEntries, {
             all: true,
-            key: "name"
+            key: "name",
+            limit: Config.options?.search.maxClipboardResults ?? 50
         }).map(r => {
             return r.obj.entry
         });

@@ -7,8 +7,8 @@ import qs.modules.paper.widgets
 
 /**
  * Per-screen zoom (Hyprland monitor scale) for the quick layout: one row per
- * screen — the connector in mono in a fixed column, then the five steps
- * 1 / 1.25 / 1.5 / 1.75 / 2×.
+ * screen — the connector in mono in a fixed column, then the steps
+ * 0.75 / 0.8 / 1 / 1.25 / 1.5 / 1.75 / 2× (sub-1 zooms OUT for more room).
  *
  * Steps that would not divide the screen's resolution into whole logical pixels
  * are marked impossible: Hyprland substitutes a nearby scale for those, so
@@ -25,7 +25,7 @@ ColumnLayout {
 
     spacing: PaperTheme.spacing.xs
 
-    readonly property var steps: ["1", "1.25", "1.5", "1.75", "2"]
+    readonly property var steps: ["0.75", "0.8", "1", "1.25", "1.5", "1.75", "2"]
 
     /// In single mode only the screen that stays on is worth showing.
     readonly property var screens: Monitors.quickMode === "single" ? Monitors.monitors.filter(m => m.name === Monitors.quickTarget) : Monitors.monitors

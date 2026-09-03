@@ -70,7 +70,14 @@ Item {
             id: img
             anchors.fill: parent
             visible: false
-            asynchronous: true
+            // MUST stay synchronous for image://icon sources: an asynchronous
+            // load runs on the QQuickPixmapReader thread, and the first
+            // QIcon::fromTheme() call in the process initialises Qt's icon
+            // loader ON THAT THREAD. The reader thread dies on the first live
+            // reload, after which every fresh theme-icon lookup silently
+            // returns a blank pixmap until quickshell is fully restarted
+            // (bar icons vanishing on "quick refresh").
+            asynchronous: false
             cache: true
             smooth: true
             mipmap: true

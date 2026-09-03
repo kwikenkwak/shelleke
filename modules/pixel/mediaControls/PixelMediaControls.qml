@@ -145,7 +145,7 @@ Scope {
                         anchors.fill: parent
                         anchors.margins: PixTheme.borderWidth
                         visible: status === Image.Ready
-                        source: card.player?.trackArtUrl ?? ""
+                        source: MprisController.coverArtUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true

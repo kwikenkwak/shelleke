@@ -53,7 +53,9 @@ MaterialShape { // App icon
         sourceComponent: IconImage {
             id: appIconImage
             implicitSize: root.appIconSize
-            asynchronous: true
+            // Synchronous: theme-icon loads on the reader thread break after a
+            // live reload (icon loader thread affinity); see PaperAppIcon.
+            asynchronous: false
             source: Quickshell.iconPath(root.appIcon, "image-missing")
         }
     }
@@ -95,7 +97,8 @@ MaterialShape { // App icon
                 anchors.right: parent.right
                 sourceComponent: IconImage {
                     implicitSize: root.smallAppIconSize
-                    asynchronous: true
+                    // Synchronous — same reload-safety rule as above.
+                    asynchronous: false
                     source: Quickshell.iconPath(root.appIcon, "image-missing")
                 }
             }

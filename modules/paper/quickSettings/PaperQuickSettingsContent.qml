@@ -34,14 +34,28 @@ import qs.modules.paper.widgets
  * It is a `Loader` with a `sourceComponent` binding rather than a forest of
  * `visible:`, so a live variant switch re-lays it out with no reload.
  *
- * Clicking Internet or Bluetooth covers the panel with a management overlay
- * (QsWifiManager / QsBluetoothManager) rather than floating a dialog over it.
+ * Clicking Internet, Bluetooth or the audio output covers the panel with a
+ * management overlay (QsWifiManager / QsBluetoothManager / QsAudioManager)
+ * rather than floating a dialog over it. The overlay is panel state, not user
+ * state: closing the sidebar drops back to the panel body, so reopening it
+ * never lands mid-way inside a network list.
  */
 Item {
     id: root
 
-    /// Which management overlay is open: "" | "wifi" | "bluetooth".
+    /// Which management overlay is open: "" | "wifi" | "bluetooth" | "audio".
     property string overlay: ""
+
+    // The content Loader stays alive while the sidebar is hidden whenever
+    // `sidebar.keepRightSidebarLoaded` is set, so an overlay left open would
+    // still be open on the next reveal. Drop back to the panel body on close.
+    Connections {
+        target: GlobalStates
+        function onSidebarRightOpenChanged(): void {
+            if (!GlobalStates.sidebarRightOpen)
+                root.overlay = "";
+        }
+    }
 
     // ---- backing toggle models: reuse, never reimplement -------------------
     BluetoothToggle {
@@ -417,7 +431,7 @@ Item {
             anchors.fill: parent
             anchors.margins: PaperTheme.pad.panel
             active: root.overlay !== ""
-            sourceComponent: root.overlay === "wifi" ? wifiManager : root.overlay === "bluetooth" ? bluetoothManager : null
+            sourceComponent: root.overlay === "wifi" ? wifiManager : root.overlay === "bluetooth" ? bluetoothManager : root.overlay === "audio" ? audioManager : null
         }
     }
 
@@ -431,6 +445,12 @@ Item {
     Component {
         id: bluetoothManager
         QsBluetoothManager {
+            onBack: root.overlay = ""
+        }
+    }
+    Component {
+        id: audioManager
+        QsAudioManager {
             onBack: root.overlay = ""
         }
     }
@@ -572,8 +592,13 @@ Item {
                 title: "Audio output"
                 status: root.audioStatus
                 on: !root.audioMuted
-                tooltip: "Audio output"
-                onToggled: Audio.toggleMute()
+                // Like Internet and Bluetooth: the row navigates to the device
+                // list. Mute keeps a one-click home on the right button, since
+                // a chevron row has no switch to carry it.
+                control: "chevron"
+                tooltip: "Audio output · right-click to mute"
+                onActivated: root.overlay = "audio"
+                onRightActivated: Audio.toggleMute()
             }
             PaperToggleRow {
                 Layout.fillWidth: true
@@ -665,8 +690,9 @@ Item {
                     title: "Output"
                     status: root.audioStatus
                     on: !root.audioMuted
-                    tooltip: "Audio output"
-                    onActivated: Audio.toggleMute()
+                    tooltip: "Audio output · right-click to mute"
+                    onActivated: root.overlay = "audio"
+                    onRightActivated: Audio.toggleMute()
                 }
                 QsToggleTile {
                     Layout.fillWidth: true

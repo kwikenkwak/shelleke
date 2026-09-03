@@ -9,6 +9,10 @@ import qs.modules.paper.widgets
  * of this repo" and, once selected, a chip per vitulina server for "open a
  * `vitulina up` tab for it". Clicking anywhere on the row toggles the repo.
  *
+ * `locked` is the repo a task being amended already holds: ticked, stamped
+ * "in task", and not togglable, since nothing here can take it back out of the
+ * folder. Its server chips stay live — those only decide which tabs open.
+ *
  *   hairline   — a bare row separated by a hairline; selecting it takes the
  *                standard left ink gutter (the change bar) and only then reveals
  *                the server chips, which are a free row of underlined words.
@@ -24,6 +28,8 @@ PaperPanel {
     property var servers: []
     property bool selected: false
     property var pickedServers: []
+    /// Already in the task being amended: on, and it cannot be turned off.
+    property bool locked: false
     /// Hairline separates rows with a rule rather than framing them.
     property bool separator: true
 
@@ -74,6 +80,7 @@ PaperPanel {
 
             PaperCheck {
                 checked: root.selected
+                enabled: !root.locked
                 onToggled: root.toggled()
             }
             PaperText {
@@ -82,6 +89,11 @@ PaperPanel {
                 role: PaperTheme.pick("body", "small", "body")
                 tone: root.selected && !PaperTheme.isHairline ? "accent" : (root.selected ? "ink" : "ink2")
                 elide: Text.ElideRight
+            }
+            PaperStamp {
+                visible: root.locked
+                text: "in task"
+                tone: "accent"
             }
             PaperText {
                 // "4 srv" / "no servers" — ledger writes the empty case as a
@@ -127,10 +139,13 @@ PaperPanel {
         }
     }
 
-    // Clicking anywhere on the row (outside the chips) toggles the repo.
+    // Clicking anywhere on the row (outside the chips) toggles the repo. A
+    // locked row has nothing to toggle, so it does not pretend to: no hand
+    // cursor, no click.
     MouseArea {
         anchors.fill: parent
         z: -1
+        enabled: !root.locked
         cursorShape: Qt.PointingHandCursor
         onClicked: root.toggled()
     }

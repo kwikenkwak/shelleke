@@ -29,4 +29,15 @@ QtObject {
 
     // Extra stuff to allow for more flexibility
     property string category: type
+
+    /**
+     * Stable identity for `ScriptModel { objectProp: "key" }`, which every search
+     * widget (ii / pixel / paper) sets. Without this property the model read
+     * `undefined` for every row, so its incremental diff had nothing to key on and
+     * the whole result list churned on each keystroke.
+     *
+     * Derived from content: a row whose fields are unchanged keeps its key, and so
+     * keeps its delegate, even though `results` rebuilds fresh objects every time.
+     */
+    readonly property string key: [type, id, rawValue, name, comment].join("\u001f")
 }

@@ -208,6 +208,50 @@ ShellRoot {
         }
     }
 
+    // The paper family's desktop picture. It rotates on its own every midnight;
+    // these are for looking through the collection now.
+    //   qs -c ii ipc call paperPlate next
+    //   qs -c ii ipc call paperPlate pin hokusai-great-wave.png
+    //   qs -c ii ipc call paperPlate daily
+    IpcHandler {
+        target: "paperPlate"
+
+        function next(): void {
+            PaperPlates.next()
+        }
+
+        function previous(): void {
+            PaperPlates.previous()
+        }
+
+        function pin(plate: string): void {
+            PaperPlates.pin(plate)
+        }
+
+        function daily(): void {
+            PaperPlates.daily()
+        }
+
+        function get(): string {
+            return PaperPlates.plate ? `${PaperPlates.plate.file} — ${PaperPlates.credit}` : "none";
+        }
+
+        // Calibrating the wall: step it up or down, or set it outright.
+        //   qs -c ii ipc call paperPlate heavier
+        //   qs -c ii ipc call paperPlate strength 1.6
+        function heavier(): void {
+            PaperPlates.heavier()
+        }
+
+        function lighter(): void {
+            PaperPlates.lighter()
+        }
+
+        function strength(value: real): void {
+            PaperPlates.setStrength(value)
+        }
+    }
+
     // Liveness sentinel used by the Hyprland "fallback" keybinds
     // (e.g. Ctrl+Alt+Delete: `qs -c ii ipc call TEST_ALIVE || wlogout`). When the
     // shell is running as the queried config, this call succeeds and the

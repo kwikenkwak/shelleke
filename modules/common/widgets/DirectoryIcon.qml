@@ -10,7 +10,10 @@ import qs.modules.common.functions
 Image {
     id: root
     required property var fileModelData
-    asynchronous: true
+    // Synchronous: image://icon loads must never run on the async pixmap-reader
+    // thread — the first QIcon::fromTheme there binds Qt's icon loader to a
+    // thread that dies on live reload, blanking every later theme-icon lookup.
+    asynchronous: false
     fillMode: Image.PreserveAspectFit
 
     source: {

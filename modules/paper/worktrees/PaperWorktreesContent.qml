@@ -9,11 +9,17 @@ import qs.modules.paper.widgets
  * Body of the "New worktree" dialog: name the task, tick the repos it touches,
  * pick which vitulina servers get their own kitty tab. Below the Create button,
  * the tasks that already exist — click one to get its terminal and tabs back
- * without touching the working copies.
+ * without touching the working copies, or press its `plus` to load it into the
+ * entry above and give it another repo.
  *
  * This is the surface where the ledger metaphor is most literal: everything
  * above Create is the entry being written, everything below it is the record of
- * what has already been written.
+ * what has already been written — and an existing name is how you *amend* an
+ * entry: whenever the name matches a task that is already there, the sheet turns
+ * from "new task" into "add repos to that task". Its current repos are then
+ * ticked and locked (they come along regardless — see keep_existing_repos in
+ * worktree-setup.py) and only the newly ticked ones are cut, installed and
+ * added; nothing already in the folder is touched.
  *
  * A task's working copies are jj workspaces on a bookmark named after the task.
  * Repos are colocated on demand to make that possible, which is why `toColocate`
@@ -40,19 +46,50 @@ PaperPanel {
 
     readonly property string name: nameField.text.trim()
     readonly property bool nameValid: /^[A-Za-z0-9._-]+$/.test(root.name)
-    readonly property var repoNames: Object.keys(root.sel)
-    readonly property int serverCount: root.repoNames.reduce((n, r) => n + root.sel[r].length, 0)
+
+    /// The existing task this name refers to, or null for a genuinely new one.
+    /// Typing the name of a task that is already there — which is what the
+    /// reopen list's `plus` does for you — is how a repo gets added to it.
+    readonly property var currentTask: Worktrees.tasks.find(t => t.name === root.name) ?? null
+    readonly property bool extending: root.currentTask !== null
+    /// The repos that task already holds. Kept whatever the ticks say, so their
+    /// rows are ticked and refuse to be unticked; a folder whose main ~/pleevi
+    /// checkout has since gone is left out here exactly as the script leaves it
+    /// out of the tabs.
+    readonly property var lockedRepos: (root.currentTask?.repos ?? []).filter(r => Worktrees.repos.some(x => x.name === r))
+    /// { repo: [server, …] } as that task's saved tabs run them.
+    readonly property var taskServers: root.currentTask?.servers ?? ({})
+
+    /// Every repo this run writes a tab for: what is ticked plus what the task
+    /// already has, and of those the ones that still need checking out.
+    readonly property var pickedRepos: {
+        const out = root.lockedRepos.slice();
+        for (const repo of Object.keys(root.sel))
+            if (out.indexOf(repo) < 0)
+                out.push(repo);
+        return out;
+    }
+    readonly property var newRepos: root.pickedRepos.filter(r => root.lockedRepos.indexOf(r) < 0)
+
+    readonly property int serverCount: root.pickedRepos.reduce((n, r) => n + root.serversFor(r).length, 0)
     /// A selected repo with nothing to start (the controller, or one whose
     /// servers you left unticked) gets a plain tab in its worktree instead.
-    readonly property int plainRepoTabs: root.repoNames.filter(r => root.sel[r].length === 0).length
-    readonly property bool canCreate: root.nameValid && root.repoNames.length > 0 && !Worktrees.busy
+    readonly property int plainRepoTabs: root.pickedRepos.filter(r => root.serversFor(r).length === 0).length
+    readonly property bool canCreate: root.nameValid && root.pickedRepos.length > 0 && !Worktrees.busy
 
-    /// Selected repos carrying a package.json: they get `pnpm install` after
-    /// checkout and a SESSION_SECRET in front of their vitulina command.
-    readonly property var nodeRepos: root.repoNames.filter(r => {
+    /// Repos to be checked out that carry a package.json: they get `pnpm install`
+    /// after checkout and a SESSION_SECRET in front of their vitulina command.
+    /// Only the new ones — an existing workspace already has its node_modules.
+    readonly property var nodeRepos: root.newRepos.filter(r => {
         const found = Worktrees.repos.find(x => x.name === r);
         return found ? (found.node ?? false) : false;
     })
+
+    /// What is on the line for one repo's servers: the ticks once it has been
+    /// touched, otherwise the tabs the task already runs for it.
+    function serversFor(repo: string): var {
+        return root.sel[repo] ?? root.taskServers[repo] ?? [];
+    }
 
     /// What the new changes are cut from — usually main@origin for every repo,
     /// but say so honestly if the discovered repos disagree.
@@ -63,12 +100,29 @@ PaperPanel {
 
     /// Repos that still need `jj git init --colocate` before they can hand out
     /// workspaces. Called out up front; additive, and undone with `rm -rf .jj`.
-    readonly property var toColocate: root.repoNames.filter(r => {
+    /// Only the new ones: a repo already in the task was colocated when it
+    /// joined it.
+    readonly property var toColocate: root.newRepos.filter(r => {
         const found = Worktrees.repos.find(x => x.name === r);
         return found ? !(found.jj ?? false) : false;
     })
 
+    /// The Setup line, which is about the repos being checked out — so when a
+    /// task is only being reopened it has to say that rather than list steps
+    /// nothing will run.
+    readonly property string setupLabel: {
+        if (root.extending && root.newRepos.length === 0)
+            return "nothing to add — reopens the tabs";
+        const steps = "jj workspace, copy .env, direnv allow" + (root.nodeRepos.length > 0 ? ", pnpm i (" + root.nodeRepos.join(", ") + ")" : "");
+        return root.extending ? steps + " — " + root.newRepos.join(", ") + " only" : steps;
+    }
+
     function toggleRepo(repo: string): void {
+        // A repo the task already holds cannot be dropped from here: unticking
+        // it would neither remove the working copy nor stop it getting its tab
+        // back, so the row stays ticked and the click does nothing.
+        if (root.lockedRepos.indexOf(repo) >= 0)
+            return;
         const next = Object.assign({}, root.sel);
         if (next[repo] !== undefined)
             delete next[repo];
@@ -79,7 +133,10 @@ PaperPanel {
 
     function toggleServer(repo: string, server: string): void {
         const next = Object.assign({}, root.sel);
-        const servers = (next[repo] ?? []).slice();
+        // Seeded from serversFor, not from `sel`: the first chip clicked on a
+        // repo the task already has must edit that repo's saved tabs rather
+        // than start from none of them.
+        const servers = root.serversFor(repo).slice();
         const at = servers.indexOf(server);
         if (at >= 0)
             servers.splice(at, 1);
@@ -89,12 +146,20 @@ PaperPanel {
         root.sel = next;
     }
 
+    /// Put an existing task in the entry above so repos can be added to it. Its
+    /// own repos need no ticks — they follow from the name, via lockedRepos.
+    function loadTask(task: string): void {
+        nameField.text = task;
+        root.sel = ({});
+        nameField.focusInput();
+    }
+
     function submit(): void {
         if (!root.canCreate)
             return;
-        Worktrees.create(root.name, root.repoNames.map(r => ({
+        Worktrees.create(root.name, root.pickedRepos.map(r => ({
                     name: r,
-                    servers: root.sel[r]
+                    servers: root.serversFor(r)
                 })));
     }
 
@@ -127,7 +192,9 @@ PaperPanel {
 
             PaperTitle {
                 Layout.fillWidth: true
-                text: "New worktree"
+                // The masthead is the honest place to say which of the two
+                // things this sheet is currently doing.
+                text: root.extending ? "Add to " + root.name : "New worktree"
                 elide: Text.ElideRight
             }
             PaperButton {
@@ -156,6 +223,18 @@ PaperPanel {
             onAccepted: root.submit()
         }
 
+        // Says why the rows below went ticked by themselves. Only an existing
+        // name does this, so it is also the confirmation that the name matched.
+        PaperText {
+            Layout.fillWidth: true
+            visible: root.extending
+            text: "existing task — its " + root.lockedRepos.length + " repo" + (root.lockedRepos.length === 1 ? "" : "s") + " stay as they are; tick the ones to add"
+            role: "meta"
+            tone: "accent"
+            footnote: true
+            wrapMode: Text.WordWrap
+        }
+
         // ---- repos ----
         PaperSectionHeader {
             Layout.fillWidth: true
@@ -178,8 +257,9 @@ PaperPanel {
                     repo: modelData.name
                     servers: modelData.servers
                     separator: index < Worktrees.repos.length - 1
-                    selected: root.sel[modelData.name] !== undefined
-                    pickedServers: root.sel[modelData.name] ?? []
+                    locked: root.lockedRepos.indexOf(modelData.name) >= 0
+                    selected: root.sel[modelData.name] !== undefined || locked
+                    pickedServers: root.serversFor(modelData.name)
                     onToggled: root.toggleRepo(modelData.name)
                     onServerToggled: server => root.toggleServer(modelData.name, server)
                 }
@@ -232,10 +312,24 @@ PaperPanel {
                 key: "Env"
                 value: "vitulina up --env " + (root.nameValid ? root.name : "…")
             }
+            // The two lines that only an amended entry has: what is being added
+            // to the task, and what it keeps untouched.
+            PaperKV {
+                Layout.fillWidth: true
+                visible: root.extending
+                key: "Adding"
+                value: root.newRepos.length > 0 ? root.newRepos.join(", ") : "—"
+            }
+            PaperKV {
+                Layout.fillWidth: true
+                visible: root.extending
+                key: "Keeping"
+                value: root.lockedRepos.length > 0 ? root.lockedRepos.join(", ") : "—"
+            }
             PaperKV {
                 Layout.fillWidth: true
                 key: "Setup"
-                value: "jj workspace, copy .env, direnv allow" + (root.nodeRepos.length > 0 ? ", pnpm i (" + root.nodeRepos.join(", ") + ")" : "")
+                value: root.setupLabel
             }
             PaperKV {
                 Layout.fillWidth: true
@@ -258,7 +352,9 @@ PaperPanel {
                 primary: true
                 // Ledger puts a `plus` on the verb; the others keep it plain.
                 icon: PaperTheme.isLedger ? "plus" : ""
-                label: Worktrees.busy ? "Working…" : "Create"
+                // Three verbs for the one action, because the same press does
+                // three different things depending on what the name matched.
+                label: Worktrees.busy ? "Working…" : !root.extending ? "Create" : root.newRepos.length > 0 ? "Add" : "Reopen"
                 enabled: root.canCreate
                 onClicked: root.submit()
             }
@@ -280,7 +376,9 @@ PaperPanel {
         PaperSectionHeader {
             Layout.fillWidth: true
             label: "Reopen"
-            meta: Worktrees.tasks.length + " task" + (Worktrees.tasks.length === 1 ? "" : "s")
+            // The count, plus what the row's second button is for — the only
+            // place the sheet can say so without a legend.
+            meta: Worktrees.tasks.length + " task" + (Worktrees.tasks.length === 1 ? "" : "s") + " · + adds repos"
         }
         PaperEmpty {
             Layout.fillWidth: true
@@ -318,8 +416,13 @@ PaperPanel {
                         repos: modelData.repos
                         tabCount: (modelData.tabs ?? []).length
                         enabled: !Worktrees.busy
+                        // The row this sheet is currently amending.
+                        loaded: root.extending && modelData.name === root.name
                         // Reopen only — no fetch, no install.
                         onActivated: Worktrees.open(modelData.name)
+                        // The `plus` instead loads it above, where the repos it
+                        // does not have yet can be ticked and added.
+                        onExtendRequested: root.loadTask(modelData.name)
                     }
                 }
             }

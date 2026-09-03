@@ -53,9 +53,30 @@ Item {
 
     property int draggingFromWorkspace: -1
     property int draggingTargetWorkspace: -1
+    property string draggingFromSpecial: ""
+    property string draggingTargetSpecial: ""
+
+    // Special workspaces (scratchpads): a centered row of workspace-sized
+    // hard-edged tiles floating below the panel — the space beside them stays
+    // transparent. Hyprland only lists the ones that exist (= have windows).
+    readonly property var specialWorkspaces: HyprlandData.workspaces.filter(ws => ws.id < 0).sort((a, b) => a.name.localeCompare(b.name))
+    readonly property bool hasSpecials: specialWorkspaces.length > 0
+
+    function specialDisplayName(wsName) {
+        // The purposes are fixed (see hypr/custom/keybinds.conf).
+        const bare = wsName.startsWith("special:") ? wsName.slice("special:".length) : wsName;
+        const fixedNames = { web: "Browser", music: "Spotify", slack: "Slack" };
+        if (fixedNames[bare] !== undefined) return fixedNames[bare];
+        if (bare === "" || bare === "special") return "Scratchpad";
+        return bare.charAt(0).toUpperCase() + bare.slice(1);
+    }
+    function specialToggleDispatch(wsName) {
+        const bare = wsName.startsWith("special:") ? wsName.slice("special:".length) : "";
+        return (bare === "" || bare === "special") ? "togglespecialworkspace" : `togglespecialworkspace ${bare}`;
+    }
 
     implicitWidth: overviewBackground.implicitWidth
-    implicitHeight: overviewBackground.implicitHeight
+    implicitHeight: overviewBackground.implicitHeight + (root.hasSpecials ? root.workspaceImplicitHeight + root.padding * 2 + root.workspaceSpacing * 2 : 0)
 
     function getWsRow(ws) {
         var normalRow = Math.floor((ws - 1) / Config.options.overview.columns) % Config.options.overview.rows;
@@ -72,7 +93,8 @@ Item {
 
     PixPanel { // Background — hard-edged bordered container
         id: overviewBackground
-        anchors.centerIn: parent
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
         borderWidth: PixTheme.popupBorderWidth
         implicitWidth: workspaceColumnLayout.implicitWidth + root.padding * 2
         implicitHeight: workspaceColumnLayout.implicitHeight + root.padding * 2
@@ -149,6 +171,162 @@ Item {
             }
         }
 
+        PixPanel { // Special workspaces panel — same chrome as the main block
+            id: specialBackground
+            visible: root.hasSpecials
+            anchors.top: parent.bottom
+            anchors.topMargin: root.workspaceSpacing * 2
+            anchors.horizontalCenter: parent.horizontalCenter
+            borderWidth: PixTheme.popupBorderWidth
+            implicitWidth: specialRow.implicitWidth + root.padding * 2
+            implicitHeight: specialRow.implicitHeight + root.padding * 2
+
+            Row {
+                id: specialRow
+                anchors.centerIn: parent
+                spacing: root.workspaceSpacing
+
+            Repeater {
+                model: root.specialWorkspaces
+                delegate: Rectangle { // Special workspace tile
+                    id: specialTile
+                    required property var modelData
+                    readonly property string wsName: modelData.name
+                    readonly property bool isOpen: root.monitorData?.specialWorkspace?.name === specialTile.wsName
+                    property bool hoveredWhileDragging: false
+
+                    implicitWidth: root.workspaceImplicitWidth
+                    implicitHeight: root.workspaceImplicitHeight
+                    radius: 0
+                    antialiasing: false
+                    color: hoveredWhileDragging
+                        ? Qt.rgba(PixTheme.colors.line.r, PixTheme.colors.line.g, PixTheme.colors.line.b, 0.12)
+                        : "transparent"
+                    border.width: specialTile.isOpen ? root.focusedBorder : root.tileBorder
+                    border.color: (hoveredWhileDragging || specialTile.isOpen) ? PixTheme.colors.fg : PixTheme.colors.grey2
+
+                    PixTitle { // Name — same treatment as the workspace numbers (Silkscreen)
+                        anchors.centerIn: parent
+                        text: root.specialDisplayName(specialTile.wsName)
+                        color: PixTheme.colors.grey2
+                        font.pixelSize: Math.max(12, Math.round(specialTile.implicitHeight * 0.16))
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onPressed: {
+                            if (root.draggingTargetWorkspace === -1 && root.draggingTargetSpecial === "") {
+                                GlobalStates.overviewOpen = false;
+                                Hyprland.dispatch(root.specialToggleDispatch(specialTile.wsName));
+                            }
+                        }
+                    }
+
+                    DropArea {
+                        anchors.fill: parent
+                        onEntered: {
+                            root.draggingTargetSpecial = specialTile.wsName;
+                            if (root.draggingFromSpecial === specialTile.wsName)
+                                return;
+                            specialTile.hoveredWhileDragging = true;
+                        }
+                        onExited: {
+                            specialTile.hoveredWhileDragging = false;
+                            if (root.draggingTargetSpecial === specialTile.wsName)
+                                root.draggingTargetSpecial = "";
+                        }
+                    }
+
+                    Repeater { // Windows on this special workspace
+                        model: ScriptModel {
+                            values: ToplevelManager.toplevels.values.filter((toplevel) => {
+                                const address = `0x${toplevel.HyprlandToplevel?.address}`;
+                                return root.windowByAddress[address]?.workspace?.name === specialTile.wsName;
+                            })
+                        }
+                        delegate: PixelOverviewWindow {
+                            id: specialWindow
+                            required property var modelData
+                            property int monitorId: windowData?.monitor
+                            property var monitor: HyprlandData.monitors.find(m => m.id == monitorId)
+                            property var address: `0x${modelData.HyprlandToplevel.address}`
+                            toplevel: modelData
+                            monitorData: this.monitor
+                            scale: root.scale
+                            widgetMonitor: HyprlandData.monitors.find(m => m.id == root.monitor.id)
+                            windowData: root.windowByAddress[address]
+
+                            Timer {
+                                id: resetSpecialWindowPosition
+                                interval: Config.options.hacks.arbitraryRaceConditionDelay
+                                repeat: false
+                                running: false
+                                onTriggered: {
+                                    specialWindow.x = specialWindow.initX;
+                                    specialWindow.y = specialWindow.initY;
+                                }
+                            }
+
+                            z: Drag.active ? root.windowDraggingZ : (root.windowZ + windowData?.floating)
+                            Drag.hotSpot.x: width / 2
+                            Drag.hotSpot.y: height / 2
+                            MouseArea {
+                                id: specialDragArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: specialWindow.hovered = true
+                                onExited: specialWindow.hovered = false
+                                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                                drag.target: parent
+                                onPressed: (mouse) => {
+                                    root.draggingFromWorkspace = specialWindow.windowData?.workspace.id;
+                                    root.draggingFromSpecial = specialTile.wsName;
+                                    specialWindow.pressed = true;
+                                    specialWindow.Drag.active = true;
+                                    specialWindow.Drag.source = specialWindow;
+                                    specialWindow.Drag.hotSpot.x = mouse.x;
+                                    specialWindow.Drag.hotSpot.y = mouse.y;
+                                }
+                                onReleased: {
+                                    const targetWorkspace = root.draggingTargetWorkspace;
+                                    const targetSpecial = root.draggingTargetSpecial;
+                                    specialWindow.pressed = false;
+                                    specialWindow.Drag.active = false;
+                                    root.draggingFromWorkspace = -1;
+                                    root.draggingFromSpecial = "";
+                                    if (targetWorkspace !== -1) {
+                                        Hyprland.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${specialWindow.windowData?.address}`);
+                                    } else if (targetSpecial !== "" && targetSpecial !== specialTile.wsName) {
+                                        Hyprland.dispatch(`movetoworkspacesilent ${targetSpecial}, address:${specialWindow.windowData?.address}`);
+                                    }
+                                    resetSpecialWindowPosition.restart();
+                                }
+                                onClicked: (event) => {
+                                    if (!specialWindow.windowData)
+                                        return;
+                                    if (event.button === Qt.LeftButton) {
+                                        GlobalStates.overviewOpen = false;
+                                        Hyprland.dispatch(`focuswindow address:${specialWindow.windowData.address}`);
+                                        event.accepted = true;
+                                    } else if (event.button === Qt.MiddleButton) {
+                                        Hyprland.dispatch(`closewindow address:${specialWindow.windowData.address}`);
+                                        event.accepted = true;
+                                    }
+                                }
+
+                                PixTooltip {
+                                    visibleCondition: specialDragArea.containsMouse && !specialWindow.Drag.active
+                                    text: `${specialWindow.windowData?.title ?? ""}\n[${specialWindow.windowData?.class ?? ""}]`
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            }
+        }
+
         Item { // Windows + focused workspace indicator
             id: windowSpace
             anchors.centerIn: parent
@@ -218,10 +396,14 @@ Item {
                         }
                         onReleased: {
                             const targetWorkspace = root.draggingTargetWorkspace;
+                            const targetSpecial = root.draggingTargetSpecial;
                             window.pressed = false;
                             window.Drag.active = false;
                             root.draggingFromWorkspace = -1;
-                            if (targetWorkspace !== -1 && targetWorkspace !== window.windowData?.workspace.id) {
+                            if (targetSpecial !== "") {
+                                Hyprland.dispatch(`movetoworkspacesilent ${targetSpecial}, address:${window.windowData?.address}`);
+                                updateWindowPosition.restart();
+                            } else if (targetWorkspace !== -1 && targetWorkspace !== window.windowData?.workspace.id) {
                                 Hyprland.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${window.windowData?.address}`);
                                 updateWindowPosition.restart();
                             } else {
